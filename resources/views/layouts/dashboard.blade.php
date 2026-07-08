@@ -25,6 +25,15 @@
             --sidebar-width: 260px;
         }
 
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --surface-color: rgba(255, 255, 255, 0.7);
+            --surface-hover: rgba(255, 255, 255, 0.9);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-color);
@@ -159,12 +168,92 @@
             gap: 1.5rem;
         }
 
+        .user-dropdown-wrapper {
+            position: relative;
+        }
+
         .user-info {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-weight: 500;
             font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="light"] .user-info:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            min-width: 180px;
+            padding: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        [data-theme="light"] .dropdown-menu {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-primary) !important;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            text-align: left;
+            text-decoration: none !important;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="light"] .dropdown-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-item.text-danger {
+            color: var(--danger);
+        }
+
+        .dropdown-item.text-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .user-avatar {
@@ -192,6 +281,27 @@
             align-items: center;
             gap: 0.5rem;
             text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .btn-danger {
@@ -255,7 +365,7 @@
             <nav class="sidebar-nav">
                 <div class="nav-group">
                     <div class="nav-group-title">Overview</div>
-                    <a href="{{ request()->is('end-user*') ? url('end-user/dashboard') : url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                    <a href="{{ Auth::user()->role === 'end_user' ? url('end-user/dashboard') : url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
                         <i class="ph ph-squares-four"></i> Dashboard
                     </a>
                     <a href="#" class="nav-link">
@@ -312,20 +422,37 @@
         <!-- Main Content -->
         <div class="main-wrapper">
             <nav class="navbar glass">
+                <div style="flex: 1;"></div>
                 <div class="user-nav">
+                    <button class="icon-btn theme-toggle" id="theme-toggle" title="Toggle Theme" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="ph ph-sun"></i>
+                    </button>
                     @auth
-                        <div class="user-info">
-                            <div class="user-avatar">
-                                {{ substr(Auth::user()->name, 0, 1) }}
+                        <div class="user-dropdown-wrapper">
+                            <div class="user-info" id="userDropdownTrigger">
+                                <div class="user-avatar">
+                                    {{ substr(Auth::user()->name, 0, 1) }}
+                                </div>
+                                <span>{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
+                                <i class="ph ph-caret-down" style="font-size: 0.8rem; color: var(--text-secondary);"></i>
                             </div>
-                            <span>{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
+                            
+                            <div class="dropdown-menu" id="userDropdownMenu">
+                                <a href="#" class="dropdown-item">
+                                    <i class="ph ph-user"></i> My Profile
+                                </a>
+                                <a href="#" class="dropdown-item">
+                                    <i class="ph ph-gear"></i> Settings
+                                </a>
+                                <div style="height: 1px; background: var(--border-color); margin: 0.5rem 0;"></div>
+                                <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="ph ph-sign-out"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                            @csrf
-                            <button type="submit" class="btn btn-danger">
-                                <i class="ph ph-sign-out"></i> Logout
-                            </button>
-                        </form>
                     @endauth
                 </div>
             </nav>
@@ -337,5 +464,49 @@
     </div>
     
     @stack('scripts')
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const icon = themeToggle.querySelector('i');
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+
+        if (currentTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            icon.classList.remove('ph-sun');
+            icon.classList.add('ph-moon');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            
+            if (isLight) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                icon.classList.remove('ph-moon');
+                icon.classList.add('ph-sun');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                icon.classList.remove('ph-sun');
+                icon.classList.add('ph-moon');
+            }
+        });
+
+        // User Dropdown Logic
+        const userDropdownTrigger = document.getElementById('userDropdownTrigger');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+
+        if (userDropdownTrigger) {
+            userDropdownTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdownMenu.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userDropdownTrigger.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                    userDropdownMenu.classList.remove('show');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

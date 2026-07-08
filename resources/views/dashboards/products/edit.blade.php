@@ -82,8 +82,8 @@
 @section('content')
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="page-title">
-            <i class="ph ph-plus-circle"></i>
-            Add New Product
+            <i class="ph ph-pencil-simple"></i>
+            Edit Product
         </h1>
         <a href="{{ route('products.index') }}" class="btn btn-outline">
             <i class="ph ph-arrow-left"></i> Back to Products
@@ -91,19 +91,20 @@
     </div>
 
     <div class="glass form-panel">
-        <form action="{{ route('products.store') }}" method="POST">
+        <form action="{{ route('products.update', $product->id) }}" method="POST">
             @csrf
+            @method('PUT')
             
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">SKU Code *</label>
-                    <input type="text" name="sku_code" class="form-control" value="{{ old('sku_code') }}" required>
+                    <input type="text" name="sku_code" class="form-control" value="{{ old('sku_code', $product->sku_code) }}" required>
                     @error('sku_code') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Product Name *</label>
-                    <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                    <input type="text" name="name" class="form-control" value="{{ old('name', $product->name) }}" required>
                     @error('name') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -112,15 +113,15 @@
                 <div class="form-group">
                     <label class="form-label">Product Type *</label>
                     <select name="type" class="form-control" required>
-                        <option value="physical" {{ old('type') == 'physical' ? 'selected' : '' }}>Physical</option>
-                        <option value="electronic" {{ old('type') == 'electronic' ? 'selected' : '' }}>Electronic</option>
+                        <option value="physical" {{ old('type', $product->type) == 'physical' ? 'selected' : '' }}>Physical</option>
+                        <option value="electronic" {{ old('type', $product->type) == 'electronic' ? 'selected' : '' }}>Electronic</option>
                     </select>
                     @error('type') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Category</label>
-                    <input type="text" name="category" class="form-control" value="{{ old('category') }}">
+                    <input type="text" name="category" class="form-control" value="{{ old('category', $product->category) }}">
                     @error('category') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -128,15 +129,15 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Vendor ID</label>
-                    <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id') }}">
+                    <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id', $product->vendor_id) }}">
                     @error('vendor_id') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Status *</label>
                     <select name="status" class="form-control" required>
-                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="active" {{ old('status', $product->status) == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ old('status', $product->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
                     </select>
                     @error('status') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
@@ -145,7 +146,7 @@
             <div class="form-actions">
                 <a href="{{ route('products.index') }}" class="btn btn-outline">Cancel</a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="ph ph-floppy-disk"></i> Save Product
+                    <i class="ph ph-floppy-disk"></i> Update Product
                 </button>
             </div>
         </form>

@@ -143,6 +143,46 @@
         display: flex;
         justify-content: flex-end;
     }
+    
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 0.25rem;
+    }
+
+    .page-item .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 0.5rem;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .page-item:not(.disabled):not(.active) .page-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--text-secondary);
+    }
+
+    .page-item.active .page-link {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 </style>
 @endpush
 
@@ -153,46 +193,74 @@
             Product / SKU Management
         </h1>
         <div class="actions-group">
-            <button class="btn btn-outline">
+            <a href="{{ route('products.template') }}" class="btn btn-outline">
                 <i class="ph ph-download-simple"></i> Download Template
-            </button>
-            <button class="btn btn-outline">
+            </a>
+            
+            <form action="{{ route('products.bulk-upload') }}" method="POST" enctype="multipart/form-data" id="bulkUploadForm" style="display: none;">
+                @csrf
+                <input type="file" name="csv_file" id="csvFileInput" accept=".csv" onchange="document.getElementById('bulkUploadForm').submit()">
+            </form>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFileInput').click()">
                 <i class="ph ph-upload-simple"></i> Bulk Upload
             </button>
-            <a href="{{ route('products.create') }}" class="btn btn-primary">
+            
+            <a href="{{ route('products.create') }}" class="btn btn-primary" style="color: white;">
                 <i class="ph ph-plus"></i> Add Product
             </a>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="glass" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--success); background: rgba(16, 185, 129, 0.1);">
+        <div id="success-alert" class="glass" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--success); background: rgba(16, 185, 129, 0.1);">
             {{ session('success') }}
         </div>
+        <script>
+            setTimeout(() => {
+                const alert = document.getElementById('success-alert');
+                if(alert) {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 3000);
+        </script>
     @endif
 
     <div class="glass">
-        <div class="toolbar">
+        <form method="GET" action="{{ route('products.index') }}" class="toolbar" id="filterForm">
             <div class="search-box">
                 <i class="ph ph-magnifying-glass"></i>
-                <input type="text" class="search-input" placeholder="Search by SKU or Name...">
+                <input type="text" name="search" value="{{ request('search') }}" class="search-input" placeholder="Search by SKU or Name..." oninput="debouncedSearch()">
+                <!-- Hidden submit button so hitting Enter works smoothly -->
+                <button type="submit" style="display: none;"></button>
             </div>
             <div class="actions-group">
-                <select class="search-input" style="width: auto;">
+                <select name="category" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
                     <option value="">All Categories</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="apparel">Apparel</option>
+                    @foreach(\App\Models\Product::distinct('category')->whereNotNull('category')->pluck('category') as $cat)
+                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
                 </select>
-                <select class="search-input" style="width: auto;">
+                <select name="status" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
                     <option value="">All Statuses</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
-                <button class="btn btn-outline">
+                <a href="{{ route('products.export') }}" class="btn btn-outline">
                     <i class="ph ph-export"></i> Export
-                </button>
+                </a>
             </div>
-        </div>
+        </form>
+        <script>
+            let searchTimeout;
+            function debouncedSearch() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 600);
+            }
+        </script>
 
         <div class="table-container">
             <table class="data-table">

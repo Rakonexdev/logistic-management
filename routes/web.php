@@ -17,6 +17,11 @@ use App\Http\Controllers\ProductController;
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('/end-user/dashboard', [DashboardController::class, 'endUser']);
+    
+    // Product Routes
+    Route::get('products/template', [ProductController::class, 'downloadTemplate'])->name('products.template');
+    Route::post('products/bulk-upload', [ProductController::class, 'bulkUpload'])->name('products.bulk-upload');
+    Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::resource('products', ProductController::class);
 });
 
