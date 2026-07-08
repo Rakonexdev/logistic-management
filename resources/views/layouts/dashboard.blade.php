@@ -6,7 +6,7 @@
     <title>Dashboard - Logistic Management</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Phosphor Icons (or similar) -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
@@ -22,6 +22,7 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             --info: #3b82f6;
+            --sidebar-width: 260px;
         }
 
         body {
@@ -37,28 +38,38 @@
             min-height: 100vh;
         }
 
-        /* Glassmorphism utility */
         .glass {
             background: var(--surface-color);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
         }
 
-        .navbar {
+        .layout-wrapper {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            margin-bottom: 2rem;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            border-right: 1px solid var(--border-color);
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
             position: sticky;
             top: 0;
-            z-index: 100;
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-            border-top: none;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .brand {
@@ -70,6 +81,76 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-group-title {
+            padding: 0 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: var(--text-secondary);
+        }
+
+        .nav-link.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .nav-link i {
+            font-size: 1.25rem;
+        }
+
+        /* Main Content Styling */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+            border-top: none;
         }
 
         .user-nav {
@@ -113,28 +194,6 @@
             text-decoration: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-
-        .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
         .btn-danger {
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
@@ -148,6 +207,8 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 2rem 2rem 2rem;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* Scrollbar styling */
@@ -166,45 +227,114 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1rem 1rem 1rem;
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: absolute;
+                transform: translateX(-100%);
+                z-index: 1000;
+                transition: transform 0.3s;
             }
-            .navbar {
-                padding: 1rem;
+            .sidebar.show {
+                transform: translateX(0);
             }
         }
     </style>
     @stack('styles')
 </head>
 <body>
-    <nav class="navbar glass">
-        <div class="brand">
-            <i class="ph ph-package"></i>
-            LogisticsPro
-        </div>
-        
-        <div class="user-nav">
-            @auth
-                <div class="user-info">
-                    <div class="user-avatar">
-                        {{ substr(Auth::user()->name, 0, 1) }}
-                    </div>
-                    <span>{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <i class="ph ph-package" style="color: var(--accent-primary)"></i>
+                    LogisticsPro
                 </div>
-                <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                    @csrf
-                    <button type="submit" class="btn btn-danger">
-                        <i class="ph ph-sign-out"></i> Logout
-                    </button>
-                </form>
-            @endauth
-        </div>
-    </nav>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-group-title">Overview</div>
+                    <a href="{{ request()->is('end-user*') ? url('end-user/dashboard') : url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                        <i class="ph ph-squares-four"></i> Dashboard
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-chart-bar"></i> Reports
+                    </a>
+                </div>
 
-    <main class="container">
-        @yield('content')
-    </main>
+                <div class="nav-group">
+                    <div class="nav-group-title">Inventory</div>
+                    <a href="{{ route('products.index') }}" class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
+                        <i class="ph ph-box-box"></i> SKU Management
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-stack"></i> Stock Visibility
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Inbound</div>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-download-simple"></i> Advance Shipping Note
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Outbound</div>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-shopping-cart"></i> Sales Orders
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Reverse Logistics</div>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-arrow-u-up-left"></i> Return Instructions
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Finance</div>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-receipt"></i> Invoices
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-currency-circle-dollar"></i> Charge Proposals
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-bank"></i> Cheque Collections
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <nav class="navbar glass">
+                <div class="user-nav">
+                    @auth
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                {{ substr(Auth::user()->name, 0, 1) }}
+                            </div>
+                            <span>{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
+                        </div>
+                        <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                            @csrf
+                            <button type="submit" class="btn btn-danger">
+                                <i class="ph ph-sign-out"></i> Logout
+                            </button>
+                        </form>
+                    @endauth
+                </div>
+            </nav>
+
+            <main class="container">
+                @yield('content')
+            </main>
+        </div>
+    </div>
     
     @stack('scripts')
 </body>
