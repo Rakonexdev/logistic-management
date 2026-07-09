@@ -368,9 +368,6 @@
                     <a href="{{ Auth::user()->role === 'end_user' ? url('end-user/dashboard') : url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
                         <i class="ph ph-squares-four"></i> Dashboard
                     </a>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-chart-bar"></i> Reports
-                    </a>
                 </div>
 
                 <div class="nav-group">
@@ -385,7 +382,7 @@
 
                 <div class="nav-group">
                     <div class="nav-group-title">Inbound</div>
-                    <a href="#" class="nav-link">
+                    <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*/asns*') ? 'active' : '' }}">
                         <i class="ph ph-download-simple"></i> Advance Shipping Note
                     </a>
                 </div>
@@ -414,6 +411,13 @@
                     </a>
                     <a href="#" class="nav-link">
                         <i class="ph ph-bank"></i> Cheque Collections
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Reporting</div>
+                    <a href="#" class="nav-link">
+                        <i class="ph ph-chart-bar"></i> Reports
                     </a>
                 </div>
             </nav>

@@ -14,6 +14,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AsnController;
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('/end-user/dashboard', [DashboardController::class, 'endUser']);
@@ -23,6 +24,10 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::post('products/bulk-upload', [ProductController::class, 'bulkUpload'])->name('products.bulk-upload');
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::resource('products', ProductController::class);
+
+    // ASN Routes
+    Route::get('asns/template', [AsnController::class, 'downloadTemplate'])->name('asns.template');
+    Route::resource('asns', AsnController::class);
 });
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
