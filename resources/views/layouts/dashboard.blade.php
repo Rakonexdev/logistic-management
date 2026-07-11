@@ -389,7 +389,7 @@
 
                 <div class="nav-group">
                     <div class="nav-group-title">Outbound</div>
-                    <a href="#" class="nav-link">
+                    <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*/sales-orders*') ? 'active' : '' }}">
                         <i class="ph ph-shopping-cart"></i> Sales Orders
                     </a>
                 </div>
