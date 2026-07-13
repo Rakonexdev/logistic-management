@@ -141,7 +141,10 @@
     .pagination-wrapper {
         padding: 1rem;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
     
     .pagination {
@@ -247,6 +250,11 @@
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
+                <select name="per_page" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
+                    <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
+                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
+                </select>
                 <a href="{{ route('products.export') }}" class="btn btn-outline">
                     <i class="ph ph-export"></i> Export
                 </a>
@@ -314,6 +322,9 @@
         </div>
         
         <div class="pagination-wrapper">
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
+            </div>
             {{ $products->links('pagination::bootstrap-4') }}
         </div>
     </div>

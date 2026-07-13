@@ -30,7 +30,12 @@ class ProductController extends Controller
             $query->where('status', $request->status);
         }
 
-        $products = $query->latest()->paginate(10)->withQueryString();
+        $perPage = $request->integer('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50])) {
+            $perPage = 10;
+        }
+
+        $products = $query->latest()->paginate($perPage)->withQueryString();
 
         return view('dashboards.products.index', compact('products'));
     }
