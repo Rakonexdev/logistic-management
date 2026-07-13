@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdvanceShippingNote;
+use App\Models\Location;
 use App\Models\Product;
 use App\Models\SalesOrder;
 use Illuminate\Http\Request;
@@ -30,17 +31,90 @@ class SfqController extends Controller
         return back()->with('success', 'GRN Inbound receipt confirmed successfully against ASN '.$asn->asn_reference);
     }
 
-    public function locationIndex()
+    public function locationIndex(Request $request)
     {
-        // Sample location inventory
-        $locations = [
-            ['warehouse' => 'WH-Main', 'zone' => 'A', 'rack' => '01', 'bin' => 'A1', 'level' => '1', 'sku' => 'SKU-001', 'qty' => 150, 'status' => 'Available'],
-            ['warehouse' => 'WH-Main', 'zone' => 'A', 'rack' => '02', 'bin' => 'B3', 'level' => '2', 'sku' => 'SKU-002', 'qty' => 75, 'status' => 'Available'],
-            ['warehouse' => 'WH-Main', 'zone' => 'B', 'rack' => '05', 'bin' => 'C2', 'level' => '1', 'sku' => 'SKU-STOCK', 'qty' => 300, 'status' => 'Reserved'],
-        ];
+        $query = Location::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('sku', 'like', "%{$search}%")
+                    ->orWhere('warehouse', 'like', "%{$search}%")
+                    ->orWhere('zone', 'like', "%{$search}%")
+                    ->orWhere('rack', 'like', "%{$search}%")
+                    ->orWhere('bin', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = $request->integer('per_page', 10);
+        if (! in_array($perPage, [10, 20, 50])) {
+            $perPage = 10;
+        }
+
+        $locations = $query->latest()->paginate($perPage)->withQueryString();
         $products = Product::all();
 
         return view('dashboards.sfq.locations', compact('locations', 'products'));
+    }
+
+    public function locationCreate()
+    {
+        $products = Product::all();
+
+        return view('dashboards.sfq.locations.create', compact('products'));
+    }
+
+    public function locationStore(Request $request)
+    {
+        $validated = $request->validate([
+            'warehouse' => 'required|string|max:255',
+            'zone' => 'required|string|max:255',
+            'rack' => 'required|string|max:255',
+            'bin' => 'required|string|max:255',
+            'level' => 'required|string|max:255',
+            'sku' => 'required|string|max:255',
+            'qty' => 'required|integer|min:0',
+            'status' => 'required|string|max:255',
+        ]);
+
+        Location::create($validated);
+
+        return redirect()->route('sfq.locations.index')->with('success', 'Location created and added to Warehouse layout successfully.');
+    }
+
+    public function locationEdit($id)
+    {
+        $location = Location::findOrFail($id);
+        $products = Product::all();
+
+        return view('dashboards.sfq.locations.edit', compact('location', 'products'));
+    }
+
+    public function locationUpdate(Request $request, $id)
+    {
+        $location = Location::findOrFail($id);
+        $validated = $request->validate([
+            'warehouse' => 'required|string|max:255',
+            'zone' => 'required|string|max:255',
+            'rack' => 'required|string|max:255',
+            'bin' => 'required|string|max:255',
+            'level' => 'required|string|max:255',
+            'sku' => 'required|string|max:255',
+            'qty' => 'required|integer|min:0',
+            'status' => 'required|string|max:255',
+        ]);
+
+        $location->update($validated);
+
+        return redirect()->route('sfq.locations.index')->with('success', 'Location updated successfully.');
+    }
+
+    public function locationDestroy($id)
+    {
+        $location = Location::findOrFail($id);
+        $location->delete();
+
+        return redirect()->route('sfq.locations.index')->with('success', 'Location deleted successfully.');
     }
 
     public function locationTransfer(Request $request)
