@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('products/template', [ProductController::class, 'downloadTemplate'])->name('products.template');
     Route::post('products/bulk-upload', [ProductController::class, 'bulkUpload'])->name('products.bulk-upload');
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+    Route::get('products/stock-visibility', [ProductController::class, 'stockVisibility'])->name('products.stock-visibility');
     Route::resource('products', ProductController::class);
 
     // ASN Routes
