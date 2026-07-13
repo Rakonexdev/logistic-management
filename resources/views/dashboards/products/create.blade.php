@@ -127,6 +127,14 @@
 
             <div class="form-row">
                 <div class="form-group">
+                    <label class="form-label">Serial Number</label>
+                    <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number') }}" placeholder="e.g. SN-12345 (Physical items only)">
+                    @error('serial_number') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
                     <label class="form-label">Vendor ID</label>
                     <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id') }}">
                     @error('vendor_id') <span class="text-danger">{{ $message }}</span> @enderror

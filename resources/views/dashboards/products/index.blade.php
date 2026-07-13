@@ -267,6 +267,7 @@
                 <thead>
                     <tr>
                         <th>SKU Code</th>
+                        <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Type</th>
                         <th>Category</th>
@@ -278,6 +279,7 @@
                     @forelse($products as $product)
                         <tr>
                             <td style="font-weight: 600;">{{ $product->sku_code }}</td>
+                            <td>{{ $product->serial_number ?? '-' }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->type) }}</td>
                             <td>{{ $product->category ?? '-' }}</td>

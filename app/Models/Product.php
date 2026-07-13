@@ -13,6 +13,7 @@ class Product extends Model
         'sku_code',
         'name',
         'type',
+        'serial_number',
         'vendor_id',
         'category',
         'attributes',

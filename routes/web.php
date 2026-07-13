@@ -44,13 +44,18 @@ use App\Http\Controllers\SalesOrderController;
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('/end-user/dashboard', [DashboardController::class, 'endUser']);
+    Route::get('products/stock-visibility', [ProductController::class, 'stockVisibility'])->name('products.stock-visibility');
+});
 
+Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     // Product Routes
     Route::get('products/template', [ProductController::class, 'downloadTemplate'])->name('products.template');
     Route::post('products/bulk-upload', [ProductController::class, 'bulkUpload'])->name('products.bulk-upload');
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::resource('products', ProductController::class);
+});
 
+Route::middleware(['auth', 'role:end_user'])->group(function () {
     // ASN Routes
     Route::get('asns/template', [AsnController::class, 'downloadTemplate'])->name('asns.template');
     Route::resource('asns', AsnController::class);
