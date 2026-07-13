@@ -432,6 +432,27 @@
                         <i class="ph ph-sun"></i>
                     </button>
                     @auth
+                        <!-- Notification Bell Dropdown -->
+                        <div class="user-dropdown-wrapper" style="position: relative; margin-right: 1rem;">
+                            <div class="user-info" id="notificationDropdownTrigger" style="padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; justify-content: center; align-items: center; position: relative; cursor: pointer;">
+                                <i class="ph ph-bell" style="font-size: 1.25rem; color: var(--text-primary);"></i>
+                                <span id="notificationBadge" style="position: absolute; top: -2px; right: -2px; background: var(--danger); color: white; border-radius: 9999px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; line-height: 1; display: none;">0</span>
+                            </div>
+                            
+                            <div class="dropdown-menu glass" id="notificationDropdownMenu" style="position: absolute; right: 0; top: 100%; width: 360px; max-height: 480px; overflow-y: auto; z-index: 1000; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                    <span style="font-weight: 700; font-size: 0.95rem;">Notifications</span>
+                                    <button onclick="markAllNotificationsAsRead(event)" style="background: transparent; border: none; color: var(--accent-primary); font-size: 0.75rem; cursor: pointer; font-weight: 600;">Mark all as read</button>
+                                </div>
+                                <div id="notificationList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
+                                    <div style="color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.85rem;">No new notifications</div>
+                                </div>
+                                <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; text-align: center;">
+                                    <a href="{{ route('notifications.index') }}" style="color: var(--accent-primary); text-decoration: none; font-size: 0.8rem; font-weight: 600;">View All Notifications</a>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="user-dropdown-wrapper">
                             <div class="user-info" id="userDropdownTrigger">
                                 <div class="user-avatar">
@@ -502,6 +523,7 @@
         if (userDropdownTrigger) {
             userDropdownTrigger.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (notificationDropdownMenu) notificationDropdownMenu.classList.remove('show');
                 userDropdownMenu.classList.toggle('show');
             });
 
@@ -511,6 +533,152 @@
                 }
             });
         }
+
+        // Notification Dropdown Logic
+        const notificationDropdownTrigger = document.getElementById('notificationDropdownTrigger');
+        const notificationDropdownMenu = document.getElementById('notificationDropdownMenu');
+
+        if (notificationDropdownTrigger) {
+            notificationDropdownTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (userDropdownMenu) userDropdownMenu.classList.remove('show');
+                notificationDropdownMenu.classList.toggle('show');
+                if (notificationDropdownMenu.classList.contains('show')) {
+                    fetchNotificationsDropdown();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (notificationDropdownTrigger && !notificationDropdownTrigger.contains(e.target) && !notificationDropdownMenu.contains(e.target)) {
+                    notificationDropdownMenu.classList.remove('show');
+                }
+            });
+        }
+
+        function updateNotificationBadge() {
+            fetch('{{ route('notifications.unread-count') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count;
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => console.error('Error fetching unread count:', err));
+        }
+
+        function fetchNotificationsDropdown() {
+            fetch('{{ route('notifications.index') }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('notificationList');
+                    if (!list) return;
+                    list.innerHTML = '';
+                    
+                    const notifications = data.data || [];
+                    if (notifications.length === 0) {
+                        list.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.85rem;">No new notifications</div>';
+                        return;
+                    }
+
+                    notifications.slice(0, 5).forEach(n => {
+                        const item = document.createElement('div');
+                        item.className = 'notification-item';
+                        item.style.padding = '0.75rem';
+                        item.style.borderRadius = '6px';
+                        item.style.display = 'flex';
+                        item.style.flexDirection = 'column';
+                        item.style.gap = '0.25rem';
+                        item.style.cursor = 'pointer';
+                        item.style.borderBottom = '1px solid var(--border-color)';
+                        item.style.background = n.is_read ? 'transparent' : 'rgba(99, 102, 241, 0.05)';
+                        
+                        let badgeColor = 'var(--text-secondary)';
+                        let badgeBg = 'rgba(255, 255, 255, 0.05)';
+                        if (n.type === 'success') { badgeColor = 'var(--success)'; badgeBg = 'rgba(16, 185, 129, 0.1)'; }
+                        else if (n.type === 'warning') { badgeColor = 'var(--warning)'; badgeBg = 'rgba(245, 158, 11, 0.1)'; }
+                        else if (n.type === 'error') { badgeColor = 'var(--danger)'; badgeBg = 'rgba(239, 68, 68, 0.1)'; }
+                        else if (n.type === 'info') { badgeColor = 'var(--info)'; badgeBg = 'rgba(59, 130, 246, 0.1)'; }
+
+                        const formattedDate = new Date(n.created_at).toLocaleString();
+
+                        item.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">${n.title}</span>
+                                <span style="font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; color: ${badgeColor}; background: ${badgeBg}; text-transform: uppercase; font-weight: 700;">${n.type}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">${n.message}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; font-size: 0.7rem; color: var(--text-secondary);">
+                                <span>${n.sender} ${n.doc_reference ? '• ' + n.doc_reference : ''}</span>
+                                <span>${formattedDate}</span>
+                            </div>
+                        `;
+
+                        item.addEventListener('click', () => {
+                            handleNotificationClick(n.id, n.action_url);
+                        });
+
+                        list.appendChild(item);
+                    });
+                })
+                .catch(err => console.error('Error fetching notifications:', err));
+        }
+
+        function handleNotificationClick(id, actionUrl) {
+            fetch(`/api/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(() => {
+                updateNotificationBadge();
+                if (actionUrl) {
+                    window.location.href = actionUrl;
+                } else {
+                    fetchNotificationsDropdown();
+                }
+            })
+            .catch(err => console.error('Error marking notification as read:', err));
+        }
+
+        function markAllNotificationsAsRead(e) {
+            if (e) e.stopPropagation();
+            fetch('{{ route('notifications.read-all') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(() => {
+                updateNotificationBadge();
+                fetchNotificationsDropdown();
+                if (window.location.pathname === '/notifications') {
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.error('Error marking all notifications as read:', err));
+        }
+
+        // Initialize and poll notifications
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNotificationBadge();
+            setInterval(updateNotificationBadge, 30000);
+        });
     </script>
 </body>
 </html>
