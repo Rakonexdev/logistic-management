@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in - Logistics Platform</title>
+    <title>Reset Password - Logistics Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
         }
         .login-image {
             flex: 1.3;
-            background-color: #f4f5f7; /* Matching the soft gray background of the image */
+            background-color: #f4f5f7;
             background-image: url('{{ asset("assets/images/logistics_iso.png") }}');
             background-size: contain;
             background-position: center;
@@ -40,7 +40,7 @@
         }
         .login-form-container {
             flex: 1;
-            padding: 80px 80px;
+            padding: 60px 80px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -56,21 +56,21 @@
             font-size: 14px;
             color: #9ca3af;
             line-height: 1.6;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .form-group label {
             display: block;
             font-size: 13px;
             color: #9ca3af;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .form-group input[type="email"],
         .form-group input[type="password"] {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background-color: #f3f4f6;
             border: 1px solid transparent;
             font-size: 14px;
@@ -84,37 +84,9 @@
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(15, 76, 156, 0.1);
         }
-        .form-options {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 35px;
-        }
-        .form-options input[type="checkbox"] {
-            margin-right: 12px;
-            width: 16px;
-            height: 16px;
-            accent-color: #0f4c9c;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-        .form-options label {
-            font-size: 13px;
-            color: #9ca3af;
-            cursor: pointer;
-        }
-        .form-options a {
-            font-size: 13px;
-            color: #0f4c9c;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .form-options a:hover {
-            text-decoration: underline;
-        }
         .btn-submit {
             width: 100%;
-            padding: 18px;
+            padding: 16px;
             background-color: #0f4c9c;
             color: #ffffff;
             border: none;
@@ -122,13 +94,14 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-bottom: 15px;
         }
         .btn-submit:hover {
             background-color: #0b3977;
         }
         .alert {
             padding: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border-radius: 4px;
             font-size: 14px;
         }
@@ -137,7 +110,7 @@
             color: #991b1b;
             border: 1px solid #f87171;
         }
-        .alert-danger ul {
+        .alert ul {
             padding-left: 20px;
             margin: 0;
         }
@@ -164,15 +137,9 @@
     <div class="login-image"></div>
     <div class="login-form-container">
         <div class="login-header">
-            <h1>Sign in</h1>
-            <p>Welcome to logistics supply chain platform.<br>Login to your account to experience.</p>
+            <h1>Reset Password</h1>
+            <p>Please enter your email and set your new password below.</p>
         </div>
-
-        @if (session('status'))
-            <div class="alert alert-success" style="background-color: #f0fdf4; color: #166534; border: 1px solid #86efac;">
-                {{ session('status') }}
-            </div>
-        @endif
 
         @if ($errors->any())
             <div class="alert alert-danger">
@@ -184,28 +151,27 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('password.update') }}">
             @csrf
             
+            <input type="hidden" name="token" value="{{ $token }}">
+
             <div class="form-group">
                 <label for="email">E-mail</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="yatingzang0215@gmail.com">
+                <input type="email" id="email" name="email" value="{{ old('email', $email) }}" required autofocus placeholder="yatingzang0215@gmail.com">
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">New Password</label>
                 <input type="password" id="password" name="password" required placeholder="••••••••••••">
             </div>
 
-            <div class="form-options">
-                <div style="display: flex; align-items: center;">
-                    <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                    <label for="remember">Remember me</label>
-                </div>
-                <a href="{{ route('password.request') }}">Forgot password?</a>
+            <div class="form-group">
+                <label for="password_confirmation">Confirm Password</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="••••••••••••">
             </div>
 
-            <button type="submit" class="btn-submit">Sign in</button>
+            <button type="submit" class="btn-submit">Reset Password</button>
         </form>
     </div>
 </div>

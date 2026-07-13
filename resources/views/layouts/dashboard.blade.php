@@ -442,11 +442,11 @@
                             </div>
                             
                             <div class="dropdown-menu" id="userDropdownMenu">
-                                <a href="#" class="dropdown-item">
+                                <a href="{{ route('profile.edit') }}" class="dropdown-item">
                                     <i class="ph ph-user"></i> My Profile
                                 </a>
-                                <a href="#" class="dropdown-item">
-                                    <i class="ph ph-gear"></i> Settings
+                                <a href="{{ route('profile.password') }}" class="dropdown-item">
+                                    <i class="ph ph-key"></i> Reset Password
                                 </a>
                                 <div style="height: 1px; background: var(--border-color); margin: 0.5rem 0;"></div>
                                 <form action="{{ route('logout') }}" method="POST" style="margin: 0;">

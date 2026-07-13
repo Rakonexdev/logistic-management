@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in - Logistics Platform</title>
+    <title>Forgot Password - Logistics Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
         }
         .login-image {
             flex: 1.3;
-            background-color: #f4f5f7; /* Matching the soft gray background of the image */
+            background-color: #f4f5f7;
             background-image: url('{{ asset("assets/images/logistics_iso.png") }}');
             background-size: contain;
             background-position: center;
@@ -67,8 +67,7 @@
             color: #9ca3af;
             margin-bottom: 10px;
         }
-        .form-group input[type="email"],
-        .form-group input[type="password"] {
+        .form-group input[type="email"] {
             width: 100%;
             padding: 16px;
             background-color: #f3f4f6;
@@ -78,8 +77,7 @@
             outline: none;
             transition: all 0.3s ease;
         }
-        .form-group input[type="email"]:focus,
-        .form-group input[type="password"]:focus {
+        .form-group input[type="email"]:focus {
             border-color: #0f4c9c;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(15, 76, 156, 0.1);
@@ -87,21 +85,7 @@
         .form-options {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             margin-bottom: 35px;
-        }
-        .form-options input[type="checkbox"] {
-            margin-right: 12px;
-            width: 16px;
-            height: 16px;
-            accent-color: #0f4c9c;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-        .form-options label {
-            font-size: 13px;
-            color: #9ca3af;
-            cursor: pointer;
         }
         .form-options a {
             font-size: 13px;
@@ -122,6 +106,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-bottom: 20px;
         }
         .btn-submit:hover {
             background-color: #0b3977;
@@ -137,7 +122,12 @@
             color: #991b1b;
             border: 1px solid #f87171;
         }
-        .alert-danger ul {
+        .alert-success {
+            background-color: #f0fdf4;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        .alert ul {
             padding-left: 20px;
             margin: 0;
         }
@@ -164,12 +154,12 @@
     <div class="login-image"></div>
     <div class="login-form-container">
         <div class="login-header">
-            <h1>Sign in</h1>
-            <p>Welcome to logistics supply chain platform.<br>Login to your account to experience.</p>
+            <h1>Reset Password</h1>
+            <p>Forgot your password? No problem. Just let us know your email address and we will email you a password reset link.</p>
         </div>
 
         @if (session('status'))
-            <div class="alert alert-success" style="background-color: #f0fdf4; color: #166534; border: 1px solid #86efac;">
+            <div class="alert alert-success">
                 {{ session('status') }}
             </div>
         @endif
@@ -184,7 +174,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('password.email') }}">
             @csrf
             
             <div class="form-group">
@@ -192,20 +182,11 @@
                 <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="yatingzang0215@gmail.com">
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="••••••••••••">
-            </div>
+            <button type="submit" class="btn-submit">Email Password Reset Link</button>
 
             <div class="form-options">
-                <div style="display: flex; align-items: center;">
-                    <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                    <label for="remember">Remember me</label>
-                </div>
-                <a href="{{ route('password.request') }}">Forgot password?</a>
+                <a href="{{ route('login') }}">Back to Sign in</a>
             </div>
-
-            <button type="submit" class="btn-submit">Sign in</button>
         </form>
     </div>
 </div>
