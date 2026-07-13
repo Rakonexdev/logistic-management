@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SfqController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -63,4 +64,31 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
     Route::get('/sfq-user/dashboard', [DashboardController::class, 'sfqUser']);
+
+    // SFQ Operations routes
+    Route::get('/sfq/grns', [SfqController::class, 'grnIndex'])->name('sfq.grns.index');
+    Route::post('/sfq/grns/confirm', [SfqController::class, 'grnConfirm'])->name('sfq.grns.confirm');
+
+    Route::get('/sfq/locations', [SfqController::class, 'locationIndex'])->name('sfq.locations.index');
+    Route::post('/sfq/locations/transfer', [SfqController::class, 'locationTransfer'])->name('sfq.locations.transfer');
+
+    Route::get('/sfq/fulfillment', [SfqController::class, 'fulfillmentIndex'])->name('sfq.fulfillment.index');
+    Route::post('/sfq/fulfillment/update', [SfqController::class, 'fulfillmentUpdate'])->name('sfq.fulfillment.update');
+
+    Route::get('/sfq/deliveries', [SfqController::class, 'deliveryIndex'])->name('sfq.deliveries.index');
+    Route::post('/sfq/deliveries/assign', [SfqController::class, 'deliveryAssign'])->name('sfq.deliveries.assign');
+
+    Route::get('/sfq/returns', [SfqController::class, 'returnsIndex'])->name('sfq.returns.index');
+    Route::post('/sfq/returns/classify', [SfqController::class, 'returnsClassify'])->name('sfq.returns.classify');
+
+    Route::get('/sfq/cheques', [SfqController::class, 'chequesIndex'])->name('sfq.cheques.index');
+    Route::post('/sfq/cheques/submit', [SfqController::class, 'chequesSubmit'])->name('sfq.cheques.submit');
+
+    Route::get('/sfq/reconciliation', [SfqController::class, 'reconciliationIndex'])->name('sfq.reconciliation.index');
+    Route::post('/sfq/reconciliation/update', [SfqController::class, 'reconciliationUpdate'])->name('sfq.reconciliation.update');
+
+    Route::get('/sfq/invoices', [SfqController::class, 'invoicesIndex'])->name('sfq.invoices.index');
+    Route::post('/sfq/invoices/create', [SfqController::class, 'invoicesCreate'])->name('sfq.invoices.create');
+
+    Route::get('/sfq/reports', [SfqController::class, 'reportsIndex'])->name('sfq.reports.index');
 });

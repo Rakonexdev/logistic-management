@@ -363,9 +363,11 @@
             </div>
             
             <nav class="sidebar-nav">
+                @if(Auth::user()->role === 'end_user')
+                <!-- End User Navigation -->
                 <div class="nav-group">
                     <div class="nav-group-title">Overview</div>
-                    <a href="{{ Auth::user()->role === 'end_user' ? url('end-user/dashboard') : url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                    <a href="{{ url('end-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
                         <i class="ph ph-squares-four"></i> Dashboard
                     </a>
                 </div>
@@ -420,6 +422,66 @@
                         <i class="ph ph-chart-bar"></i> Reports
                     </a>
                 </div>
+                @else
+                <!-- SFQ User Navigation -->
+                <div class="nav-group">
+                    <div class="nav-group-title">Overview</div>
+                    <a href="{{ url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                        <i class="ph ph-squares-four"></i> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Inbound</div>
+                    <a href="{{ route('sfq.grns.index') }}" class="nav-link {{ request()->is('*/grns*') ? 'active' : '' }}">
+                        <i class="ph ph-download-simple"></i> GRN Confirmation
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Warehouse</div>
+                    <a href="{{ route('sfq.locations.index') }}" class="nav-link {{ request()->is('*/locations*') ? 'active' : '' }}">
+                        <i class="ph ph-stack"></i> Location & Stock
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Outbound</div>
+                    <a href="{{ route('sfq.fulfillment.index') }}" class="nav-link {{ request()->is('*/fulfillment*') ? 'active' : '' }}">
+                        <i class="ph ph-shopping-cart"></i> Order Fulfillment
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Logistics</div>
+                    <a href="{{ route('sfq.deliveries.index') }}" class="nav-link {{ request()->is('*/deliveries*') ? 'active' : '' }}">
+                        <i class="ph ph-truck"></i> Delivery Planning
+                    </a>
+                    <a href="{{ route('sfq.returns.index') }}" class="nav-link {{ request()->is('*/returns*') ? 'active' : '' }}">
+                        <i class="ph ph-arrow-u-up-left"></i> Returns Execution
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Finance</div>
+                    <a href="{{ route('sfq.cheques.index') }}" class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
+                        <i class="ph ph-bank"></i> Cheque Collections
+                    </a>
+                    <a href="{{ route('sfq.reconciliation.index') }}" class="nav-link {{ request()->is('*/reconciliation*') ? 'active' : '' }}">
+                        <i class="ph ph-currency-circle-dollar"></i> Charges Recon
+                    </a>
+                    <a href="{{ route('sfq.invoices.index') }}" class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
+                        <i class="ph ph-receipt"></i> Invoicing
+                    </a>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-group-title">Reporting</div>
+                    <a href="{{ route('sfq.reports.index') }}" class="nav-link {{ request()->is('*/reports*') ? 'active' : '' }}">
+                        <i class="ph ph-chart-bar"></i> Reports & Dashboards
+                    </a>
+                </div>
+                @endif
             </nav>
         </aside>
 
