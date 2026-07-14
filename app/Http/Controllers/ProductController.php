@@ -237,10 +237,10 @@ class ProductController extends Controller
 
             $outbound = AsnItem::where('sku_code', $product->sku_code)
                 ->whereHas('asn', function ($q) {
-                    $q->whereIn('status', ['submitted', 'processing', 'completed']);
+                    $q->whereIn('status', ['draft', 'submitted', 'processing', 'completed']);
                 })->sum('quantity') + SalesOrderItem::where('sku_code', $product->sku_code)
                 ->whereHas('salesOrder', function ($q) {
-                    $q->whereIn('status', ['submitted', 'processing', 'completed']);
+                    $q->whereIn('status', ['draft', 'submitted', 'processing', 'completed']);
                 })->sum('quantity');
 
             $product->inbound_qty = $inbound;

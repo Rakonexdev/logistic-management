@@ -49,9 +49,6 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::get('products/stock-visibility', [ProductController::class, 'stockVisibility'])->name('products.stock-visibility');
     Route::resource('products', ProductController::class);
-
-    // Shared ASN View Route
-    Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
 });
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
@@ -66,6 +63,11 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::post('sales-orders/stock-check', [SalesOrderController::class, 'checkStock'])->name('sales-orders.stock-check');
     Route::get('sales-orders/export', [SalesOrderController::class, 'export'])->name('sales-orders.export');
     Route::resource('sales-orders', SalesOrderController::class);
+});
+
+// Shared ASN View Route (placed after resource/static routes to avoid wildcard conflicts)
+Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
+    Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
 });
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
@@ -83,6 +85,7 @@ Route::middleware(['auth', 'role:sfq_user'])->group(function () {
 
     Route::get('/sfq/deliveries', [SfqController::class, 'deliveryIndex'])->name('sfq.deliveries.index');
     Route::post('/sfq/deliveries/assign', [SfqController::class, 'deliveryAssign'])->name('sfq.deliveries.assign');
+    Route::post('/sfq/deliveries/complete', [SfqController::class, 'deliveryComplete'])->name('sfq.deliveries.complete');
 
     Route::get('/sfq/returns', [SfqController::class, 'returnsIndex'])->name('sfq.returns.index');
     Route::post('/sfq/returns/classify', [SfqController::class, 'returnsClassify'])->name('sfq.returns.classify');

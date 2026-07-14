@@ -19,6 +19,9 @@ class SalesOrder extends Model
         'remarks',
         'status',
         'user_id',
+        'driver',
+        'vehicle',
+        'delivery_status',
     ];
 
     protected $casts = [

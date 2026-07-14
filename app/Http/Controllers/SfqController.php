@@ -11,9 +11,15 @@ class SfqController extends Controller
 {
     public function grnIndex(Request $request)
     {
-        $asns = AdvanceShippingNote::with('items')->latest()->paginate(10)->withQueryString();
+        $asns = AdvanceShippingNote::with('items')
+            ->whereIn('status', ['processing', 'completed', 'discrepancy'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('dashboards.sfq.grns', compact('asns'));
+        $pendingAsns = AdvanceShippingNote::whereIn('status', ['submitted', 'processing', 'discrepancy'])->latest()->get();
+
+        return view('dashboards.sfq.grns', compact('asns', 'pendingAsns'));
     }
 
     public function grnConfirm(Request $request)
@@ -26,7 +32,10 @@ class SfqController extends Controller
         ]);
 
         $asn = AdvanceShippingNote::findOrFail($request->asn_id);
-        $asn->update(['status' => 'completed']);
+        $newStatus = $request->input('action') === 'submit' 
+            ? 'completed' 
+            : ($request->input('action') === 'report' ? 'discrepancy' : 'processing');
+        $asn->update(['status' => $newStatus]);
 
         foreach ($request->input('received_qty', []) as $sku => $qty) {
             $item = \App\Models\AsnItem::where('asn_id', $asn->id)->where('sku_code', $sku)->first();
@@ -83,17 +92,32 @@ class SfqController extends Controller
         ]);
 
         $order = SalesOrder::findOrFail($request->order_id);
-        $order->update(['status' => $request->status]);
+        $updateData = ['status' => $request->status];
+        if ($request->status === 'completed' && !$order->delivery_status) {
+            $updateData['delivery_status'] = 'Pending Assignment';
+        }
+        $order->update($updateData);
 
         return back()->with('success', "Sales Order {$order->so_number} status updated to ".ucfirst($request->status));
     }
 
     public function deliveryIndex()
     {
-        $deliveries = [
-            ['ref' => 'DEL-101', 'so' => 'SO-2026-0001', 'address' => '100 North Rd, NY', 'driver' => 'John Doe', 'vehicle' => 'Truck A', 'status' => 'Out for Delivery'],
-            ['ref' => 'DEL-102', 'so' => 'SO-2026-0002', 'address' => '200 East Ave, CA', 'driver' => 'Jane Smith', 'vehicle' => 'Van B', 'status' => 'Pending Assignment'],
-        ];
+        $orders = SalesOrder::where('status', 'completed')
+            ->orWhereNotNull('delivery_status')
+            ->latest()
+            ->get();
+        
+        $deliveries = $orders->map(function ($order) {
+            return [
+                'ref' => 'DEL-' . $order->id,
+                'so' => $order->so_number,
+                'address' => $order->customer_name . ' (' . ($order->designation ?? 'N/A') . ')',
+                'driver' => $order->driver ?? '-',
+                'vehicle' => $order->vehicle ?? '-',
+                'status' => $order->delivery_status ?: 'Pending Assignment',
+            ];
+        });
 
         return view('dashboards.sfq.deliveries', compact('deliveries'));
     }
@@ -106,7 +130,32 @@ class SfqController extends Controller
             'vehicle' => 'required|string',
         ]);
 
+        $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
+        $order = SalesOrder::findOrFail($orderId);
+        
+        $order->update([
+            'driver' => $request->driver,
+            'vehicle' => $request->vehicle,
+            'delivery_status' => 'Assigned',
+        ]);
+
         return back()->with('success', "Driver {$request->driver} and Vehicle {$request->vehicle} assigned to delivery {$request->delivery_ref}.");
+    }
+
+    public function deliveryComplete(Request $request)
+    {
+        $request->validate([
+            'delivery_ref' => 'required|string',
+        ]);
+
+        $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
+        $order = SalesOrder::findOrFail($orderId);
+        
+        $order->update([
+            'delivery_status' => 'Delivered',
+        ]);
+
+        return back()->with('success', "Delivery {$request->delivery_ref} marked as Delivered.");
     }
 
     public function returnsIndex()

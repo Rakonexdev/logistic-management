@@ -227,10 +227,10 @@
                     @foreach($order->items as $index => $item)
                         <tr>
                             <td>
-                                <input type="text" name="items[{{ $index }}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="{{ old("items.{$index}.sku_code", $item->sku_code) }}" onchange="resetStockIndicator(this)">
+                                <input type="text" name="items[{{ $index }}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="{{ old("items.{$index}.sku_code", $item->sku_code) }}" oninput="resetStockIndicator(this)">
                             </td>
                             <td>
-                                <input type="number" name="items[{{ $index }}][quantity]" class="form-input" required min="1" placeholder="Qty" value="{{ old("items.{$index}.quantity", $item->quantity) }}" onchange="resetStockIndicator(this)">
+                                <input type="number" name="items[{{ $index }}][quantity]" class="form-input" required min="1" placeholder="Qty" value="{{ old("items.{$index}.quantity", $item->quantity) }}" oninput="resetStockIndicator(this)">
                             </td>
                             <td class="stock-cell" style="min-width: 150px;">
                                 <span class="stock-indicator">-</span>
@@ -297,10 +297,10 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}" onchange="resetStockIndicator(this)">
+                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}" oninput="resetStockIndicator(this)">
                 </td>
                 <td>
-                    <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}" onchange="resetStockIndicator(this)">
+                    <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}" oninput="resetStockIndicator(this)">
                 </td>
                 <td class="stock-cell">
                     <span class="stock-indicator">-</span>
@@ -322,6 +322,7 @@
                 indicator.className = 'stock-indicator';
                 indicator.innerHTML = '-';
             }
+            runStockCheck();
         }
 
         async function runStockCheck() {

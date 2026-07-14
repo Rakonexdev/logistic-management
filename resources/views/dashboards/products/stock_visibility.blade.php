@@ -194,11 +194,11 @@
 
     <div class="glass" style="padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
         <!-- Filter Form -->
-        <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar">
+        <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar" id="filterForm">
             <div class="search-input-wrapper">
                 <i class="ph ph-magnifying-glass search-icon"></i>
                 <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..."
-                    value="{{ request('search') }}">
+                    value="{{ request('search') }}" oninput="debouncedSearch()">
             </div>
 
             <div style="position: relative;">
@@ -274,4 +274,16 @@
             {{ $products->links('pagination::bootstrap-4') }}
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            let searchTimeout;
+            function debouncedSearch() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 600);
+            }
+        </script>
+    @endpush
 @endsection
