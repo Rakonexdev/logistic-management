@@ -246,9 +246,9 @@
                     <label class="form-label" for="driver">Assign Driver</label>
                     <select id="driver" name="driver" class="form-select" required>
                         <option value="">Select Driver</option>
-                        <option value="John Doe">John Doe</option>
-                        <option value="Jane Smith">Jane Smith</option>
-                        <option value="Robert Brown">Robert Brown</option>
+                        @foreach($drivers as $driver)
+                            <option value="{{ $driver->name }}">{{ $driver->name }}</option>
+                        @endforeach
                     </select>
                 </div>
 

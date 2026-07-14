@@ -207,6 +207,10 @@
 
             <button type="submit" class="btn-submit">Sign in</button>
         </form>
+        <div style="text-align: center; margin-top: 25px; font-size: 13px;">
+            <span style="color: #9ca3af;">Looking for the Driver Mobile App?</span> 
+            <a href="{{ route('driver.login') }}" style="color: #0f4c9c; text-decoration: none; font-weight: 500; margin-left: 5px;">Click here to access</a>
+        </div>
     </div>
 </div>
 

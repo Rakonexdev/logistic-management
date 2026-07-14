@@ -22,6 +22,13 @@ class SalesOrder extends Model
         'driver',
         'vehicle',
         'delivery_status',
+        'arrived_at',
+        'recipient_name',
+        'signed_proof_path',
+        'delivery_photo_path',
+        'delivery_completed_at',
+        'delivery_remarks',
+        'delivery_issue',
     ];
 
     protected $casts = [

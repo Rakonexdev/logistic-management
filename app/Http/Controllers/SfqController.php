@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdvanceShippingNote;
+use App\Models\AsnItem;
+use App\Models\ChequeCollection;
 use App\Models\Product;
+use App\Models\ReturnPickup;
 use App\Models\SalesOrder;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SfqController extends Controller
@@ -32,13 +36,13 @@ class SfqController extends Controller
         ]);
 
         $asn = AdvanceShippingNote::findOrFail($request->asn_id);
-        $newStatus = $request->input('action') === 'submit' 
-            ? 'completed' 
+        $newStatus = $request->input('action') === 'submit'
+            ? 'completed'
             : ($request->input('action') === 'report' ? 'discrepancy' : 'processing');
         $asn->update(['status' => $newStatus]);
 
         foreach ($request->input('received_qty', []) as $sku => $qty) {
-            $item = \App\Models\AsnItem::where('asn_id', $asn->id)->where('sku_code', $sku)->first();
+            $item = AsnItem::where('asn_id', $asn->id)->where('sku_code', $sku)->first();
             if ($item) {
                 $discQty = isset($request->discrepancy_qty[$sku]) ? intval($request->discrepancy_qty[$sku]) : ($qty - $item->quantity);
                 $item->update([
@@ -93,7 +97,7 @@ class SfqController extends Controller
 
         $order = SalesOrder::findOrFail($request->order_id);
         $updateData = ['status' => $request->status];
-        if ($request->status === 'completed' && !$order->delivery_status) {
+        if ($request->status === 'completed' && ! $order->delivery_status) {
             $updateData['delivery_status'] = 'Pending Assignment';
         }
         $order->update($updateData);
@@ -107,19 +111,21 @@ class SfqController extends Controller
             ->orWhereNotNull('delivery_status')
             ->latest()
             ->get();
-        
+
         $deliveries = $orders->map(function ($order) {
             return [
-                'ref' => 'DEL-' . $order->id,
+                'ref' => 'DEL-'.$order->id,
                 'so' => $order->so_number,
-                'address' => $order->customer_name . ' (' . ($order->designation ?? 'N/A') . ')',
+                'address' => $order->customer_name.' ('.($order->designation ?? 'N/A').')',
                 'driver' => $order->driver ?? '-',
                 'vehicle' => $order->vehicle ?? '-',
                 'status' => $order->delivery_status ?: 'Pending Assignment',
             ];
         });
 
-        return view('dashboards.sfq.deliveries', compact('deliveries'));
+        $drivers = User::where('role', 'driver')->get();
+
+        return view('dashboards.sfq.deliveries', compact('deliveries', 'drivers'));
     }
 
     public function deliveryAssign(Request $request)
@@ -132,7 +138,7 @@ class SfqController extends Controller
 
         $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
         $order = SalesOrder::findOrFail($orderId);
-        
+
         $order->update([
             'driver' => $request->driver,
             'vehicle' => $request->vehicle,
@@ -150,7 +156,7 @@ class SfqController extends Controller
 
         $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
         $order = SalesOrder::findOrFail($orderId);
-        
+
         $order->update([
             'delivery_status' => 'Delivered',
         ]);
@@ -160,10 +166,16 @@ class SfqController extends Controller
 
     public function returnsIndex()
     {
-        $returns = [
-            ['ref' => 'RET-001', 'driver' => 'John Doe', 'sku' => 'SKU-001', 'qty' => 5, 'classification' => 'Defective', 'status' => 'Returned to Warehouse'],
-            ['ref' => 'RET-002', 'driver' => 'Jane Smith', 'sku' => 'SKU-002', 'qty' => 12, 'classification' => 'Re-stockable', 'status' => 'Pending Pickup'],
-        ];
+        $returns = ReturnPickup::latest()->get()->map(function ($ret) {
+            return [
+                'ref' => $ret->return_ref,
+                'driver' => $ret->driver ?? '-',
+                'sku' => $ret->product_sku,
+                'qty' => $ret->quantity,
+                'classification' => $ret->classification ?? 'Re-stockable',
+                'status' => $ret->status,
+            ];
+        });
 
         return view('dashboards.sfq.returns', compact('returns'));
     }
@@ -171,8 +183,14 @@ class SfqController extends Controller
     public function returnsClassify(Request $request)
     {
         $request->validate([
-            'return_ref' => 'required|string',
+            'return_ref' => 'required|string|exists:return_pickups,return_ref',
             'classification' => 'required|in:Defective,Re-stockable',
+        ]);
+
+        $return = ReturnPickup::where('return_ref', $request->return_ref)->firstOrFail();
+        $return->update([
+            'classification' => $request->classification,
+            'status' => 'Returned to Warehouse',
         ]);
 
         return back()->with('success', "Return reference {$request->return_ref} classified as {$request->classification}.");
@@ -180,10 +198,15 @@ class SfqController extends Controller
 
     public function chequesIndex()
     {
-        $cheques = [
-            ['ref' => 'CHQ-201', 'customer' => 'Customer Alpha', 'driver' => 'John Doe', 'amount' => 1500.00, 'status' => 'Collected'],
-            ['ref' => 'CHQ-202', 'customer' => 'Customer Beta', 'driver' => 'Jane Smith', 'amount' => 3200.50, 'status' => 'Pending Collection'],
-        ];
+        $cheques = ChequeCollection::latest()->get()->map(function ($chq) {
+            return [
+                'ref' => $chq->collection_ref,
+                'customer' => $chq->customer_name,
+                'driver' => $chq->driver ?? '-',
+                'amount' => $chq->amount,
+                'status' => $chq->status,
+            ];
+        });
 
         return view('dashboards.sfq.cheques', compact('cheques'));
     }
@@ -191,8 +214,15 @@ class SfqController extends Controller
     public function chequesSubmit(Request $request)
     {
         $request->validate([
-            'cheque_ref' => 'required|string',
+            'cheque_ref' => 'required|string|exists:cheque_collections,collection_ref',
             'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $cheque = ChequeCollection::where('collection_ref', $request->cheque_ref)->firstOrFail();
+        $cheque->update([
+            'amount' => $request->amount,
+            'status' => 'Submitted',
+            'submission_time' => now(),
         ]);
 
         return back()->with('success', "Cheque collection record {$request->cheque_ref} submitted successfully.");

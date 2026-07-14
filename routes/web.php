@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DriverAuthController;
+use App\Http\Controllers\DriverDashboardController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -100,4 +102,28 @@ Route::middleware(['auth', 'role:sfq_user'])->group(function () {
     Route::post('/sfq/invoices/create', [SfqController::class, 'invoicesCreate'])->name('sfq.invoices.create');
 
     Route::get('/sfq/reports', [SfqController::class, 'reportsIndex'])->name('sfq.reports.index');
+});
+
+// Driver Mobile App Routes
+Route::get('/driver/login', [DriverAuthController::class, 'showLoginForm'])->name('driver.login');
+Route::post('/driver/login', [DriverAuthController::class, 'login']);
+Route::post('/driver/logout', [DriverAuthController::class, 'logout'])->name('driver.logout');
+
+Route::middleware(['auth', 'role:driver'])->group(function () {
+    Route::get('/driver/dashboard', [DriverDashboardController::class, 'index'])->name('driver.dashboard');
+
+    // Delivery Actions
+    Route::post('/driver/deliveries/{order}/arrive', [DriverDashboardController::class, 'markArrived'])->name('driver.deliveries.arrive');
+    Route::post('/driver/deliveries/{order}/complete', [DriverDashboardController::class, 'markDelivered'])->name('driver.deliveries.complete');
+    Route::post('/driver/deliveries/{order}/issue', [DriverDashboardController::class, 'reportDeliveryIssue'])->name('driver.deliveries.issue');
+
+    // Return Pickup Actions
+    Route::post('/driver/returns/{returnPickup}/start', [DriverDashboardController::class, 'startPickup'])->name('driver.returns.start');
+    Route::post('/driver/returns/{returnPickup}/complete', [DriverDashboardController::class, 'completePickup'])->name('driver.returns.complete');
+    Route::post('/driver/returns/{returnPickup}/handover', [DriverDashboardController::class, 'submitHandover'])->name('driver.returns.handover');
+
+    // Cheque Actions
+    Route::post('/driver/cheques/{chequeCollection}/collect', [DriverDashboardController::class, 'collectCheque'])->name('driver.cheques.collect');
+    Route::post('/driver/cheques/{chequeCollection}/submit', [DriverDashboardController::class, 'submitCheque'])->name('driver.cheques.submit');
+    Route::post('/driver/cheques/{chequeCollection}/issue', [DriverDashboardController::class, 'reportChequeIssue'])->name('driver.cheques.issue');
 });
