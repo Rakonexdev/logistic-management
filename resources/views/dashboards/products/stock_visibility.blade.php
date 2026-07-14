@@ -90,7 +90,8 @@
             text-align: left;
         }
 
-        .data-table th, .data-table td {
+        .data-table th,
+        .data-table td {
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -196,18 +197,21 @@
         <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar">
             <div class="search-input-wrapper">
                 <i class="ph ph-magnifying-glass search-icon"></i>
-                <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..." value="{{ request('search') }}">
+                <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..."
+                    value="{{ request('search') }}">
             </div>
 
             <div style="position: relative;">
                 <select name="category" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Categories</option>
-                    <option value="electronics" {{ request('category') === 'electronics' ? 'selected' : '' }}>Electronics</option>
+                    <option value="electronics" {{ request('category') === 'electronics' ? 'selected' : '' }}>Electronics
+                    </option>
                     <option value="apparel" {{ request('category') === 'apparel' ? 'selected' : '' }}>Apparel</option>
                     <option value="furniture" {{ request('category') === 'furniture' ? 'selected' : '' }}>Furniture</option>
                     <option value="food" {{ request('category') === 'food' ? 'selected' : '' }}>Food</option>
                 </select>
-                <i class="ph ph-caret-down" style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
+                <i class="ph ph-caret-down"
+                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
             </div>
 
             <div style="position: relative;">
@@ -216,11 +220,13 @@
                     <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
                     <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
                 </select>
-                <i class="ph ph-caret-down" style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
+                <i class="ph ph-caret-down"
+                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
             </div>
-            
+
             @if(request()->anyFilled(['search', 'category', 'per_page']))
-                <a href="{{ route('products.stock-visibility') }}" class="btn btn-outline" style="padding: 0.75rem 1rem; font-size: 0.875rem; border-radius: 8px;">
+                <a href="{{ route('products.stock-visibility') }}" class="btn btn-outline"
+                    style="padding: 0.75rem 1rem; font-size: 0.875rem; border-radius: 8px;">
                     Clear Filters
                 </a>
             @endif
@@ -237,7 +243,6 @@
                         <th>Inbound Qty</th>
                         <th>Outbound Qty</th>
                         <th>Available Qty</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -249,11 +254,6 @@
                             <td class="stock-qty">{{ $product->inbound_qty }}</td>
                             <td class="stock-qty">{{ $product->outbound_qty }}</td>
                             <td class="stock-qty stock-available">{{ $product->available_qty }}</td>
-                            <td>
-                                <span class="badge badge-{{ strtolower($product->status) }}">
-                                    {{ ucfirst($product->status) }}
-                                </span>
-                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -268,7 +268,8 @@
 
         <div class="pagination-wrapper">
             <div style="color: var(--text-secondary); font-size: 0.875rem;">
-                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }}
+                records
             </div>
             {{ $products->links('pagination::bootstrap-4') }}
         </div>

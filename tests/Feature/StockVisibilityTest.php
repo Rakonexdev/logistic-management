@@ -65,6 +65,9 @@ test('end users can view stock visibility page with correct calculations', funct
 test('end users can change per page limit on stock visibility', function () {
     $user = User::factory()->create(['role' => 'end_user']);
 
+    // Clean up existing products to prevent test pollution
+    Product::query()->delete();
+
     // Create 15 products
     for ($i = 1; $i <= 15; $i++) {
         Product::create([
@@ -79,10 +82,10 @@ test('end users can change per page limit on stock visibility', function () {
     $this->actingAs($user)
         ->get(route('products.stock-visibility', ['per_page' => 10]))
         ->assertSuccessful()
-        ->assertSee('Showing 1 to 10 of 15 records');
+        ->assertSee('Showing 1 to 10 of 15');
 
     $this->actingAs($user)
         ->get(route('products.stock-visibility', ['per_page' => 25]))
         ->assertSuccessful()
-        ->assertSee('Showing 1 to 15 of 15 records');
+        ->assertSee('Showing 1 to 15 of 15');
 });
