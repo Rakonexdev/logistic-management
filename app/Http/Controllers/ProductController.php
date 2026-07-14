@@ -233,12 +233,12 @@ class ProductController extends Controller
         $products = $query->latest()->paginate($perPage)->withQueryString();
 
         foreach ($products as $product) {
-            $inbound = $product->qty + AsnItem::where('sku_code', $product->sku_code)
+            $inbound = $product->qty;
+
+            $outbound = AsnItem::where('sku_code', $product->sku_code)
                 ->whereHas('asn', function ($q) {
                     $q->whereIn('status', ['submitted', 'processing', 'completed']);
-                })->sum('quantity');
-
-            $outbound = SalesOrderItem::where('sku_code', $product->sku_code)
+                })->sum('quantity') + SalesOrderItem::where('sku_code', $product->sku_code)
                 ->whereHas('salesOrder', function ($q) {
                     $q->whereIn('status', ['submitted', 'processing', 'completed']);
                 })->sum('quantity');

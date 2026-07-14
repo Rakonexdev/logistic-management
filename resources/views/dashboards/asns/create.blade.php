@@ -194,7 +194,7 @@
                 <tbody id="itemsBody">
                     <tr>
                         <td>
-                            <input type="text" name="items[0][sku_code]" class="form-input" required placeholder="Enter SKU">
+                            <input type="text" name="items[0][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU">
                         </td>
                         <td>
                             <input type="number" name="items[0][quantity]" class="form-input" required min="1" placeholder="Qty">
@@ -239,6 +239,11 @@
                 </button>
             </div>
         </form>
+        <datalist id="products-list">
+            @foreach($products as $prod)
+                <option value="{{ $prod->sku_code }}">{{ $prod->sku_code }} - {{ $prod->name }}</option>
+            @endforeach
+        </datalist>
     </div>
 
     <script>
@@ -249,7 +254,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="items[${rowCount}][sku_code]" class="form-input" required placeholder="Enter SKU" value="${sku}">
+                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}">
                 </td>
                 <td>
                     <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}">
@@ -263,6 +268,43 @@
             tbody.appendChild(tr);
             rowCount++;
         }
+
+        const productsData = @json($products);
+        const skuQtyMap = {};
+        productsData.forEach(p => {
+            skuQtyMap[p.sku_code] = p.qty;
+        });
+
+        function validateRowQty(input) {
+            const tr = input.closest('tr');
+            const skuInput = tr.querySelector('[name$="[sku_code]"]');
+            const qtyInput = tr.querySelector('[name$="[quantity]"]');
+            const sku = skuInput.value;
+            const enteredQty = parseInt(qtyInput.value) || 0;
+            const maxQty = skuQtyMap[sku];
+            
+            let errorSpan = qtyInput.parentNode.querySelector('.qty-error');
+            if (errorSpan) {
+                errorSpan.remove();
+            }
+
+            if (maxQty !== undefined && enteredQty > maxQty) {
+                errorSpan = document.createElement('span');
+                errorSpan.className = 'qty-error';
+                errorSpan.style.color = 'var(--danger)';
+                errorSpan.style.fontSize = '0.75rem';
+                errorSpan.style.display = 'block';
+                errorSpan.style.marginTop = '0.25rem';
+                errorSpan.innerText = `Max allowed: ${maxQty}`;
+                qtyInput.parentNode.appendChild(errorSpan);
+            }
+        }
+
+        document.getElementById('itemsBody').addEventListener('input', function(e) {
+            if (e.target.name && (e.target.name.includes('[quantity]') || e.target.name.includes('[sku_code]'))) {
+                validateRowQty(e.target);
+            }
+        });
 
         document.getElementById('csvUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];

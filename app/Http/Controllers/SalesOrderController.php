@@ -40,7 +40,9 @@ class SalesOrderController extends Controller
 
     public function create(): View
     {
-        return view('dashboards.sales_orders.create');
+        $products = Product::orderBy('sku_code')->get();
+
+        return view('dashboards.sales_orders.create', compact('products'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -99,8 +101,9 @@ class SalesOrderController extends Controller
     public function edit(int $id): View
     {
         $order = SalesOrder::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        $products = Product::orderBy('sku_code')->get();
 
-        return view('dashboards.sales_orders.edit', compact('order'));
+        return view('dashboards.sales_orders.edit', compact('order', 'products'));
     }
 
     public function update(Request $request, int $id): RedirectResponse
