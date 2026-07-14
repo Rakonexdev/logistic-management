@@ -94,9 +94,17 @@ class AsnController extends Controller
         return redirect()->route('asns.index')->with('success', 'ASN '.ucfirst($asn->status).' successfully.');
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        if (Auth::user()->role === 'sfq_user') {
+            $asn = AdvanceShippingNote::with('items')->findOrFail($id);
+        } else {
+            $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($asn);
+        }
 
         return view('dashboards.asns.show', compact('asn'));
     }

@@ -49,6 +49,9 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::get('products/stock-visibility', [ProductController::class, 'stockVisibility'])->name('products.stock-visibility');
     Route::resource('products', ProductController::class);
+
+    // Shared ASN View Route
+    Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
 });
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
@@ -56,7 +59,7 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
 
     // ASN Routes
     Route::get('asns/template', [AsnController::class, 'downloadTemplate'])->name('asns.template');
-    Route::resource('asns', AsnController::class);
+    Route::resource('asns', AsnController::class, ['except' => ['show']]);
 
     // Sales Order Routes
     Route::get('sales-orders/template', [SalesOrderController::class, 'downloadTemplate'])->name('sales-orders.template');

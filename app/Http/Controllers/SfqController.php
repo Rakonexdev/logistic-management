@@ -9,9 +9,9 @@ use Illuminate\Http\Request;
 
 class SfqController extends Controller
 {
-    public function grnIndex()
+    public function grnIndex(Request $request)
     {
-        $asns = AdvanceShippingNote::with('items')->latest()->get();
+        $asns = AdvanceShippingNote::with('items')->latest()->paginate(10)->withQueryString();
 
         return view('dashboards.sfq.grns', compact('asns'));
     }
@@ -21,11 +21,24 @@ class SfqController extends Controller
         $request->validate([
             'asn_id' => 'required|exists:advance_shipping_notes,id',
             'received_qty' => 'required|array',
+            'discrepancy_qty' => 'nullable|array',
             'discrepancy_reason' => 'nullable|array',
         ]);
 
         $asn = AdvanceShippingNote::findOrFail($request->asn_id);
         $asn->update(['status' => 'completed']);
+
+        foreach ($request->input('received_qty', []) as $sku => $qty) {
+            $item = \App\Models\AsnItem::where('asn_id', $asn->id)->where('sku_code', $sku)->first();
+            if ($item) {
+                $discQty = isset($request->discrepancy_qty[$sku]) ? intval($request->discrepancy_qty[$sku]) : ($qty - $item->quantity);
+                $item->update([
+                    'received_qty' => $qty,
+                    'discrepancy_qty' => $discQty,
+                    'discrepancy_reason' => $request->discrepancy_reason[$sku] ?? null,
+                ]);
+            }
+        }
 
         return back()->with('success', 'GRN Inbound receipt confirmed successfully against ASN '.$asn->asn_reference);
     }
