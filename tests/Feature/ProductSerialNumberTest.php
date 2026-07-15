@@ -14,6 +14,7 @@ test('authenticated users can store and update product with serial number', func
         'sku_code' => 'SKU-SERIAL-TEST',
         'name' => 'Serial Test Product',
         'type' => 'physical',
+        'qty' => 5,
         'serial_number' => 'FG100FTK25011385',
         'vendor_id' => 'V-FORTINET',
         'category' => 'Firewall',
@@ -26,6 +27,7 @@ test('authenticated users can store and update product with serial number', func
 
     $this->assertDatabaseHas('products', [
         'sku_code' => 'SKU-SERIAL-TEST',
+        'qty' => 5,
         'serial_number' => 'FG100FTK25011385',
     ]);
 
@@ -44,9 +46,9 @@ test('authenticated users can store and update product with serial number', func
 test('users can bulk upload products with serial numbers', function () {
     $user = User::factory()->create(['role' => 'sfq_user']);
 
-    $csvContent = "sku_code,name,type,serial_number,vendor_id,category,status\n";
-    $csvContent .= "FG-100F,FG-100F,physical,FG100FTK25011385,V-FORTINET,Firewall,active\n";
-    $csvContent .= "FG-40F,FG-40F,physical,FGT40FTK24083675,V-FORTINET,Firewall,active\n";
+    $csvContent = "sku_code,name,type,qty,serial_number,vendor_id,category,status\n";
+    $csvContent .= "FG-100F,FG-100F,physical,10,FG100FTK25011385,V-FORTINET,Firewall,active\n";
+    $csvContent .= "FG-40F,FG-40F,physical,25,FGT40FTK24083675,V-FORTINET,Firewall,active\n";
 
     $file = UploadedFile::fake()->createWithContent('products.csv', $csvContent);
 
@@ -58,11 +60,13 @@ test('users can bulk upload products with serial numbers', function () {
 
     $this->assertDatabaseHas('products', [
         'sku_code' => 'FG-100F',
+        'qty' => 10,
         'serial_number' => 'FG100FTK25011385',
     ]);
 
     $this->assertDatabaseHas('products', [
         'sku_code' => 'FG-40F',
+        'qty' => 25,
         'serial_number' => 'FGT40FTK24083675',
     ]);
 });
@@ -73,6 +77,7 @@ test('adding a product with duplicate serial number fails validation', function 
         'sku_code' => 'SKU-EXISTING',
         'name' => 'Existing Product',
         'type' => 'physical',
+        'qty' => 1,
         'serial_number' => 'FG100FTK25011385',
         'status' => 'active',
     ]);
@@ -83,6 +88,7 @@ test('adding a product with duplicate serial number fails validation', function 
             'sku_code' => 'SKU-DUPLICATE-SN',
             'name' => 'Duplicate SN Product',
             'type' => 'physical',
+            'qty' => 2,
             'serial_number' => 'FG100FTK25011385', // duplicate
             'status' => 'active',
         ]);

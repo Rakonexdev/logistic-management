@@ -131,9 +131,15 @@
             <i class="ph ph-file-text"></i>
             ASN Details: {{ $asn->asn_reference }}
         </h1>
-        <a href="{{ route('asns.index') }}" class="btn btn-outline">
-            <i class="ph ph-arrow-left"></i> Back to ASNs
-        </a>
+        @if(Auth::user()->role === 'sfq_user')
+            <a href="{{ route('sfq.grns.index') }}" class="btn btn-outline">
+                <i class="ph ph-arrow-left"></i> Back to GRNs
+            </a>
+        @else
+            <a href="{{ route('asns.index') }}" class="btn btn-outline">
+                <i class="ph ph-arrow-left"></i> Back to ASNs
+            </a>
+        @endif
     </div>
 
     <div class="glass details-panel">

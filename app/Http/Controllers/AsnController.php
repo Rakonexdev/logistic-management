@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\AdvanceShippingNote;
 use App\Models\AsnItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 
 class AsnController extends Controller
 {
@@ -19,8 +20,8 @@ class AsnController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('asn_reference', 'like', "%{$search}%")
-                  ->orWhere('vendor_id', 'like', "%{$search}%")
-                  ->orWhere('airway_bill', 'like', "%{$search}%");
+                    ->orWhere('vendor_id', 'like', "%{$search}%")
+                    ->orWhere('airway_bill', 'like', "%{$search}%");
             });
         }
 
@@ -29,13 +30,15 @@ class AsnController extends Controller
         }
 
         $asns = $query->latest()->paginate(10)->withQueryString();
-        
+
         return view('dashboards.asns.index', compact('asns'));
     }
 
     public function create()
     {
-        return view('dashboards.asns.create');
+        $products = Product::orderBy('sku_code')->get();
+
+        return view('dashboards.asns.create', compact('products'));
     }
 
     public function store(Request $request)
@@ -48,12 +51,21 @@ class AsnController extends Controller
             'airway_bill_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'additional_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip,doc,docx|max:10240',
             'items' => 'required|array|min:1',
-            'items.*.sku_code' => 'required|string',
+            'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
-            'status' => 'required|in:draft,submitted'
+            'status' => 'required|in:draft,submitted',
         ]);
 
-        $asn = new AdvanceShippingNote();
+        foreach ($request->items as $index => $item) {
+            $product = Product::where('sku_code', $item['sku_code'])->first();
+            if ($product && $item['quantity'] > $product->qty) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+            }
+        }
+
+        $asn = new AdvanceShippingNote;
         $asn->asn_reference = $request->asn_reference;
         $asn->airway_bill = $request->airway_bill;
         $asn->vendor_id = $request->vendor_id;
@@ -79,19 +91,30 @@ class AsnController extends Controller
             ]);
         }
 
-        return redirect()->route('asns.index')->with('success', 'ASN ' . ucfirst($asn->status) . ' successfully.');
+        return redirect()->route('asns.index')->with('success', 'ASN '.ucfirst($asn->status).' successfully.');
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        if (Auth::user()->role === 'sfq_user') {
+            $asn = AdvanceShippingNote::with('items')->findOrFail($id);
+        } else {
+            $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($asn);
+        }
+
         return view('dashboards.asns.show', compact('asn'));
     }
 
     public function edit($id)
     {
         $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
-        return view('dashboards.asns.edit', compact('asn'));
+        $products = Product::orderBy('sku_code')->get();
+
+        return view('dashboards.asns.edit', compact('asn', 'products'));
     }
 
     public function update(Request $request, $id)
@@ -99,17 +122,26 @@ class AsnController extends Controller
         $asn = AdvanceShippingNote::where('user_id', Auth::id())->findOrFail($id);
 
         $request->validate([
-            'asn_reference' => 'required|string|unique:advance_shipping_notes,asn_reference,' . $asn->id,
+            'asn_reference' => 'required|string|unique:advance_shipping_notes,asn_reference,'.$asn->id,
             'airway_bill' => 'required|string',
             'vendor_id' => 'required|string',
             'remarks' => 'nullable|string',
             'airway_bill_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'additional_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip,doc,docx|max:10240',
             'items' => 'required|array|min:1',
-            'items.*.sku_code' => 'required|string',
+            'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
-            'status' => 'required|in:draft,submitted'
+            'status' => 'required|in:draft,submitted',
         ]);
+
+        foreach ($request->items as $index => $item) {
+            $product = Product::where('sku_code', $item['sku_code'])->first();
+            if ($product && $item['quantity'] > $product->qty) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+            }
+        }
 
         $asn->asn_reference = $request->asn_reference;
         $asn->airway_bill = $request->airway_bill;
@@ -118,12 +150,16 @@ class AsnController extends Controller
         $asn->status = $request->status;
 
         if ($request->hasFile('airway_bill_file')) {
-            if ($asn->airway_bill_path) Storage::disk('public')->delete($asn->airway_bill_path);
+            if ($asn->airway_bill_path) {
+                Storage::disk('public')->delete($asn->airway_bill_path);
+            }
             $asn->airway_bill_path = $request->file('airway_bill_file')->store('airway_bills', 'public');
         }
 
         if ($request->hasFile('additional_file')) {
-            if ($asn->additional_attachments_path) Storage::disk('public')->delete($asn->additional_attachments_path);
+            if ($asn->additional_attachments_path) {
+                Storage::disk('public')->delete($asn->additional_attachments_path);
+            }
             $asn->additional_attachments_path = $request->file('additional_file')->store('additional_attachments', 'public');
         }
 
@@ -149,11 +185,11 @@ class AsnController extends Controller
             'Content-Disposition' => 'attachment; filename=equipment_list_template.csv',
         ];
         $columns = ['sku_code', 'quantity'];
-        
-        $callback = function() use ($columns) {
+
+        $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
-            
+
             $samples = [
                 ['SKU-1001', '50'],
                 ['SKU-1002', '100'],
@@ -163,10 +199,10 @@ class AsnController extends Controller
             foreach ($samples as $sample) {
                 fputcsv($file, $sample);
             }
-            
+
             fclose($file);
         };
-        
+
         return Response::stream($callback, 200, $headers);
     }
 }

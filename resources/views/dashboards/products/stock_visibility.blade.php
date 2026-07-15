@@ -4,13 +4,15 @@
     <style>
         .page-header {
             margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .page-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin: 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -24,9 +26,9 @@
         }
 
         .search-input-wrapper {
-            flex: 1;
-            min-width: 280px;
             position: relative;
+            flex: 1;
+            min-width: 250px;
         }
 
         .search-input {
@@ -42,6 +44,11 @@
 
         [data-theme="light"] .search-input {
             background: rgba(0, 0, 0, 0.02);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
         }
 
         .search-icon {
@@ -83,7 +90,8 @@
             text-align: left;
         }
 
-        .data-table th, .data-table td {
+        .data-table th,
+        .data-table td {
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -174,30 +182,6 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-family: inherit;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
-        .btn-outline {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-
-        .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
     </style>
 @endpush
 
@@ -210,21 +194,24 @@
 
     <div class="glass" style="padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
         <!-- Filter Form -->
-        <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar">
+        <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar" id="filterForm">
             <div class="search-input-wrapper">
                 <i class="ph ph-magnifying-glass search-icon"></i>
-                <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..." value="{{ request('search') }}">
+                <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..."
+                    value="{{ request('search') }}" oninput="debouncedSearch()">
             </div>
 
             <div style="position: relative;">
                 <select name="category" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Categories</option>
-                    <option value="electronics" {{ request('category') === 'electronics' ? 'selected' : '' }}>Electronics</option>
+                    <option value="electronics" {{ request('category') === 'electronics' ? 'selected' : '' }}>Electronics
+                    </option>
                     <option value="apparel" {{ request('category') === 'apparel' ? 'selected' : '' }}>Apparel</option>
                     <option value="furniture" {{ request('category') === 'furniture' ? 'selected' : '' }}>Furniture</option>
                     <option value="food" {{ request('category') === 'food' ? 'selected' : '' }}>Food</option>
                 </select>
-                <i class="ph ph-caret-down" style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
+                <i class="ph ph-caret-down"
+                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
             </div>
 
             <div style="position: relative;">
@@ -233,11 +220,13 @@
                     <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
                     <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
                 </select>
-                <i class="ph ph-caret-down" style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
+                <i class="ph ph-caret-down"
+                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
             </div>
-            
+
             @if(request()->anyFilled(['search', 'category', 'per_page']))
-                <a href="{{ route('products.stock-visibility') }}" class="btn btn-outline" style="padding: 0.75rem 1rem; font-size: 0.875rem; border-radius: 8px;">
+                <a href="{{ route('products.stock-visibility') }}" class="btn btn-outline"
+                    style="padding: 0.75rem 1rem; font-size: 0.875rem; border-radius: 8px;">
                     Clear Filters
                 </a>
             @endif
@@ -249,30 +238,22 @@
                 <thead>
                     <tr>
                         <th>SKU Code</th>
-                        <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Category</th>
                         <th>Inbound Qty</th>
                         <th>Outbound Qty</th>
                         <th>Available Qty</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($products as $product)
                         <tr>
                             <td><strong>{{ $product->sku_code }}</strong></td>
-                            <td>{{ $product->serial_number ?? '-' }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->category) ?: 'N/A' }}</td>
                             <td class="stock-qty">{{ $product->inbound_qty }}</td>
                             <td class="stock-qty">{{ $product->outbound_qty }}</td>
                             <td class="stock-qty stock-available">{{ $product->available_qty }}</td>
-                            <td>
-                                <span class="badge badge-{{ strtolower($product->status) }}">
-                                    {{ ucfirst($product->status) }}
-                                </span>
-                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -287,9 +268,22 @@
 
         <div class="pagination-wrapper">
             <div style="color: var(--text-secondary); font-size: 0.875rem;">
-                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }}
+                records
             </div>
             {{ $products->links('pagination::bootstrap-4') }}
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            let searchTimeout;
+            function debouncedSearch() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 600);
+            }
+        </script>
+    @endpush
 @endsection

@@ -150,19 +150,26 @@
             text-transform: uppercase;
         }
 
-        .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .badge-pending, .badge-submitted { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
         .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-processing { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-discrepancy { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     </style>
 @endpush
 
 @section('content')
     <div class="page-header">
-        <h1 class="page-title">
+        <h1 class="page-title" id="pageTitle">
             <i class="ph ph-download-simple"></i> GRN Confirmation
         </h1>
-        <a href="#" class="btn btn-outline">
-            <i class="ph ph-clock-counter-clockwise"></i> View ASN/GRN History
-        </a>
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="button" class="btn btn-primary" id="addGrnBtn">
+                <i class="ph ph-plus-circle"></i> Add GRN
+            </button>
+            <button type="button" class="btn btn-outline" id="backToListBtn" style="display: none;">
+                <i class="ph ph-arrow-left"></i> Back to List
+            </button>
+        </div>
     </div>
 
     @if(session('success'))
@@ -171,7 +178,7 @@
         </div>
     @endif
 
-    <div class="form-panel glass">
+    <div class="form-panel glass" id="grnFormSection" style="display: none; padding: 2rem; margin-bottom: 2rem;">
         <form action="{{ route('sfq.grns.confirm') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
@@ -185,7 +192,7 @@
                     <label class="form-label" for="asn_id">ASN Reference</label>
                     <select id="asn_id" name="asn_id" class="form-select" required>
                         <option value="">Select ASN to Confirm</option>
-                        @foreach($asns as $asn)
+                        @foreach($pendingAsns as $asn)
                             <option value="{{ $asn->id }}" data-airway="{{ $asn->airway_bill }}">
                                 {{ $asn->asn_reference }} ({{ $asn->vendor_id }})
                             </option>
@@ -211,6 +218,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th style="width: 50px; text-align: center;">Verify</th>
                                 <th>Product / SKU</th>
                                 <th>Expected Qty</th>
                                 <th>Received Qty</th>
@@ -221,7 +229,7 @@
                         </thead>
                         <tbody id="items-tbody">
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td>
+                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td>
                             </tr>
                         </tbody>
                     </table>
@@ -255,7 +263,7 @@
     </div>
 
     <!-- ASN list summary -->
-    <div class="form-panel glass" style="padding: 1.5rem;">
+    <div class="form-panel glass" id="grnListSection" style="padding: 1.5rem;">
         <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-primary);">Recent Inbound Shipments</h3>
         <div class="table-responsive">
             <table class="data-table">
@@ -266,6 +274,7 @@
                         <th>Vendor</th>
                         <th>Status</th>
                         <th>Created Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -280,14 +289,27 @@
                                 </span>
                             </td>
                             <td>{{ $asn->created_at->format('Y-m-d H:i') }}</td>
+                            <td>
+                                <a href="{{ route('asns.show', $asn->id) }}" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.85rem;" title="View GRN">
+                                    <i class="ph ph-eye"></i> View GRN
+                                </a>
+                                @if($asn->status !== 'completed')
+                                    <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.85rem; margin-left: 0.25rem;" onclick="editGrn({{ $asn->id }})" title="Edit GRN">
+                                        <i class="ph ph-pencil"></i> Edit GRN
+                                    </button>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-secondary);">No shipments found</td>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">No shipments found</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="pagination-wrapper" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            {{ $asns->links('pagination::bootstrap-5') }}
         </div>
     </div>
 @endsection
@@ -303,11 +325,11 @@
             const tbody = document.getElementById('items-tbody');
 
             if (!asnId) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading ASN items...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Loading ASN items...</td></tr>';
 
             // Query dynamic details
             fetch('{{ route('asns.index') }}/' + asnId, {
@@ -321,13 +343,19 @@
                 tbody.innerHTML = '';
                 const items = data.items || [];
                 if (items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No items found in this ASN</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No items found in this ASN</td></tr>';
                     return;
                 }
 
                 items.forEach((item, idx) => {
                     const row = document.createElement('tr');
+                    const isChecked = item.received_qty !== null ? 'checked' : '';
+                    const rQty = item.received_qty !== null ? item.received_qty : item.quantity;
+                    const dQty = item.discrepancy_qty !== null ? item.discrepancy_qty : 0;
                     row.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="verified[${item.sku_code}]" value="1" class="form-checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isChecked}>
+                        </td>
                         <td><strong>${item.sku_code}</strong></td>
                         <td>
                             <span id="exp-qty-${idx}">${item.quantity}</span>
@@ -335,17 +363,17 @@
                             <input type="hidden" name="items[${idx}][expected_qty]" value="${item.quantity}">
                         </td>
                         <td>
-                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${item.quantity}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}')">
+                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}')">
                         </td>
                         <td>
-                            <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem; background: rgba(0,0,0,0.1);" value="0" readonly>
+                            <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${dQty}">
                         </td>
                         <td>
                             <select name="discrepancy_reason[${item.sku_code}]" class="form-select" style="padding: 0.5rem;">
                                 <option value="">None</option>
-                                <option value="damaged">Damaged</option>
-                                <option value="shortage">Shortage</option>
-                                <option value="overage">Overage</option>
+                                <option value="damaged" ${item.discrepancy_reason === 'damaged' ? 'selected' : ''}>Damaged</option>
+                                <option value="shortage" ${item.discrepancy_reason === 'shortage' ? 'selected' : ''}>Shortage</option>
+                                <option value="overage" ${item.discrepancy_reason === 'overage' ? 'selected' : ''}>Overage</option>
                             </select>
                         </td>
                         <td>
@@ -368,5 +396,71 @@
                 discField.value = received - expected;
             }
         }
+
+        // Edit GRN Toggle Function
+        function editGrn(asnId) {
+            // Add option dynamically to dropdown if missing
+            const selectEl = document.getElementById('asn_id');
+            let optionExists = false;
+            for (let i = 0; i < selectEl.options.length; i++) {
+                if (selectEl.options[i].value == asnId) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            
+            if (!optionExists) {
+                // Fetch dynamic ASN details to find name/vendor to add option
+                fetch('{{ route('asns.index') }}/' + asnId, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const option = document.createElement('option');
+                    option.value = data.id;
+                    option.setAttribute('data-airway', data.airway_bill);
+                    option.text = `${data.asn_reference} (${data.vendor_id})`;
+                    selectEl.add(option);
+                    selectEl.value = asnId;
+                    selectEl.dispatchEvent(new Event('change'));
+                });
+            } else {
+                selectEl.value = asnId;
+                selectEl.dispatchEvent(new Event('change'));
+            }
+
+            // Toggle layout
+            grnFormSection.style.display = 'block';
+            grnListSection.style.display = 'none';
+            addGrnBtn.style.display = 'none';
+            backToListBtn.style.display = 'inline-flex';
+            pageTitle.innerHTML = '<i class="ph ph-pencil"></i> Edit GRN Receipt';
+        }
+
+        // Toggle Form/List View
+        const grnFormSection = document.getElementById('grnFormSection');
+        const grnListSection = document.getElementById('grnListSection');
+        const addGrnBtn = document.getElementById('addGrnBtn');
+        const backToListBtn = document.getElementById('backToListBtn');
+        const pageTitle = document.getElementById('pageTitle');
+
+        addGrnBtn.addEventListener('click', function() {
+            grnFormSection.style.display = 'block';
+            grnListSection.style.display = 'none';
+            addGrnBtn.style.display = 'none';
+            backToListBtn.style.display = 'inline-flex';
+            pageTitle.innerHTML = '<i class="ph ph-plus-circle"></i> Create GRN Receipt';
+        });
+
+        backToListBtn.addEventListener('click', function() {
+            grnFormSection.style.display = 'none';
+            grnListSection.style.display = 'block';
+            addGrnBtn.style.display = 'inline-flex';
+            backToListBtn.style.display = 'none';
+            pageTitle.innerHTML = '<i class="ph ph-download-simple"></i> GRN Confirmation';
+        });
     </script>
 @endpush

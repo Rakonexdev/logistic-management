@@ -154,8 +154,8 @@
         }
 
         .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-        .badge-out { background: rgba(59, 130, 246, 0.15); color: var(--info); }
-        .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-assigned { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-delivered { background: rgba(16, 185, 129, 0.15); color: var(--success); }
     </style>
 @endpush
 
@@ -198,15 +198,21 @@
                                 <td>{{ $del['driver'] }}</td>
                                 <td>{{ $del['vehicle'] }}</td>
                                 <td>
-                                    <span class="badge badge-{{ $del['status'] === 'Out for Delivery' ? 'out' : ($del['status'] === 'Completed' ? 'completed' : 'pending') }}">
+                                    <span class="badge badge-{{ $del['status'] === 'Assigned' ? 'assigned' : ($del['status'] === 'Delivered' ? 'delivered' : 'pending') }}">
                                         {{ $del['status'] }}
                                     </span>
                                 </td>
                                 <td>
-                                    @if($del['status'] === 'Out for Delivery')
-                                        <button onclick="confirmDelivery('{{ $del['ref'] }}')" class="btn btn-outline" style="padding: 0.5rem; font-size: 0.8rem; color: var(--success); border-color: rgba(16, 185, 129, 0.2);">
-                                            <i class="ph ph-check"></i> Complete
-                                        </button>
+                                    @if($del['status'] === 'Assigned')
+                                        <form action="{{ route('sfq.deliveries.complete') }}" method="POST" style="display: inline;" onsubmit="return confirm('Mark delivery trip {{ $del['ref'] }} as Delivered?')">
+                                            @csrf
+                                            <input type="hidden" name="delivery_ref" value="{{ $del['ref'] }}">
+                                            <button type="submit" class="btn btn-outline" style="padding: 0.5rem; font-size: 0.8rem; color: var(--success); border-color: rgba(16, 185, 129, 0.2);">
+                                                <i class="ph ph-check"></i> Complete
+                                            </button>
+                                        </form>
+                                    @elseif($del['status'] === 'Delivered')
+                                        <span style="font-size: 0.85rem; color: var(--success); font-weight: 600;"><i class="ph ph-check-circle"></i> Delivered</span>
                                     @else
                                         <span style="font-size: 0.85rem; color: var(--text-secondary);">Awaiting Dispatch</span>
                                     @endif
@@ -229,7 +235,7 @@
                     <select id="delivery_ref" name="delivery_ref" class="form-select" required>
                         <option value="">Select Trip</option>
                         @foreach($deliveries as $del)
-                            @if($del['status'] !== 'Completed')
+                            @if($del['status'] === 'Pending Assignment')
                                 <option value="{{ $del['ref'] }}">{{ $del['ref'] }} ({{ $del['so'] }})</option>
                             @endif
                         @endforeach
@@ -240,9 +246,9 @@
                     <label class="form-label" for="driver">Assign Driver</label>
                     <select id="driver" name="driver" class="form-select" required>
                         <option value="">Select Driver</option>
-                        <option value="John Doe">John Doe</option>
-                        <option value="Jane Smith">Jane Smith</option>
-                        <option value="Robert Brown">Robert Brown</option>
+                        @foreach($drivers as $driver)
+                            <option value="{{ $driver->name }}">{{ $driver->name }}</option>
+                        @endforeach
                     </select>
                 </div>
 

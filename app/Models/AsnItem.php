@@ -12,7 +12,10 @@ class AsnItem extends Model
     protected $fillable = [
         'asn_id',
         'sku_code',
-        'quantity'
+        'quantity',
+        'received_qty',
+        'discrepancy_qty',
+        'discrepancy_reason',
     ];
 
     public function asn()

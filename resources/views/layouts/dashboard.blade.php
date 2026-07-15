@@ -377,7 +377,7 @@
                     <a href="{{ route('products.index') }}" class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
                         <i class="ph ph-package"></i> SKU Management
                     </a>
-                    <a href="{{ route('products.stock-visibility') }}" class="nav-link {{ request()->is('*/stock-visibility*') ? 'active' : '' }}">
+                    <a href="{{ route('products.stock-visibility') }}" class="nav-link {{ request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
                         <i class="ph ph-stack"></i> Stock Visibility
                     </a>
                 </div>

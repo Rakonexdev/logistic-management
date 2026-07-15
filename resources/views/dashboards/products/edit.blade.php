@@ -132,10 +132,13 @@
                     <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number', $product->serial_number) }}" placeholder="e.g. SN-12345 (Physical items only)">
                     @error('serial_number') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
-            </div>
 
-            <div class="form-row">
                 <div class="form-group">
+                    <label class="form-label">Quantity *</label>
+                    <input type="number" name="qty" class="form-control" value="{{ old('qty', $product->qty) }}" min="0" required>
+                    @error('qty') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+            </div>
                     <label class="form-label">Vendor ID</label>
                     <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id', $product->vendor_id) }}">
                     @error('vendor_id') <span class="text-danger">{{ $message }}</span> @enderror

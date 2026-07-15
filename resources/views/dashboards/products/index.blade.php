@@ -141,7 +141,10 @@
     .pagination-wrapper {
         padding: 1rem;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
     
     .pagination {
@@ -182,6 +185,54 @@
     .page-item.disabled .page-link {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    /* Custom Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .modal-message {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
     }
 </style>
 @endpush
@@ -247,6 +298,11 @@
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
+                <select name="per_page" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
+                    <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
+                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
+                </select>
                 <a href="{{ route('products.export') }}" class="btn btn-outline">
                     <i class="ph ph-export"></i> Export
                 </a>
@@ -270,6 +326,7 @@
                         <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Type</th>
+                        <th>QTY</th>
                         <th>Category</th>
                         <th>Status</th>
                         <th style="width: 100px;">Actions</th>
@@ -282,6 +339,7 @@
                             <td>{{ $product->serial_number ?? '-' }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->type) }}</td>
+                            <td>{{ $product->qty }}</td>
                             <td>{{ $product->category ?? '-' }}</td>
                             <td>
                                 <span class="badge {{ $product->status == 'active' ? 'badge-active' : 'badge-inactive' }}">
@@ -293,13 +351,9 @@
                                     <a href="{{ route('products.edit', $product->id) }}" class="icon-btn" title="Edit">
                                         <i class="ph ph-pencil-simple"></i>
                                     </a>
-                                    <form action="{{ route('products.destroy', $product->id) }}" method="POST" onsubmit="return confirm('Delete this product?');" style="margin: 0;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="icon-btn danger" title="Delete">
-                                            <i class="ph ph-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="icon-btn danger" onclick="openDeleteModal('{{ route('products.destroy', $product->id) }}')" title="Delete">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -316,7 +370,41 @@
         </div>
         
         <div class="pagination-wrapper">
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
+            </div>
             {{ $products->links('pagination::bootstrap-4') }}
         </div>
     </div>
 @endsection
+
+<!-- Custom Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content glass">
+        <h3 class="modal-title"><i class="ph ph-warning" style="color: var(--danger);"></i> Confirm Delete</h3>
+        <p class="modal-message">Are you sure you want to delete this product? This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="margin: 0;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-primary" style="background: var(--danger);">
+                    Yes, Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+    <script>
+        function openDeleteModal(actionUrl) {
+            document.getElementById('deleteForm').action = actionUrl;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+    </script>
+@endpush
