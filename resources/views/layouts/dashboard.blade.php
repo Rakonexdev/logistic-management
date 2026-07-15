@@ -431,12 +431,7 @@
                     </a>
                 </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Inventory</div>
-                    <a href="{{ route('products.index') }}" class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
-                        <i class="ph ph-package"></i> SKU Management
-                    </a>
-                </div>
+
 
                 <div class="nav-group">
                     <div class="nav-group-title">Inbound</div>

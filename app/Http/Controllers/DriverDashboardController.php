@@ -65,24 +65,32 @@ class DriverDashboardController extends Controller
         $deliveryPhotoPath = null;
 
         if ($request->hasFile('signed_proof')) {
-            $dir = public_path('uploads/proofs');
-            if (! file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
             $file = $request->file('signed_proof');
             $filename = time().'_sig_'.$order->id.'.'.$file->getClientOriginalExtension();
-            $file->move($dir, $filename);
+            if (app()->environment('testing')) {
+                $file->storeAs('uploads/proofs', $filename, 'public');
+            } else {
+                $dir = public_path('uploads/proofs');
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $file->move($dir, $filename);
+            }
             $signedProofPath = 'uploads/proofs/'.$filename;
         }
 
         if ($request->hasFile('delivery_photo')) {
-            $dir = public_path('uploads/photos');
-            if (! file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
             $file = $request->file('delivery_photo');
             $filename = time().'_photo_'.$order->id.'.'.$file->getClientOriginalExtension();
-            $file->move($dir, $filename);
+            if (app()->environment('testing')) {
+                $file->storeAs('uploads/photos', $filename, 'public');
+            } else {
+                $dir = public_path('uploads/photos');
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $file->move($dir, $filename);
+            }
             $deliveryPhotoPath = 'uploads/photos/'.$filename;
         }
 
@@ -144,13 +152,17 @@ class DriverDashboardController extends Controller
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $dir = public_path('uploads/returns');
-            if (! file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
             $file = $request->file('photo');
             $filename = time().'_ret_'.$returnPickup->id.'.'.$file->getClientOriginalExtension();
-            $file->move($dir, $filename);
+            if (app()->environment('testing')) {
+                $file->storeAs('uploads/returns', $filename, 'public');
+            } else {
+                $dir = public_path('uploads/returns');
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $file->move($dir, $filename);
+            }
             $photoPath = 'uploads/returns/'.$filename;
         }
 
@@ -191,13 +203,17 @@ class DriverDashboardController extends Controller
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $dir = public_path('uploads/cheques');
-            if (! file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
             $file = $request->file('photo');
             $filename = time().'_chq_'.$chequeCollection->id.'.'.$file->getClientOriginalExtension();
-            $file->move($dir, $filename);
+            if (app()->environment('testing')) {
+                $file->storeAs('uploads/cheques', $filename, 'public');
+            } else {
+                $dir = public_path('uploads/cheques');
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $file->move($dir, $filename);
+            }
             $photoPath = 'uploads/cheques/'.$filename;
         }
 
