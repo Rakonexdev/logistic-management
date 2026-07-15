@@ -56,6 +56,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
 Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('/end-user/dashboard', [DashboardController::class, 'endUser']);
 
+Route::middleware(['auth', 'role:end_user'])->group(function () {
     // ASN Routes
     Route::get('asns/template', [AsnController::class, 'downloadTemplate'])->name('asns.template');
     Route::resource('asns', AsnController::class, ['except' => ['show']]);
@@ -81,6 +82,11 @@ Route::middleware(['auth', 'role:sfq_user'])->group(function () {
     Route::post('/sfq/grns/confirm', [SfqController::class, 'grnConfirm'])->name('sfq.grns.confirm');
 
     Route::get('/sfq/locations', [SfqController::class, 'locationIndex'])->name('sfq.locations.index');
+    Route::get('/sfq/locations/create', [SfqController::class, 'locationCreate'])->name('sfq.locations.create');
+    Route::post('/sfq/locations', [SfqController::class, 'locationStore'])->name('sfq.locations.store');
+    Route::get('/sfq/locations/{id}/edit', [SfqController::class, 'locationEdit'])->name('sfq.locations.edit');
+    Route::put('/sfq/locations/{id}', [SfqController::class, 'locationUpdate'])->name('sfq.locations.update');
+    Route::delete('/sfq/locations/{id}', [SfqController::class, 'locationDestroy'])->name('sfq.locations.destroy');
     Route::post('/sfq/locations/transfer', [SfqController::class, 'locationTransfer'])->name('sfq.locations.transfer');
 
     Route::get('/sfq/fulfillment', [SfqController::class, 'fulfillmentIndex'])->name('sfq.fulfillment.index');
