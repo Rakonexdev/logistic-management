@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AdvanceShippingNote;
 use App\Models\AsnItem;
 use App\Models\ChequeCollection;
+use App\Models\Location;
 use App\Models\Product;
 use App\Models\ReturnPickup;
 use App\Models\SalesOrder;

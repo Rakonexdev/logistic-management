@@ -51,6 +51,7 @@ class ProductController extends Controller
             'sku_code' => 'required|unique:products,sku_code',
             'name' => 'required|string|max:255',
             'type' => 'required|in:physical,electronic',
+            'qty' => 'required|integer|min:0',
             'serial_number' => 'nullable|string|max:255|unique:products,serial_number',
             'vendor_id' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
@@ -232,14 +233,6 @@ class ProductController extends Controller
         $products = $query->latest()->paginate($perPage)->withQueryString();
 
         foreach ($products as $product) {
-            $inbound = AsnItem::where('sku_code', $product->sku_code)
-                ->whereHas('asn', function ($q) {
-                    $q->whereIn('status', ['submitted', 'processing', 'completed']);
-                })->sum('quantity');
-
-            $outbound = SalesOrderItem::where('sku_code', $product->sku_code)
-                ->whereHas('salesOrder', function ($q) {
-                    $q->whereIn('status', ['submitted', 'processing', 'completed']);
             $inbound = $product->qty;
 
             $outbound = AsnItem::where('sku_code', $product->sku_code)

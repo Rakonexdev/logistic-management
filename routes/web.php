@@ -56,7 +56,6 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
 Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('/end-user/dashboard', [DashboardController::class, 'endUser']);
 
-Route::middleware(['auth', 'role:end_user'])->group(function () {
     // ASN Routes
     Route::get('asns/template', [AsnController::class, 'downloadTemplate'])->name('asns.template');
     Route::resource('asns', AsnController::class, ['except' => ['show']]);
