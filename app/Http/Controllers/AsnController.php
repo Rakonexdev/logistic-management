@@ -109,6 +109,17 @@ class AsnController extends Controller
         return view('dashboards.asns.show', compact('asn'));
     }
 
+    public function generateReport($id)
+    {
+        if (Auth::user()->role === 'sfq_user') {
+            $asn = AdvanceShippingNote::with('items')->findOrFail($id);
+        } else {
+            $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
+        }
+
+        return view('dashboards.asns.report', compact('asn'));
+    }
+
     public function edit($id)
     {
         $asn = AdvanceShippingNote::with('items')->where('user_id', Auth::id())->findOrFail($id);
