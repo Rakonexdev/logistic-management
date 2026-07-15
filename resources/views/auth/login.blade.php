@@ -87,6 +87,7 @@
         .form-options {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             margin-bottom: 35px;
         }
         .form-options input[type="checkbox"] {
@@ -101,6 +102,15 @@
             font-size: 13px;
             color: #9ca3af;
             cursor: pointer;
+        }
+        .form-options a {
+            font-size: 13px;
+            color: #0f4c9c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .form-options a:hover {
+            text-decoration: underline;
         }
         .btn-submit {
             width: 100%;
@@ -158,6 +168,12 @@
             <p>Welcome to logistics supply chain platform.<br>Login to your account to experience.</p>
         </div>
 
+        @if (session('status'))
+            <div class="alert alert-success" style="background-color: #f0fdf4; color: #166534; border: 1px solid #86efac;">
+                {{ session('status') }}
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="alert alert-danger">
                 <ul>
@@ -182,12 +198,19 @@
             </div>
 
             <div class="form-options">
-                <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                <label for="remember">Remember me</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                    <label for="remember">Remember me</label>
+                </div>
+                <a href="{{ route('password.request') }}">Forgot password?</a>
             </div>
 
             <button type="submit" class="btn-submit">Sign in</button>
         </form>
+        <div style="text-align: center; margin-top: 25px; font-size: 13px;">
+            <span style="color: #9ca3af;">Looking for the Driver Mobile App?</span> 
+            <a href="{{ route('driver.login') }}" style="color: #0f4c9c; text-decoration: none; font-weight: 500; margin-left: 5px;">Click here to access</a>
+        </div>
     </div>
 </div>
 

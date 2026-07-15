@@ -12,6 +12,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user()->role);
         }
+
         return view('auth.login');
     }
 
@@ -27,12 +28,7 @@ class AuthController extends Controller
             $user = Auth::user();
 
             if ($user->role === 'driver') {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return back()->withErrors([
-                    'email' => 'Drivers must use the mobile application to log in.',
-                ])->onlyInput('email');
+                return redirect()->intended('/driver/dashboard');
             }
 
             return $this->redirectBasedOnRole($user->role);
@@ -58,7 +54,10 @@ class AuthController extends Controller
             return redirect()->intended('/end-user/dashboard');
         } elseif ($role === 'sfq_user') {
             return redirect()->intended('/sfq-user/dashboard');
+        } elseif ($role === 'driver') {
+            return redirect()->intended('/driver/dashboard');
         }
+
         return redirect('/login');
     }
 }

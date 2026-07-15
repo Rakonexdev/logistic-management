@@ -1,0 +1,410 @@
+@extends('layouts.dashboard')
+
+@push('styles')
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .actions-group {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .search-box {
+        position: relative;
+        width: 300px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.6rem 1rem 0.6rem 2.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+    }
+
+    .table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .data-table th, .data-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .data-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .data-table td {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    .action-icons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .icon-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: color 0.2s;
+        padding: 0.25rem;
+    }
+
+    .icon-btn:hover {
+        color: var(--accent-primary);
+    }
+    .icon-btn.danger:hover {
+        color: var(--danger);
+    }
+    
+    .pagination-wrapper {
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 0.25rem;
+    }
+
+    .page-item .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 0.5rem;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .page-item:not(.disabled):not(.active) .page-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--text-secondary);
+    }
+
+    .page-item.active .page-link {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Custom Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .modal-message {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+</style>
+@endpush
+
+@section('content')
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="ph ph-box-box"></i>
+            Product / SKU Management
+        </h1>
+        <div class="actions-group">
+            <a href="{{ route('products.template') }}" class="btn btn-outline">
+                <i class="ph ph-download-simple"></i> Download Template
+            </a>
+            
+            <form action="{{ route('products.bulk-upload') }}" method="POST" enctype="multipart/form-data" id="bulkUploadForm" style="display: none;">
+                @csrf
+                <input type="file" name="csv_file" id="csvFileInput" accept=".csv" onchange="document.getElementById('bulkUploadForm').submit()">
+            </form>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFileInput').click()">
+                <i class="ph ph-upload-simple"></i> Bulk Upload
+            </button>
+            
+            <a href="{{ route('products.create') }}" class="btn btn-primary" style="color: white;">
+                <i class="ph ph-plus"></i> Add Product
+            </a>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <div id="success-alert" class="glass" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--success); background: rgba(16, 185, 129, 0.1);">
+            {{ session('success') }}
+        </div>
+        <script>
+            setTimeout(() => {
+                const alert = document.getElementById('success-alert');
+                if(alert) {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 3000);
+        </script>
+    @endif
+
+    <div class="glass">
+        <form method="GET" action="{{ route('products.index') }}" class="toolbar" id="filterForm">
+            <div class="search-box">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" name="search" value="{{ request('search') }}" class="search-input" placeholder="Search by SKU or Name..." oninput="debouncedSearch()">
+                <!-- Hidden submit button so hitting Enter works smoothly -->
+                <button type="submit" style="display: none;"></button>
+            </div>
+            <div class="actions-group">
+                <select name="category" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">All Categories</option>
+                    @foreach(\App\Models\Product::distinct('category')->whereNotNull('category')->pluck('category') as $cat)
+                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
+                <select name="status" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">All Statuses</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                </select>
+                <select name="per_page" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
+                    <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
+                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
+                </select>
+                <a href="{{ route('products.export') }}" class="btn btn-outline">
+                    <i class="ph ph-export"></i> Export
+                </a>
+            </div>
+        </form>
+        <script>
+            let searchTimeout;
+            function debouncedSearch() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 600);
+            }
+        </script>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>SKU Code</th>
+                        <th>Serial Number</th>
+                        <th>Product Name</th>
+                        <th>Type</th>
+                        <th>QTY</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($products as $product)
+                        <tr>
+                            <td style="font-weight: 600;">{{ $product->sku_code }}</td>
+                            <td>{{ $product->serial_number ?? '-' }}</td>
+                            <td>{{ $product->name }}</td>
+                            <td>{{ ucfirst($product->type) }}</td>
+                            <td>{{ $product->qty }}</td>
+                            <td>{{ $product->category ?? '-' }}</td>
+                            <td>
+                                <span class="badge {{ $product->status == 'active' ? 'badge-active' : 'badge-inactive' }}">
+                                    {{ $product->status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-icons">
+                                    <a href="{{ route('products.edit', $product->id) }}" class="icon-btn" title="Edit">
+                                        <i class="ph ph-pencil-simple"></i>
+                                    </a>
+                                    <button type="button" class="icon-btn danger" onclick="openDeleteModal('{{ route('products.destroy', $product->id) }}')" title="Delete">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                <i class="ph ph-archive" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                                No products found. Add one to get started.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-wrapper">
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
+            </div>
+            {{ $products->links('pagination::bootstrap-4') }}
+        </div>
+    </div>
+@endsection
+
+<!-- Custom Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content glass">
+        <h3 class="modal-title"><i class="ph ph-warning" style="color: var(--danger);"></i> Confirm Delete</h3>
+        <p class="modal-message">Are you sure you want to delete this product? This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="margin: 0;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-primary" style="background: var(--danger);">
+                    Yes, Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+    <script>
+        function openDeleteModal(actionUrl) {
+            document.getElementById('deleteForm').action = actionUrl;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+    </script>
+@endpush

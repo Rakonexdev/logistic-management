@@ -1,0 +1,466 @@
+@extends('layouts.dashboard')
+
+@push('styles')
+    <style>
+        .page-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-panel {
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        [data-theme="light"] .form-input,
+        [data-theme="light"] .form-select,
+        [data-theme="light"] .form-textarea {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-select option {
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th, .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-pending, .badge-submitted { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-processing { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-discrepancy { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    </style>
+@endpush
+
+@section('content')
+    <div class="page-header">
+        <h1 class="page-title" id="pageTitle">
+            <i class="ph ph-download-simple"></i> GRN Confirmation
+        </h1>
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="button" class="btn btn-primary" id="addGrnBtn">
+                <i class="ph ph-plus-circle"></i> Add GRN
+            </button>
+            <button type="button" class="btn btn-outline" id="backToListBtn" style="display: none;">
+                <i class="ph ph-arrow-left"></i> Back to List
+            </button>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div class="form-panel glass" id="grnFormSection" style="display: none; padding: 2rem; margin-bottom: 2rem;">
+        <form action="{{ route('sfq.grns.confirm') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="grn_number">GRN Number</label>
+                    <input type="text" id="grn_number" name="grn_number" class="form-input" value="GRN-{{ time() }}" readonly required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="asn_id">ASN Reference</label>
+                    <select id="asn_id" name="asn_id" class="form-select" required>
+                        <option value="">Select ASN to Confirm</option>
+                        @foreach($pendingAsns as $asn)
+                            <option value="{{ $asn->id }}" data-airway="{{ $asn->airway_bill }}">
+                                {{ $asn->asn_reference }} ({{ $asn->vendor_id }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="airway_bill">Airway Bill Number</label>
+                    <input type="text" id="airway_bill" name="airway_bill" class="form-input" placeholder="e.g. AWB-12345" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="received_date">Received Date</label>
+                    <input type="date" id="received_date" name="received_date" class="form-input" value="{{ date('Y-m-d') }}" required>
+                </div>
+            </div>
+
+            <!-- Inbound Items Quantity Verification -->
+            <div style="margin-top: 2rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-primary);">Verify Received Quantities</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center;">Verify</th>
+                                <th>Product / SKU</th>
+                                <th>Expected Qty</th>
+                                <th>Received Qty</th>
+                                <th>Discrepancy Qty</th>
+                                <th>Discrepancy Reason</th>
+                                <th>Location Assignment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="photo">Supporting Photo / Attachment</label>
+                    <input type="file" id="photo" name="photo" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="remarks">Remarks</label>
+                    <textarea id="remarks" name="remarks" class="form-textarea" rows="2" placeholder="e.g. Discrepancy noted in SKU-001 box damage..."></textarea>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" name="action" value="draft" class="btn btn-outline">
+                    <i class="ph ph-floppy-disk"></i> Save Draft
+                </button>
+                <button type="submit" name="action" value="report" class="btn btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
+                    <i class="ph ph-warning-octagon"></i> Report Discrepancy
+                </button>
+                <button type="submit" name="action" value="submit" class="btn btn-primary">
+                    <i class="ph ph-check-square"></i> Submit GRN
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ASN list summary -->
+    <div class="form-panel glass" id="grnListSection" style="padding: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-primary);">Recent Inbound Shipments</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ASN Reference</th>
+                        <th>Airway Bill</th>
+                        <th>Vendor</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($asns as $asn)
+                        <tr>
+                            <td><strong>{{ $asn->asn_reference }}</strong></td>
+                            <td>{{ $asn->airway_bill }}</td>
+                            <td>{{ $asn->vendor_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ $asn->status }}">
+                                    {{ $asn->status }}
+                                </span>
+                            </td>
+                            <td>{{ $asn->created_at->format('Y-m-d H:i') }}</td>
+                            <td>
+                                <a href="{{ route('asns.show', $asn->id) }}" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.85rem;" title="View GRN">
+                                    <i class="ph ph-eye"></i> View GRN
+                                </a>
+                                @if($asn->status !== 'completed')
+                                    <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.85rem; margin-left: 0.25rem;" onclick="editGrn({{ $asn->id }})" title="Edit GRN">
+                                        <i class="ph ph-pencil"></i> Edit GRN
+                                    </button>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">No shipments found</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-wrapper" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            {{ $asns->links('pagination::bootstrap-5') }}
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script>
+        document.getElementById('asn_id').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const airway = selectedOption.getAttribute('data-airway') || '';
+            document.getElementById('airway_bill').value = airway;
+
+            const asnId = this.value;
+            const tbody = document.getElementById('items-tbody');
+
+            if (!asnId) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Loading ASN items...</td></tr>';
+
+            // Query dynamic details
+            fetch('{{ route('asns.index') }}/' + asnId, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                const items = data.items || [];
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No items found in this ASN</td></tr>';
+                    return;
+                }
+
+                items.forEach((item, idx) => {
+                    const row = document.createElement('tr');
+                    const isChecked = item.received_qty !== null ? 'checked' : '';
+                    const rQty = item.received_qty !== null ? item.received_qty : item.quantity;
+                    const dQty = item.discrepancy_qty !== null ? item.discrepancy_qty : 0;
+                    row.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="verified[${item.sku_code}]" value="1" class="form-checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isChecked}>
+                        </td>
+                        <td><strong>${item.sku_code}</strong></td>
+                        <td>
+                            <span id="exp-qty-${idx}">${item.quantity}</span>
+                            <input type="hidden" name="items[${idx}][sku_code]" value="${item.sku_code}">
+                            <input type="hidden" name="items[${idx}][expected_qty]" value="${item.quantity}">
+                        </td>
+                        <td>
+                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}')">
+                        </td>
+                        <td>
+                            <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${dQty}">
+                        </td>
+                        <td>
+                            <select name="discrepancy_reason[${item.sku_code}]" class="form-select" style="padding: 0.5rem;">
+                                <option value="">None</option>
+                                <option value="damaged" ${item.discrepancy_reason === 'damaged' ? 'selected' : ''}>Damaged</option>
+                                <option value="shortage" ${item.discrepancy_reason === 'shortage' ? 'selected' : ''}>Shortage</option>
+                                <option value="overage" ${item.discrepancy_reason === 'overage' ? 'selected' : ''}>Overage</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="location[${item.sku_code}]" class="form-input" style="padding: 0.5rem;" placeholder="e.g. WH-Main-A-02">
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Failed to load ASN items</td></tr>';
+            });
+        });
+
+        function calculateDiscrepancy(input, expected, discId) {
+            const received = parseInt(input.value) || 0;
+            const discField = document.getElementById(discId);
+            if (discField) {
+                discField.value = received - expected;
+            }
+        }
+
+        // Edit GRN Toggle Function
+        function editGrn(asnId) {
+            // Add option dynamically to dropdown if missing
+            const selectEl = document.getElementById('asn_id');
+            let optionExists = false;
+            for (let i = 0; i < selectEl.options.length; i++) {
+                if (selectEl.options[i].value == asnId) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            
+            if (!optionExists) {
+                // Fetch dynamic ASN details to find name/vendor to add option
+                fetch('{{ route('asns.index') }}/' + asnId, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const option = document.createElement('option');
+                    option.value = data.id;
+                    option.setAttribute('data-airway', data.airway_bill);
+                    option.text = `${data.asn_reference} (${data.vendor_id})`;
+                    selectEl.add(option);
+                    selectEl.value = asnId;
+                    selectEl.dispatchEvent(new Event('change'));
+                });
+            } else {
+                selectEl.value = asnId;
+                selectEl.dispatchEvent(new Event('change'));
+            }
+
+            // Toggle layout
+            grnFormSection.style.display = 'block';
+            grnListSection.style.display = 'none';
+            addGrnBtn.style.display = 'none';
+            backToListBtn.style.display = 'inline-flex';
+            pageTitle.innerHTML = '<i class="ph ph-pencil"></i> Edit GRN Receipt';
+        }
+
+        // Toggle Form/List View
+        const grnFormSection = document.getElementById('grnFormSection');
+        const grnListSection = document.getElementById('grnListSection');
+        const addGrnBtn = document.getElementById('addGrnBtn');
+        const backToListBtn = document.getElementById('backToListBtn');
+        const pageTitle = document.getElementById('pageTitle');
+
+        addGrnBtn.addEventListener('click', function() {
+            grnFormSection.style.display = 'block';
+            grnListSection.style.display = 'none';
+            addGrnBtn.style.display = 'none';
+            backToListBtn.style.display = 'inline-flex';
+            pageTitle.innerHTML = '<i class="ph ph-plus-circle"></i> Create GRN Receipt';
+        });
+
+        backToListBtn.addEventListener('click', function() {
+            grnFormSection.style.display = 'none';
+            grnListSection.style.display = 'block';
+            addGrnBtn.style.display = 'inline-flex';
+            backToListBtn.style.display = 'none';
+            pageTitle.innerHTML = '<i class="ph ph-download-simple"></i> GRN Confirmation';
+        });
+    </script>
+@endpush
