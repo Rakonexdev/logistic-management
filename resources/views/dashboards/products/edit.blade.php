@@ -139,6 +139,9 @@
                     @error('qty') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
+
+            <div class="form-row">
+                <div class="form-group">
                     <label class="form-label">Vendor ID</label>
                     <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id', $product->vendor_id) }}">
                     @error('vendor_id') <span class="text-danger">{{ $message }}</span> @enderror

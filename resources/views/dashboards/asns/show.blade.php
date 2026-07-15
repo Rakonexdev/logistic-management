@@ -101,8 +101,23 @@
         }
 
         .status-submitted {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+        
+        .status-processing {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--info);
+        }
+        
+        .status-completed {
+            background: rgba(16, 185, 129, 0.15);
             color: var(--success);
+        }
+
+        .status-discrepancy {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
         }
         
         .attachment-link {
@@ -131,15 +146,20 @@
             <i class="ph ph-file-text"></i>
             ASN Details: {{ $asn->asn_reference }}
         </h1>
-        @if(Auth::user()->role === 'sfq_user')
-            <a href="{{ route('sfq.grns.index') }}" class="btn btn-outline">
-                <i class="ph ph-arrow-left"></i> Back to GRNs
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <a href="{{ route('asns.report', $asn->id) }}" target="_blank" class="btn btn-primary">
+                <i class="ph ph-printer"></i> Generate Report
             </a>
-        @else
-            <a href="{{ route('asns.index') }}" class="btn btn-outline">
-                <i class="ph ph-arrow-left"></i> Back to ASNs
-            </a>
-        @endif
+            @if(Auth::user()->role === 'sfq_user')
+                <a href="{{ route('sfq.grns.index') }}" class="btn btn-outline">
+                    <i class="ph ph-arrow-left"></i> Back to GRNs
+                </a>
+            @else
+                <a href="{{ route('asns.index') }}" class="btn btn-outline">
+                    <i class="ph ph-arrow-left"></i> Back to ASNs
+                </a>
+            @endif
+        </div>
     </div>
 
     <div class="glass details-panel">
@@ -174,7 +194,10 @@
                     <tr>
                         <th>#</th>
                         <th>Product / SKU Code</th>
-                        <th>Quantity</th>
+                        <th>Expected Qty</th>
+                        <th>Received Qty</th>
+                        <th>Discrepancy Qty</th>
+                        <th>Discrepancy Reason</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -183,6 +206,17 @@
                             <td style="color: var(--text-secondary);">{{ $index + 1 }}</td>
                             <td style="font-weight: 600;">{{ $item->sku_code }}</td>
                             <td>{{ $item->quantity }}</td>
+                            <td>{{ $item->received_qty ?? '-' }}</td>
+                            <td>
+                                @if($item->discrepancy_qty !== null && $item->discrepancy_qty != 0)
+                                    <span style="color: {{ $item->discrepancy_qty > 0 ? 'var(--success)' : 'var(--danger)' }}; font-weight: 600;">
+                                        {{ abs($item->discrepancy_qty) }}
+                                    </span>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>{{ $item->discrepancy_reason ?? '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
