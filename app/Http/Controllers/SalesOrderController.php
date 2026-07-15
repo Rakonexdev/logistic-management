@@ -183,17 +183,21 @@ class SalesOrderController extends Controller
                 continue;
             }
 
-            $inbound = AsnItem::where('sku_code', $sku)
+            $inboundAsnSum = AsnItem::where('sku_code', $sku)
                 ->whereHas('asn', function ($query) {
-                    $query->whereIn('status', ['submitted', 'processing', 'completed']);
-                })->sum('quantity');
+                    $query->whereIn('status', ['submitted', 'processing', 'completed', 'discrepancy']);
+                })
+                ->get()
+                ->sum(function ($item) {
+                    return $item->received_qty !== null ? $item->received_qty : $item->quantity;
+                });
 
-            $outbound = SalesOrderItem::where('sku_code', $sku)
+            $outboundSo = SalesOrderItem::where('sku_code', $sku)
                 ->whereHas('salesOrder', function ($query) {
                     $query->whereIn('status', ['submitted', 'processing', 'completed']);
                 })->sum('quantity');
 
-            $available = max(0, $inbound - $outbound);
+            $available = max(0, $product->qty + $inboundAsnSum - $outboundSo);
 
             $results[$sku] = [
                 'available' => (int) $available,
