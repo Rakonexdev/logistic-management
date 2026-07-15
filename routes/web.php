@@ -69,6 +69,7 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
 
 // Shared ASN View Route (placed after resource/static routes to avoid wildcard conflicts)
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
+    Route::get('asns/{asn}/report', [AsnController::class, 'generateReport'])->name('asns.report');
     Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
 });
 
