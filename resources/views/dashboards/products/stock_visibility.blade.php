@@ -240,8 +240,7 @@
                         <th>SKU Code</th>
                         <th>Product Name</th>
                         <th>Category</th>
-                        <th>Inbound Qty</th>
-                        <th>Outbound Qty</th>
+                        <th>Location</th>
                         <th>Available Qty</th>
                     </tr>
                 </thead>
@@ -251,13 +250,12 @@
                             <td><strong>{{ $product->sku_code }}</strong></td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->category) ?: 'N/A' }}</td>
-                            <td class="stock-qty">{{ $product->inbound_qty }}</td>
-                            <td class="stock-qty">{{ $product->outbound_qty }}</td>
+                            <td>{{ $product->location_info }}</td>
                             <td class="stock-qty stock-available">{{ $product->available_qty }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
                                 No products found.
                             </td>
                         </tr>

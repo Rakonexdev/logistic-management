@@ -167,7 +167,9 @@
                 
                 <div class="form-group">
                     <label class="form-label">Vendor / Supplier *</label>
-                    <input type="text" name="vendor_id" class="form-input" required value="{{ old('vendor_id', $asn->vendor_id) }}">
+                    <select name="vendor_id" class="form-input" required style="appearance: auto; -webkit-appearance: auto;">
+                        <option value="Solutions Four W.L.L" {{ old('vendor_id', $asn->vendor_id) == 'Solutions Four W.L.L' ? 'selected' : '' }}>Solutions Four W.L.L</option>
+                    </select>
                 </div>
             </div>
 

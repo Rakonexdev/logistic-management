@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AsnItem;
+use App\Models\Location;
 use App\Models\Product;
 use App\Models\SalesOrderItem;
 use Illuminate\Http\Request;
@@ -246,6 +247,18 @@ class ProductController extends Controller
             $product->inbound_qty = $inbound;
             $product->outbound_qty = $outbound;
             $product->available_qty = max(0, $inbound - $outbound);
+
+            // Fetch locations
+            $locationsList = Location::where('sku', $product->sku_code)->get();
+            if ($locationsList->isEmpty()) {
+                $product->location_info = 'WH-1';
+            } else {
+                $locationStrings = [];
+                foreach ($locationsList as $loc) {
+                    $locationStrings[] = "{$loc->warehouse} ({$loc->zone}-{$loc->rack}-{$loc->bin}-{$loc->level})";
+                }
+                $product->location_info = implode(', ', $locationStrings);
+            }
         }
 
         return view('dashboards.products.stock_visibility', compact('products'));

@@ -297,6 +297,23 @@
 
 We have received the products listed below. The following report contains the details of the received items, including the SKU, item name, quantity, and any discrepancies identified during the inspection.</div>
 
+    @php
+        $hasDamaged = false;
+        $hasMissing = false;
+        foreach ($asn->items as $item) {
+            $discQty = $item->discrepancy_qty ?? 0;
+            $discReason = strtolower($item->discrepancy_reason ?? '');
+            $isDamaged = str_contains($discReason, 'damage') || str_contains($discReason, 'defect');
+            $isShortage = str_contains($discReason, 'shortage') || str_contains($discReason, 'missing') || ($discQty < 0 && !$isDamaged);
+            if ($isDamaged && abs($discQty) > 0) {
+                $hasDamaged = true;
+            }
+            if ($isShortage && abs($discQty) > 0) {
+                $hasMissing = true;
+            }
+        }
+    @endphp
+
     <!-- Product Details Table -->
     <table class="details-table">
         <thead>
@@ -305,8 +322,12 @@ We have received the products listed below. The following report contains the de
                 <th>Item Name</th>
                 <th>Ordered Qty</th>
                 <th>Received Qty</th>
-                <th>Damaged Qty</th>
-                <th>Missing Qty</th>
+                @if($hasDamaged)
+                    <th>Damaged Qty</th>
+                @endif
+                @if($hasMissing)
+                    <th>Missing Qty</th>
+                @endif
                 <th>Status</th>
                 <th>Remarks</th>
             </tr>
@@ -353,8 +374,12 @@ We have received the products listed below. The following report contains the de
                     <td>{{ $productName }}</td>
                     <td>{{ $orderedQty }}</td>
                     <td>{{ $item->received_qty ?? '0' }}</td>
-                    <td>{{ $damagedQty ?: '-' }}</td>
-                    <td>{{ $missingQty ?: '-' }}</td>
+                    @if($hasDamaged)
+                        <td>{{ $damagedQty ?: '-' }}</td>
+                    @endif
+                    @if($hasMissing)
+                        <td>{{ $missingQty ?: '-' }}</td>
+                    @endif
                     <td>
                         <span class="badge badge-{{ $statusClass }}">
                             {{ $statusLabel }}
