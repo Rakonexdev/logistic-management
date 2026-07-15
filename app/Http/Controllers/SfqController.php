@@ -9,6 +9,7 @@ use App\Models\Location;
 use App\Models\Product;
 use App\Models\ReturnPickup;
 use App\Models\SalesOrder;
+use App\Models\SalesOrderItem;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -78,14 +79,14 @@ class SfqController extends Controller
         }
 
         $locations = $query->latest()->paginate($perPage)->withQueryString();
-        $products = Product::all();
+        $products = $this->getVerifiedProducts();
 
         return view('dashboards.sfq.locations', compact('locations', 'products'));
     }
 
     public function locationCreate()
     {
-        $products = Product::all();
+        $products = $this->getVerifiedProducts();
 
         return view('dashboards.sfq.locations.create', compact('products'));
     }
@@ -111,7 +112,7 @@ class SfqController extends Controller
     public function locationEdit($id)
     {
         $location = Location::findOrFail($id);
-        $products = Product::all();
+        $products = $this->getVerifiedProducts();
 
         return view('dashboards.sfq.locations.edit', compact('location', 'products'));
     }
@@ -353,5 +354,36 @@ class SfqController extends Controller
         ];
 
         return view('dashboards.sfq.reports', compact('metrics'));
+    }
+
+    private function getVerifiedProducts()
+    {
+        $products = Product::whereIn('sku_code', function ($query) {
+            $query->select('sku_code')
+                ->from('asn_items')
+                ->whereIn('asn_id', function ($subQuery) {
+                    $subQuery->select('id')
+                        ->from('advance_shipping_notes')
+                        ->whereIn('status', ['completed', 'discrepancy']);
+                });
+        })->get();
+
+        foreach ($products as $product) {
+            $inboundAsn = AsnItem::where('sku_code', $product->sku_code)
+                ->whereHas('asn', function ($q) {
+                    $q->whereIn('status', ['completed', 'discrepancy']);
+                })
+                ->sum('received_qty');
+
+            $outboundSo = SalesOrderItem::where('sku_code', $product->sku_code)
+                ->whereHas('salesOrder', function ($q) {
+                    $q->whereIn('status', ['submitted', 'processing', 'completed']);
+                })
+                ->sum('quantity');
+
+            $product->available_qty = max(0, $inboundAsn - $outboundSo);
+        }
+
+        return $products;
     }
 }

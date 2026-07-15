@@ -156,8 +156,8 @@
                     <select id="sku" name="sku" class="form-select" required>
                         <option value="">Select SKU</option>
                         @foreach($products as $prod)
-                            <option value="{{ $prod->sku_code }}" {{ old('sku', $location->sku) === $prod->sku_code ? 'selected' : '' }}>
-                                {{ $prod->sku_code }} - {{ $prod->name }}
+                            <option value="{{ $prod->sku_code }}" data-qty="{{ $prod->available_qty }}" {{ old('sku', $location->sku) === $prod->sku_code ? 'selected' : '' }}>
+                                {{ $prod->sku_code }}
                             </option>
                         @endforeach
                     </select>
@@ -187,3 +187,13 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.getElementById('sku').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const qty = selectedOption.getAttribute('data-qty') || '';
+            document.getElementById('qty').value = qty;
+        });
+    </script>
+@endpush
