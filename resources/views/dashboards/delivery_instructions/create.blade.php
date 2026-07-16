@@ -193,8 +193,8 @@
                 <thead>
                     <tr>
                         <th style="width: 20%;">Product / SKU *</th>
-                        <th style="width: 42%;">Description</th>
-                        <th style="width: 8%;">Quantity *</th>
+                        <th style="width: 38%;">Description</th>
+                        <th style="width: 12%;">Quantity *</th>
                         <th style="width: 25%;">Serial Numbers (if required)</th>
                         <th style="width: 50px;"></th>
                     </tr>
