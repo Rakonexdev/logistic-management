@@ -12,6 +12,7 @@ class DeliveryNoteItem extends Model
     protected $fillable = [
         'delivery_note_id',
         'sku_code',
+        'description',
         'quantity',
         'serial_numbers',
     ];

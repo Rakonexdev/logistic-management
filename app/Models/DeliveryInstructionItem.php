@@ -12,6 +12,7 @@ class DeliveryInstructionItem extends Model
     protected $fillable = [
         'delivery_instruction_id',
         'sku_code',
+        'description',
         'quantity',
         'serial_numbers',
         'delivered_quantity',

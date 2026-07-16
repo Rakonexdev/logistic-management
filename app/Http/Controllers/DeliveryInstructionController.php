@@ -9,6 +9,7 @@ use App\Models\DeliveryNoteItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Response;
 
 class DeliveryInstructionController extends Controller
 {
@@ -67,6 +68,7 @@ class DeliveryInstructionController extends Controller
             'delivery_address' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string',
+            'items.*.description' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.serial_numbers' => 'nullable|string',
         ]);
@@ -89,6 +91,7 @@ class DeliveryInstructionController extends Controller
                 $hasMismatches = true;
                 $mismatches[] = [
                     'sku_code' => $sku,
+                    'description' => $item['description'] ?? '',
                     'quantity' => $qty,
                     'serial_numbers' => $enteredSerials,
                     'reason' => 'SKU does not exist in warehouse inventory.',
@@ -130,6 +133,7 @@ class DeliveryInstructionController extends Controller
                 $hasMismatches = true;
                 $mismatches[] = [
                     'sku_code' => $sku,
+                    'description' => $item['description'] ?? '',
                     'quantity' => $qty,
                     'serial_numbers' => $enteredSerials,
                     'reason' => implode(' ', $itemErrors),
@@ -144,6 +148,7 @@ class DeliveryInstructionController extends Controller
                     }
                     $availableItems[] = [
                         'sku_code' => $sku,
+                        'description' => $item['description'] ?? '',
                         'quantity' => min($qty, $availableQty),
                         'serial_numbers' => $matchedSerials,
                     ];
@@ -151,6 +156,7 @@ class DeliveryInstructionController extends Controller
             } else {
                 $availableItems[] = [
                     'sku_code' => $sku,
+                    'description' => $item['description'] ?? '',
                     'quantity' => $qty,
                     'serial_numbers' => $enteredSerials,
                 ];
@@ -203,9 +209,12 @@ class DeliveryInstructionController extends Controller
                 $itemStatus = 'partial';
             }
 
+            $desc = $item['description'] ?? '';
+
             DeliveryInstructionItem::create([
                 'delivery_instruction_id' => $di->id,
                 'sku_code' => $sku,
+                'description' => $desc,
                 'quantity' => $qty,
                 'serial_numbers' => $serials,
                 'delivered_quantity' => $deliveredQty,
@@ -233,6 +242,7 @@ class DeliveryInstructionController extends Controller
                     DeliveryNoteItem::create([
                         'delivery_note_id' => $dn->id,
                         'sku_code' => $avail['sku_code'],
+                        'description' => $avail['description'] ?? '',
                         'quantity' => $avail['quantity'],
                         'serial_numbers' => implode(', ', $avail['serial_numbers']),
                     ]);
@@ -245,5 +255,33 @@ class DeliveryInstructionController extends Controller
             : 'Delivery Instruction and Delivery Note created successfully.';
 
         return redirect()->route('delivery-instructions.index')->with('success', $message);
+    }
+
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=delivery_instruction_template.csv',
+        ];
+        $columns = ['sku_code', 'description', 'quantity', 'serial_numbers'];
+
+        $callback = function () use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            $samples = [
+                ['FG-100F', 'FortiGate-100F Firewall', '2', 'FG100FTK25011385, FG100FTK25011385'],
+                ['FG-40F', 'FortiGate-40F Firewall', '5', 'FGT40FTK24083675'],
+                ['LIC-FG100F-BDL', 'Unified Threat Protection License', '1', ''],
+            ];
+
+            foreach ($samples as $sample) {
+                fputcsv($file, $sample);
+            }
+
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
     }
 }

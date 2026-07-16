@@ -103,6 +103,9 @@
                 <div class="item-card item-card-danger">
                     <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.5rem;">
                         <span style="color: var(--text-primary);">SKU: {{ $mis['sku_code'] }}</span>
+                        @if(!empty($mis['description']))
+                            <span style="color: var(--text-secondary); font-weight: normal; font-size: 0.875rem;">Description: {{ $mis['description'] }}</span>
+                        @endif
                         <span style="color: var(--danger);">Requested Qty: {{ $mis['quantity'] }}</span>
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
@@ -127,6 +130,9 @@
                 <div class="item-card item-card-success">
                     <div style="display: flex; justify-content: space-between; font-weight: 600;">
                         <span style="color: var(--text-primary);">SKU: {{ $avail['sku_code'] }}</span>
+                        @if(!empty($avail['description']))
+                            <span style="color: var(--text-secondary); font-weight: normal; font-size: 0.875rem;">Description: {{ $avail['description'] }}</span>
+                        @endif
                         <span style="color: var(--success);">Delivered Qty: {{ $avail['quantity'] }}</span>
                     </div>
                     @if(!empty($avail['serial_numbers']))
@@ -159,6 +165,7 @@
                 
                 @foreach($original_items as $index => $item)
                     <input type="hidden" name="items[{{ $index }}][sku_code]" value="{{ $item['sku_code'] }}">
+                    <input type="hidden" name="items[{{ $index }}][description]" value="{{ $item['description'] ?? '' }}">
                     <input type="hidden" name="items[{{ $index }}][quantity]" value="{{ $item['quantity'] }}">
                     <input type="hidden" name="items[{{ $index }}][serial_numbers]" value="{{ $item['serial_numbers'] ?? '' }}">
                 @endforeach
