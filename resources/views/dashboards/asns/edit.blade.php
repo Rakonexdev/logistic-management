@@ -325,21 +325,78 @@
             reader.onload = function(event) {
                 const text = event.target.result;
                 const lines = text.split('\n');
+                if (lines.length === 0) return;
                 
                 // If it's a valid CSV with headers, we skip the first row
-                const startIndex = lines[0].toLowerCase().includes('sku') ? 1 : 0;
+                const headerLine = lines[0].toLowerCase();
+                const isNewFormat = headerLine.includes('asn_reference') || headerLine.includes('airway_bill') || headerLine.includes('vendor');
+                const startIndex = (headerLine.includes('sku') || isNewFormat) ? 1 : 0;
+                
+                const tbody = document.getElementById('itemsBody');
+                if (isNewFormat) {
+                    tbody.innerHTML = '';
+                }
                 
                 let addedCount = 0;
+                let firstRowParsed = false;
+                
                 for (let i = startIndex; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
                     
                     const cols = lines[i].split(',');
-                    if (cols.length >= 2) {
-                        const sku = cols[0].trim();
-                        const qty = parseInt(cols[1].trim());
-                        if (sku && !isNaN(qty)) {
-                            addRow(sku, qty);
-                            addedCount++;
+                    if (isNewFormat) {
+                        if (cols.length >= 5) {
+                            const asnRef = cols[0].trim();
+                            const awb = cols[1].trim();
+                            const vendor = cols[2].trim();
+                            const sku = cols[3].trim();
+                            const qty = parseInt(cols[4].trim());
+                            
+                            if (!firstRowParsed) {
+                                if (asnRef) {
+                                    const refInput = document.querySelector('input[name="asn_reference"]');
+                                    if (refInput) refInput.value = asnRef;
+                                }
+                                if (awb) {
+                                    const awbInput = document.querySelector('input[name="airway_bill"]');
+                                    if (awbInput) awbInput.value = awb;
+                                }
+                                if (vendor) {
+                                    const vendorSelect = document.querySelector('select[name="vendor_id"]');
+                                    if (vendorSelect) {
+                                        let exists = false;
+                                        for (let o = 0; o < vendorSelect.options.length; o++) {
+                                            if (vendorSelect.options[o].value.toLowerCase() === vendor.toLowerCase()) {
+                                                vendorSelect.selectedIndex = o;
+                                                exists = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!exists && vendor) {
+                                            const opt = document.createElement('option');
+                                            opt.value = vendor;
+                                            opt.text = vendor;
+                                            vendorSelect.add(opt);
+                                            vendorSelect.value = vendor;
+                                        }
+                                    }
+                                }
+                                firstRowParsed = true;
+                            }
+                            
+                            if (sku && !isNaN(qty)) {
+                                addRow(sku, qty);
+                                addedCount++;
+                            }
+                        }
+                    } else {
+                        if (cols.length >= 2) {
+                            const sku = cols[0].trim();
+                            const qty = parseInt(cols[1].trim());
+                            if (sku && !isNaN(qty)) {
+                                addRow(sku, qty);
+                                addedCount++;
+                            }
                         }
                     }
                 }

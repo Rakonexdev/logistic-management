@@ -394,6 +394,9 @@
                     <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*/sales-orders*') ? 'active' : '' }}">
                         <i class="ph ph-shopping-cart"></i> Sales Orders
                     </a>
+                    <a href="{{ route('delivery-instructions.index') }}" class="nav-link {{ request()->is('*/delivery-instructions*') ? 'active' : '' }}">
+                        <i class="ph ph-truck"></i> Delivery Instructions
+                    </a>
                 </div>
 
                 <div class="nav-group">

@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 use App\Http\Controllers\AsnController;
+use App\Http\Controllers\DeliveryInstructionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SalesOrderController;
 
@@ -65,6 +66,10 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::post('sales-orders/stock-check', [SalesOrderController::class, 'checkStock'])->name('sales-orders.stock-check');
     Route::get('sales-orders/export', [SalesOrderController::class, 'export'])->name('sales-orders.export');
     Route::resource('sales-orders', SalesOrderController::class);
+
+    // Delivery Instruction Routes
+    Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
+    Route::resource('delivery-instructions', DeliveryInstructionController::class);
 });
 
 // Shared ASN View Route (placed after resource/static routes to avoid wildcard conflicts)
