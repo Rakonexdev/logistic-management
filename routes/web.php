@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::resource('sales-orders', SalesOrderController::class);
 
     // Delivery Instruction Routes
+    Route::get('delivery-instructions/template', [DeliveryInstructionController::class, 'downloadTemplate'])->name('delivery-instructions.template');
     Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
 });
