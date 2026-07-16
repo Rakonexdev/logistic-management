@@ -178,12 +178,22 @@
 
             <div class="section-title">
                 Requested Items List
+                <div>
+                    <input type="file" id="csvUpload" accept=".csv" style="display: none;">
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('csvUpload').click()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                        <i class="ph ph-upload-simple"></i> Bulk Upload CSV
+                    </button>
+                    <a href="{{ route('delivery-instructions.template') }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                        <i class="ph ph-download-simple"></i> Download Template
+                    </a>
+                </div>
             </div>
             
             <table class="items-table" id="itemsTable">
                 <thead>
                     <tr>
                         <th>Product / SKU *</th>
+                        <th>Description</th>
                         <th>Quantity *</th>
                         <th>Serial Numbers (if required)</th>
                         <th style="width: 50px;"></th>
@@ -195,6 +205,9 @@
                             <tr>
                                 <td>
                                     <input type="text" name="items[{{ $index }}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="{{ $item['sku_code'] }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="items[{{ $index }}][description]" class="form-input" placeholder="Description" value="{{ $item['description'] ?? '' }}">
                                 </td>
                                 <td>
                                     <input type="number" name="items[{{ $index }}][quantity]" class="form-input" required min="1" placeholder="Qty" value="{{ $item['quantity'] }}">
@@ -214,6 +227,9 @@
                         <tr>
                             <td>
                                 <input type="text" name="items[0][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU">
+                            </td>
+                            <td>
+                                <input type="text" name="items[0][description]" class="form-input" placeholder="Description">
                             </td>
                             <td>
                                 <input type="number" name="items[0][quantity]" class="form-input" required min="1" placeholder="Qty">
@@ -253,18 +269,21 @@
     <script>
         let rowCount = {{ count($remainingItems) > 0 ? count($remainingItems) : 1 }};
 
-        function addRow() {
+        function addRow(sku = '', description = '', qty = '', serials = '') {
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU">
+                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}">
                 </td>
                 <td>
-                    <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty">
+                    <input type="text" name="items[${rowCount}][description]" class="form-input" placeholder="Description" value="${description}">
                 </td>
                 <td>
-                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2">
+                    <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}">
+                </td>
+                <td>
+                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" value="${serials}">
                     <span class="hint-text">Enter serial numbers separated by commas</span>
                 </td>
                 <td>
@@ -276,5 +295,71 @@
             tbody.appendChild(tr);
             rowCount++;
         }
+
+        document.getElementById('csvUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                const lines = text.split('\n');
+                if (lines.length === 0) return;
+                
+                const headerLine = lines[0].toLowerCase();
+                const startIndex = headerLine.includes('sku') ? 1 : 0;
+                
+                const tbody = document.getElementById('itemsBody');
+                const rows = tbody.querySelectorAll('tr');
+                if (rows.length === 1) {
+                    const skuInput = rows[0].querySelector('[name$="[sku_code]"]');
+                    if (skuInput && !skuInput.value) {
+                        tbody.innerHTML = '';
+                    }
+                }
+                
+                let addedCount = 0;
+                for (let i = startIndex; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    
+                    const cols = lines[i].split(',');
+                    let sku = cols[0].trim();
+                    let desc = '';
+                    let qty = 1;
+                    let serials = '';
+                    
+                    if (cols.length >= 4) {
+                        desc = cols[1].trim();
+                        qty = parseInt(cols[2].trim()) || 1;
+                        serials = cols.slice(3).join(',').replace(/^"|"$/g, '').trim();
+                    } else if (cols.length === 3) {
+                        const isSecondNum = !isNaN(parseInt(cols[1].trim()));
+                        if (isSecondNum) {
+                            qty = parseInt(cols[1].trim()) || 1;
+                            serials = cols[2].trim();
+                        } else {
+                            desc = cols[1].trim();
+                            qty = parseInt(cols[2].trim()) || 1;
+                        }
+                    } else if (cols.length === 2) {
+                        const isSecondNum = !isNaN(parseInt(cols[1].trim()));
+                        if (isSecondNum) {
+                            qty = parseInt(cols[1].trim()) || 1;
+                        } else {
+                            desc = cols[1].trim();
+                        }
+                    }
+                    
+                    if (sku) {
+                        addRow(sku, desc, qty, serials);
+                        addedCount++;
+                    }
+                }
+                
+                alert(`Successfully added ${addedCount} items from CSV.`);
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
     </script>
 @endsection

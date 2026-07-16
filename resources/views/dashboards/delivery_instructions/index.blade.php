@@ -147,7 +147,7 @@
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                     @foreach($di->items as $item)
                                         <div style="font-size: 0.85rem;">
-                                            {{ $item->sku_code }}: <strong>{{ $item->delivered_quantity }}</strong> / {{ $item->quantity }}
+                                            {{ $item->sku_code }} - <span style="color: var(--text-secondary);">{{ $item->description ?? 'No Description' }}</span> (<strong>{{ $item->delivered_quantity }}</strong> / {{ $item->quantity }})
                                             @if($item->serial_numbers)
                                                 <span style="display: block; font-size: 0.75rem; color: var(--text-secondary);">
                                                     S/N: {{ $item->serial_numbers }}
@@ -210,7 +210,7 @@
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                     @foreach($note->items as $item)
                                         <div style="font-size: 0.85rem;">
-                                            {{ $item->sku_code }} (Qty: <strong>{{ $item->quantity }}</strong>)
+                                            {{ $item->sku_code }} - <span style="color: var(--text-secondary);">{{ $item->description ?? '' }}</span> (Qty: <strong>{{ $item->quantity }}</strong>)
                                             @if($item->serial_numbers)
                                                 <span style="display: block; font-size: 0.75rem; color: var(--success);">
                                                     S/N: {{ $item->serial_numbers }}
