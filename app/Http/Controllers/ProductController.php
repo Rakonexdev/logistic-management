@@ -261,6 +261,12 @@ class ProductController extends Controller
             }
         }
 
-        return view('dashboards.products.stock_visibility', compact('products'));
+        $categories = Product::whereNotNull('category')
+            ->where('category', '<>', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('dashboards.products.stock_visibility', compact('products', 'categories'));
     }
 }

@@ -204,11 +204,11 @@
             <div style="position: relative;">
                 <select name="category" class="filter-select" onchange="this.form.submit()">
                     <option value="">All Categories</option>
-                    <option value="electronics" {{ request('category') === 'electronics' ? 'selected' : '' }}>Electronics
-                    </option>
-                    <option value="apparel" {{ request('category') === 'apparel' ? 'selected' : '' }}>Apparel</option>
-                    <option value="furniture" {{ request('category') === 'furniture' ? 'selected' : '' }}>Furniture</option>
-                    <option value="food" {{ request('category') === 'food' ? 'selected' : '' }}>Food</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>
+                            {{ ucfirst($cat) }}
+                        </option>
+                    @endforeach
                 </select>
                 <i class="ph ph-caret-down"
                     style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
