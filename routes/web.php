@@ -70,6 +70,8 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     // Delivery Instruction Routes
     Route::get('delivery-instructions/template', [DeliveryInstructionController::class, 'downloadTemplate'])->name('delivery-instructions.template');
     Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
+    Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
+    Route::get('delivery-notes', [DeliveryInstructionController::class, 'deliveryNotesIndex'])->name('delivery-notes.index');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
 });
 

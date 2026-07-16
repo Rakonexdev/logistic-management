@@ -197,7 +197,7 @@
         <form action="{{ route('products.stock-visibility') }}" method="GET" class="search-filter-bar" id="filterForm">
             <div class="search-input-wrapper">
                 <i class="ph ph-magnifying-glass search-icon"></i>
-                <input type="text" name="search" class="search-input" placeholder="Search by SKU code or product name..."
+                <input type="text" name="search" class="search-input" placeholder="Search by SKU code, product name or serial number..."
                     value="{{ request('search') }}" oninput="debouncedSearch()">
             </div>
 
@@ -238,6 +238,7 @@
                 <thead>
                     <tr>
                         <th>SKU Code</th>
+                        <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Category</th>
                         <th>Location</th>
@@ -248,6 +249,7 @@
                     @forelse($products as $product)
                         <tr>
                             <td><strong>{{ $product->sku_code }}</strong></td>
+                            <td>{{ $product->serial_number ?: '-' }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->category) ?: 'N/A' }}</td>
                             <td>{{ $product->location_info }}</td>
@@ -255,7 +257,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
                                 No products found.
                             </td>
                         </tr>

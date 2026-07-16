@@ -105,7 +105,7 @@ test('submitting delivery instruction with missing stock or wrong serials shows 
     $response->assertViewIs('dashboards.delivery_instructions.warning');
     $response->assertSee('Mismatched or Unavailable Items Detected');
     $response->assertSee('Requested quantity (5) exceeds available stock (2)');
-    $response->assertSee("Serial number 'SN-WRONG' does not match available serial number 'SN-1111'");
+    $response->assertSee("Serial number 'SN-WRONG' does not match any of the available serial numbers: SN-1111.");
 });
 
 test('confirming partial delivery only delivers available items and leaves others pending', function () {

@@ -192,10 +192,10 @@
             <table class="items-table" id="itemsTable">
                 <thead>
                     <tr>
-                        <th>Product / SKU *</th>
-                        <th>Description</th>
-                        <th>Quantity *</th>
-                        <th>Serial Numbers (if required)</th>
+                        <th style="width: 20%;">Product / SKU *</th>
+                        <th style="width: 42%;">Description</th>
+                        <th style="width: 8%;">Quantity *</th>
+                        <th style="width: 25%;">Serial Numbers (if required)</th>
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
@@ -204,16 +204,16 @@
                         @foreach($remainingItems as $index => $item)
                             <tr>
                                 <td>
-                                    <input type="text" name="items[{{ $index }}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="{{ $item['sku_code'] }}">
+                                    <input type="text" name="items[{{ $index }}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="{{ $item['sku_code'] }}" oninput="this.title = this.value" title="{{ $item['sku_code'] }}">
                                 </td>
                                 <td>
-                                    <input type="text" name="items[{{ $index }}][description]" class="form-input" placeholder="Description" value="{{ $item['description'] ?? '' }}">
+                                    <input type="text" name="items[{{ $index }}][description]" class="form-input" placeholder="Description" value="{{ $item['description'] ?? '' }}" oninput="this.title = this.value" title="{{ $item['description'] ?? '' }}">
                                 </td>
                                 <td>
                                     <input type="number" name="items[{{ $index }}][quantity]" class="form-input" required min="1" placeholder="Qty" value="{{ $item['quantity'] }}">
                                 </td>
                                 <td>
-                                    <input type="text" name="items[{{ $index }}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" value="">
+                                    <input type="text" name="items[{{ $index }}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" value="" oninput="this.title = this.value">
                                     <span class="hint-text">Enter serial numbers separated by commas</span>
                                 </td>
                                 <td>
@@ -226,16 +226,16 @@
                     @else
                         <tr>
                             <td>
-                                <input type="text" name="items[0][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU">
+                                <input type="text" name="items[0][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" oninput="this.title = this.value">
                             </td>
                             <td>
-                                <input type="text" name="items[0][description]" class="form-input" placeholder="Description">
+                                <input type="text" name="items[0][description]" class="form-input" placeholder="Description" oninput="this.title = this.value">
                             </td>
                             <td>
                                 <input type="number" name="items[0][quantity]" class="form-input" required min="1" placeholder="Qty">
                             </td>
                             <td>
-                                <input type="text" name="items[0][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2">
+                                <input type="text" name="items[0][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" oninput="this.title = this.value">
                                 <span class="hint-text">Enter serial numbers separated by commas</span>
                             </td>
                             <td>
@@ -274,16 +274,16 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}">
+                    <input type="text" name="items[${rowCount}][sku_code]" list="products-list" class="form-input" required placeholder="Select or Enter SKU" value="${sku}" oninput="this.title = this.value" title="${sku}">
                 </td>
                 <td>
-                    <input type="text" name="items[${rowCount}][description]" class="form-input" placeholder="Description" value="${description}">
+                    <input type="text" name="items[${rowCount}][description]" class="form-input" placeholder="Description" value="${description}" oninput="this.title = this.value" title="${description}">
                 </td>
                 <td>
                     <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}">
                 </td>
                 <td>
-                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" value="${serials}">
+                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="e.g. SN1, SN2" value="${serials}" oninput="this.title = this.value" title="${serials}">
                     <span class="hint-text">Enter serial numbers separated by commas</span>
                 </td>
                 <td>
@@ -322,31 +322,50 @@
                 for (let i = startIndex; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
                     
-                    const cols = lines[i].split(',');
-                    let sku = cols[0].trim();
+                    let cols = [];
+                    let insideQuote = false;
+                    let entry = "";
+                    const lineText = lines[i];
+                    for (let j = 0; j < lineText.length; j++) {
+                        let char = lineText[j];
+                        if (char === '"') {
+                            insideQuote = !insideQuote;
+                        } else if (char === ',' && !insideQuote) {
+                            cols.push(entry.trim());
+                            entry = "";
+                        } else {
+                            entry += char;
+                        }
+                    }
+                    cols.push(entry.trim());
+                    
+                    let sku = cols[0] ? cols[0].replace(/^"|"$/g, '').trim() : '';
                     let desc = '';
                     let qty = 1;
                     let serials = '';
                     
                     if (cols.length >= 4) {
-                        desc = cols[1].trim();
-                        qty = parseInt(cols[2].trim()) || 1;
-                        serials = cols.slice(3).join(',').replace(/^"|"$/g, '').trim();
+                        desc = cols[1] ? cols[1].replace(/^"|"$/g, '').trim() : '';
+                        qty = parseInt(cols[2] ? cols[2].replace(/^"|"$/g, '').trim() : '') || 1;
+                        serials = cols[3] ? cols[3].replace(/^"|"$/g, '').trim() : '';
                     } else if (cols.length === 3) {
-                        const isSecondNum = !isNaN(parseInt(cols[1].trim()));
+                        const val1 = cols[1] ? cols[1].replace(/^"|"$/g, '').trim() : '';
+                        const val2 = cols[2] ? cols[2].replace(/^"|"$/g, '').trim() : '';
+                        const isSecondNum = !isNaN(parseInt(val1));
                         if (isSecondNum) {
-                            qty = parseInt(cols[1].trim()) || 1;
-                            serials = cols[2].trim();
+                            qty = parseInt(val1) || 1;
+                            serials = val2;
                         } else {
-                            desc = cols[1].trim();
-                            qty = parseInt(cols[2].trim()) || 1;
+                            desc = val1;
+                            qty = parseInt(val2) || 1;
                         }
                     } else if (cols.length === 2) {
-                        const isSecondNum = !isNaN(parseInt(cols[1].trim()));
+                        const val1 = cols[1] ? cols[1].replace(/^"|"$/g, '').trim() : '';
+                        const isSecondNum = !isNaN(parseInt(val1));
                         if (isSecondNum) {
-                            qty = parseInt(cols[1].trim()) || 1;
+                            qty = parseInt(val1) || 1;
                         } else {
-                            desc = cols[1].trim();
+                            desc = val1;
                         }
                     }
                     

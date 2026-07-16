@@ -1,0 +1,20 @@
+sku_code,description,quantity,serial_numbers
+NX-3155-G9-6542Y-CM,"NX-3155-G9, 1 Node; 2x Intel Xeon-Gold 6542Y processor (2.9 GHz/ 24-core/ 250W,Emerald Rapids) per node",3,"26SG5Q080027, 26SG5Q140001, 26SG5Q140003"
+C-MEM-64GB-5600-CM,"64GB Memory Module (5600MHz DDR5 RDM)",36,BUILD IN
+C-NVM-7.68TB-B-CM,7.68 TB NVMe SSD,12,BUILD IN
+C-LOM-10G2D1BT-CM,"LOM Module: Broadcom 10GbE, 2-port, Base-T NIC (BCM 57416)",3,BUILD IN
+C-NIC-25G2A2-Q-CM,"Mellanox 25/10GbE, 2-port, NIC (CX6 25GbE);transceiver not included",6,BUILD IN
+C-PWR-4FC13C14-CM,"C13/C14, 10A, 4ft Power cord",6,BUILD IN
+C-TPM-2.0-U-CM,TPM 2.0 Module Unprovisioned,1,BUILD IN
+NX-9151-G9-8562Y+-CM,"NX-9151-G9, 1 Node; 2x Intel Xeon-Platinum 8562Y+ processor (2.8 GHz/ 32-core/ 300W,Emerald Rapids) per node",2,"26SG9B020004, 26SG9B020005"
+C-MEM-64GB-5600-S-CM,"64GB Memory Module (5600MHz DDR5 RDM)",32,BUILD IN
+C-GPU-RTXP6KBSE-96GB-CM,NVIDIA RTX Pro 6000 Blackwell Server Edition GPU (96GB),4,BUILD IN
+C-NIC-100G2A2-Q-CM,"Mellanox 100/40/25GbE, 2-port, NIC (CX6 100GbE);transceiver not included",4,BUILD IN
+C-PWR-4FC13C14-CM,"C13/C14, 10A, 4ft Power cord",6,BUILD IN
+C-TPM-2.0-U-A-CM,TPM 2.0 Module Unprovisioned,2,BUILD IN
+NX-3155-G9-6548Y+-CM,"NX-3155-G9, 1 Node; 2x Intel Xeon-Gold 6548Y+ processor (2.5 GHz/ 32-core/ 250W,Emerald Rapids) per node",2,"26SG5Q140002, 26SG5Q140004"
+C-MEM-64GB-5600-CM,"64GB Memory Module (5600MHz DDR5 RDM)",32,BUILD IN
+C-NVM-7.68TB-B-CM,7.68 TB NVMe SSD,12,BUILD IN
+C-LOM-10G2D1BT-CM,"LOM Module: Broadcom 10GbE, 2-port, Base-T NIC (BCM 57416)",2,BUILD IN
+C-NIC-25G2A2-Q-CM,"Mellanox 25/10GbE, 2-port, NIC (CX6 25GbE);transceiver not included",4,BUILD IN
+C-PWR-4FC13C14-CM,"C13/C14, 10A, 4ft Power cord",4,BUILD IN

@@ -15,17 +15,22 @@ class DeliveryInstructionController extends Controller
 {
     public function index()
     {
-        $instructions = DeliveryInstruction::with('items')
+        $instructions = DeliveryInstruction::with(['items', 'deliveryNotes'])
             ->where('user_id', Auth::id())
             ->latest()
-            ->paginate(10, ['*'], 'instructions_page');
+            ->paginate(10);
 
+        return view('dashboards.delivery_instructions.index', compact('instructions'));
+    }
+
+    public function deliveryNotesIndex()
+    {
         $notes = DeliveryNote::with('items', 'deliveryInstruction')
             ->where('user_id', Auth::id())
             ->latest()
-            ->paginate(10, ['*'], 'notes_page');
+            ->paginate(10);
 
-        return view('dashboards.delivery_instructions.index', compact('instructions', 'notes'));
+        return view('dashboards.delivery_notes.index', compact('notes'));
     }
 
     public function create()
@@ -104,7 +109,7 @@ class DeliveryInstructionController extends Controller
 
             $availableQty = $product->qty;
             $productSerial = $product->serial_number;
-            $availableSerials = $productSerial ? [$productSerial] : [];
+            $availableSerials = $productSerial ? array_filter(array_map('trim', explode(',', $productSerial))) : [];
 
             $itemErrors = [];
 
@@ -114,13 +119,13 @@ class DeliveryInstructionController extends Controller
                 $itemErrors[] = "Requested quantity ({$qty}) exceeds available stock ({$availableQty}).";
             }
 
-            if ($productSerial) {
+            if (! empty($availableSerials)) {
                 if (empty($enteredSerials)) {
                     $itemErrors[] = 'Serial number is required for this SKU.';
                 } else {
                     foreach ($enteredSerials as $serial) {
-                        if (strtolower($serial) !== strtolower($productSerial)) {
-                            $itemErrors[] = "Serial number '{$serial}' does not match available serial number '{$productSerial}'.";
+                        if (! in_array(strtolower($serial), array_map('strtolower', $availableSerials))) {
+                            $itemErrors[] = "Serial number '{$serial}' does not match any of the available serial numbers: ".implode(', ', $availableSerials).'.';
                         }
                     }
                     if (count($enteredSerials) !== $qty) {
@@ -143,8 +148,13 @@ class DeliveryInstructionController extends Controller
 
                 if ($availableQty > 0) {
                     $matchedSerials = [];
-                    if ($productSerial && in_array(strtolower($productSerial), array_map('strtolower', $enteredSerials))) {
-                        $matchedSerials[] = $productSerial;
+                    if (! empty($availableSerials)) {
+                        $enteredLower = array_map('strtolower', $enteredSerials);
+                        foreach ($availableSerials as $availSer) {
+                            if (in_array(strtolower($availSer), $enteredLower)) {
+                                $matchedSerials[] = $availSer;
+                            }
+                        }
                     }
                     $availableItems[] = [
                         'sku_code' => $sku,
@@ -283,5 +293,12 @@ class DeliveryInstructionController extends Controller
         };
 
         return Response::stream($callback, 200, $headers);
+    }
+
+    public function printDeliveryNote($id)
+    {
+        $note = DeliveryNote::with('items', 'deliveryInstruction')->findOrFail($id);
+
+        return view('dashboards.delivery_instructions.print_dn', compact('note'));
     }
 }
