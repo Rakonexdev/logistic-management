@@ -204,16 +204,35 @@ class SfqController extends Controller
             ->latest()
             ->get();
 
-        $deliveries = $orders->map(function ($order) {
-            return [
+        $notes = DeliveryNote::with('deliveryInstruction')
+            ->where('status', 'completed')
+            ->orWhereNotNull('delivery_status')
+            ->latest()
+            ->get();
+
+        $deliveries = collect();
+
+        foreach ($orders as $order) {
+            $deliveries->push([
                 'ref' => 'DEL-'.$order->id,
                 'so' => $order->so_number,
                 'address' => $order->customer_name.' ('.($order->customer_address ?? 'N/A').')',
                 'driver' => $order->driver ?? '-',
                 'vehicle' => $order->vehicle ?? '-',
                 'status' => $order->delivery_status ?: 'Pending Assignment',
-            ];
-        });
+            ]);
+        }
+
+        foreach ($notes as $note) {
+            $deliveries->push([
+                'ref' => $note->dn_number,
+                'so' => $note->dn_number,
+                'address' => ($note->deliveryInstruction->customer_name ?? 'N/A').' ('.($note->deliveryInstruction->delivery_address ?? 'N/A').')',
+                'driver' => $note->driver ?? '-',
+                'vehicle' => $note->vehicle ?? '-',
+                'status' => $note->delivery_status ?: 'Pending Assignment',
+            ]);
+        }
 
         $drivers = User::where('role', 'driver')->get();
 
@@ -228,14 +247,22 @@ class SfqController extends Controller
             'vehicle' => 'required|string',
         ]);
 
-        $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
-        $order = SalesOrder::findOrFail($orderId);
-
-        $order->update([
-            'driver' => $request->driver,
-            'vehicle' => $request->vehicle,
-            'delivery_status' => 'Assigned',
-        ]);
+        if (str_starts_with($request->delivery_ref, 'DN-')) {
+            $dn = DeliveryNote::where('dn_number', $request->delivery_ref)->firstOrFail();
+            $dn->update([
+                'driver' => $request->driver,
+                'vehicle' => $request->vehicle,
+                'delivery_status' => 'Assigned',
+            ]);
+        } else {
+            $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
+            $order = SalesOrder::findOrFail($orderId);
+            $order->update([
+                'driver' => $request->driver,
+                'vehicle' => $request->vehicle,
+                'delivery_status' => 'Assigned',
+            ]);
+        }
 
         return back()->with('success', "Driver {$request->driver} and Vehicle {$request->vehicle} assigned to delivery {$request->delivery_ref}.");
     }
@@ -246,12 +273,18 @@ class SfqController extends Controller
             'delivery_ref' => 'required|string',
         ]);
 
-        $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
-        $order = SalesOrder::findOrFail($orderId);
-
-        $order->update([
-            'delivery_status' => 'Delivered',
-        ]);
+        if (str_starts_with($request->delivery_ref, 'DN-')) {
+            $dn = DeliveryNote::where('dn_number', $request->delivery_ref)->firstOrFail();
+            $dn->update([
+                'delivery_status' => 'Delivered',
+            ]);
+        } else {
+            $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
+            $order = SalesOrder::findOrFail($orderId);
+            $order->update([
+                'delivery_status' => 'Delivered',
+            ]);
+        }
 
         return back()->with('success', "Delivery {$request->delivery_ref} marked as Delivered.");
     }

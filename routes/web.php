@@ -129,9 +129,9 @@ Route::middleware(['auth', 'role:driver'])->group(function () {
     Route::get('/driver/dashboard', [DriverDashboardController::class, 'index'])->name('driver.dashboard');
 
     // Delivery Actions
-    Route::post('/driver/deliveries/{order}/arrive', [DriverDashboardController::class, 'markArrived'])->name('driver.deliveries.arrive');
-    Route::post('/driver/deliveries/{order}/complete', [DriverDashboardController::class, 'markDelivered'])->name('driver.deliveries.complete');
-    Route::post('/driver/deliveries/{order}/issue', [DriverDashboardController::class, 'reportDeliveryIssue'])->name('driver.deliveries.issue');
+    Route::post('/driver/deliveries/{id}/arrive', [DriverDashboardController::class, 'markArrived'])->name('driver.deliveries.arrive');
+    Route::post('/driver/deliveries/{id}/complete', [DriverDashboardController::class, 'markDelivered'])->name('driver.deliveries.complete');
+    Route::post('/driver/deliveries/{id}/issue', [DriverDashboardController::class, 'reportDeliveryIssue'])->name('driver.deliveries.issue');
 
     // Return Pickup Actions
     Route::post('/driver/returns/{returnPickup}/start', [DriverDashboardController::class, 'startPickup'])->name('driver.returns.start');

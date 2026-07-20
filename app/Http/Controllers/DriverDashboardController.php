@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChequeCollection;
+use App\Models\DeliveryNote;
 use App\Models\ReturnPickup;
 use App\Models\SalesOrder;
 use Illuminate\Http\Request;
@@ -14,12 +15,37 @@ class DriverDashboardController extends Controller
     {
         $driverName = Auth::user()->name;
 
-        // Fetch deliveries assigned to this driver
-        $deliveries = SalesOrder::with('items')
+        // Fetch deliveries assigned to this driver (Sales Orders)
+        $soDeliveries = SalesOrder::with('items')
             ->where('driver', $driverName)
             ->whereIn('delivery_status', ['Assigned', 'Arrived', 'Delivered', 'Issue Reported'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($so) {
+                $so->is_delivery_note = false;
+                $so->ref_number = 'DEL-'.$so->id;
+                $so->display_so_number = $so->so_number;
+
+                return $so;
+            });
+
+        // Fetch deliveries assigned to this driver (Delivery Notes)
+        $dnDeliveries = DeliveryNote::with('items', 'deliveryInstruction')
+            ->where('driver', $driverName)
+            ->whereIn('delivery_status', ['Assigned', 'Arrived', 'Delivered', 'Issue Reported'])
+            ->latest()
+            ->get()
+            ->map(function ($dn) {
+                $dn->is_delivery_note = true;
+                $dn->ref_number = $dn->dn_number;
+                $dn->customer_name = $dn->deliveryInstruction->customer_name ?? 'N/A';
+                $dn->customer_address = $dn->deliveryInstruction->delivery_address ?? 'N/A';
+                $dn->display_so_number = $dn->deliveryInstruction->di_number ?? 'N/A';
+
+                return $dn;
+            });
+
+        $deliveries = $soDeliveries->concat($dnDeliveries);
 
         // Fetch returns assigned to this driver
         $returns = ReturnPickup::where('driver', $driverName)
@@ -34,8 +60,24 @@ class DriverDashboardController extends Controller
         return view('driver.dashboard', compact('deliveries', 'returns', 'cheques'));
     }
 
-    public function markArrived(SalesOrder $order)
+    public function markArrived($id)
     {
+        if (str_starts_with($id, 'dn-')) {
+            $realId = (int) str_replace('dn-', '', $id);
+            $dn = DeliveryNote::findOrFail($realId);
+            if ($dn->driver !== Auth::user()->name) {
+                abort(403, 'Unauthorized.');
+            }
+            $dn->update([
+                'delivery_status' => 'Arrived',
+                'arrived_at' => now(),
+            ]);
+
+            return back()->with('success', "Arrived at customer location for Delivery {$dn->dn_number}.");
+        }
+
+        $realId = (int) str_replace('so-', '', $id);
+        $order = SalesOrder::findOrFail($realId);
         if ($order->driver !== Auth::user()->name) {
             abort(403, 'Unauthorized.');
         }
@@ -48,12 +90,8 @@ class DriverDashboardController extends Controller
         return back()->with('success', "Arrived at customer location for Delivery DEL-{$order->id}.");
     }
 
-    public function markDelivered(Request $request, SalesOrder $order)
+    public function markDelivered(Request $request, $id)
     {
-        if ($order->driver !== Auth::user()->name) {
-            abort(403, 'Unauthorized.');
-        }
-
         $request->validate([
             'recipient_name' => ['required', 'string', 'max:255'],
             'delivery_remarks' => ['nullable', 'string'],
@@ -61,12 +99,25 @@ class DriverDashboardController extends Controller
             'delivery_photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
 
+        $isDn = str_starts_with($id, 'dn-');
+        $realId = (int) str_replace(['dn-', 'so-'], '', $id);
+
+        if ($isDn) {
+            $model = DeliveryNote::findOrFail($realId);
+        } else {
+            $model = SalesOrder::findOrFail($realId);
+        }
+
+        if ($model->driver !== Auth::user()->name) {
+            abort(403, 'Unauthorized.');
+        }
+
         $signedProofPath = null;
         $deliveryPhotoPath = null;
 
         if ($request->hasFile('signed_proof')) {
             $file = $request->file('signed_proof');
-            $filename = time().'_sig_'.$order->id.'.'.$file->getClientOriginalExtension();
+            $filename = time().'_sig_'.$realId.'.'.$file->getClientOriginalExtension();
             if (app()->environment('testing')) {
                 $file->storeAs('uploads/proofs', $filename, 'public');
             } else {
@@ -81,7 +132,7 @@ class DriverDashboardController extends Controller
 
         if ($request->hasFile('delivery_photo')) {
             $file = $request->file('delivery_photo');
-            $filename = time().'_photo_'.$order->id.'.'.$file->getClientOriginalExtension();
+            $filename = time().'_photo_'.$realId.'.'.$file->getClientOriginalExtension();
             if (app()->environment('testing')) {
                 $file->storeAs('uploads/photos', $filename, 'public');
             } else {
@@ -94,7 +145,7 @@ class DriverDashboardController extends Controller
             $deliveryPhotoPath = 'uploads/photos/'.$filename;
         }
 
-        $order->update([
+        $model->update([
             'delivery_status' => 'Delivered',
             'recipient_name' => $request->recipient_name,
             'signed_proof_path' => $signedProofPath,
@@ -103,25 +154,38 @@ class DriverDashboardController extends Controller
             'delivery_completed_at' => now(),
         ]);
 
-        return back()->with('success', "Delivery DEL-{$order->id} completed successfully.");
+        $ref = $isDn ? $model->dn_number : 'DEL-'.$model->id;
+
+        return back()->with('success', "Delivery {$ref} completed successfully.");
     }
 
-    public function reportDeliveryIssue(Request $request, SalesOrder $order)
+    public function reportDeliveryIssue(Request $request, $id)
     {
-        if ($order->driver !== Auth::user()->name) {
-            abort(403, 'Unauthorized.');
-        }
-
         $request->validate([
             'delivery_issue' => ['required', 'string'],
         ]);
 
-        $order->update([
+        $isDn = str_starts_with($id, 'dn-');
+        $realId = (int) str_replace(['dn-', 'so-'], '', $id);
+
+        if ($isDn) {
+            $model = DeliveryNote::findOrFail($realId);
+        } else {
+            $model = SalesOrder::findOrFail($realId);
+        }
+
+        if ($model->driver !== Auth::user()->name) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $model->update([
             'delivery_status' => 'Issue Reported',
             'delivery_issue' => $request->delivery_issue,
         ]);
 
-        return back()->with('success', "Issue reported for Delivery DEL-{$order->id}.");
+        $ref = $isDn ? $model->dn_number : 'DEL-'.$model->id;
+
+        return back()->with('success', "Issue reported for Delivery {$ref}.");
     }
 
     public function startPickup(ReturnPickup $returnPickup)

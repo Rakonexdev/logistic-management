@@ -14,6 +14,9 @@ class DeliveryNote extends Model
         'delivery_instruction_id',
         'user_id',
         'status',
+        'driver',
+        'vehicle',
+        'delivery_status',
     ];
 
     public function deliveryInstruction()
