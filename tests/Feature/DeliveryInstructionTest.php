@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\DeliveryInstruction;
+use App\Models\DeliveryNote;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -161,4 +162,43 @@ test('confirming partial delivery only delivers available items and leaves other
     $this->assertDatabaseHas('delivery_notes', [
         'delivery_instruction_id' => $di->id,
     ]);
+});
+
+test('end user can release a delivery note and it appears under order fulfillment', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+    $operator = User::factory()->create(['role' => 'sfq_user']);
+
+    $di = DeliveryInstruction::create([
+        'di_number' => 'DI-RELEASE-TEST',
+        'customer_name' => 'Release Customer',
+        'delivery_address' => 'Release Address',
+        'status' => 'completed',
+        'user_id' => $user->id,
+    ]);
+
+    $dn = DeliveryNote::create([
+        'dn_number' => 'DN-RELEASE-TEST',
+        'delivery_instruction_id' => $di->id,
+        'user_id' => $user->id,
+        'status' => 'draft',
+    ]);
+
+    // Ensure it is not visible on fulfillment index initially
+    $response = $this->actingAs($operator)
+        ->get(route('sfq.fulfillment.index'));
+    $response->assertSuccessful();
+    $response->assertDontSee('DN-RELEASE-TEST');
+
+    // Release the delivery note
+    $response = $this->actingAs($user)
+        ->post(route('delivery-notes.release', $dn->id));
+    $response->assertRedirect();
+
+    expect($dn->fresh()->status)->toBe('released');
+
+    // Ensure it is now visible on fulfillment index
+    $response = $this->actingAs($operator)
+        ->get(route('sfq.fulfillment.index'));
+    $response->assertSuccessful();
+    $response->assertSee('DN-RELEASE-TEST');
 });

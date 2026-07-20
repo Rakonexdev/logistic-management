@@ -13,6 +13,7 @@ class SalesOrder extends Model
         'so_number',
         'customer_name',
         'designation',
+        'customer_address',
         'order_date',
         'excel_file_path',
         'pdf_file_path',

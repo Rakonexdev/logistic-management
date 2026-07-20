@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AdvanceShippingNote;
 use App\Models\AsnItem;
 use App\Models\ChequeCollection;
+use App\Models\DeliveryNote;
 use App\Models\Location;
 use App\Models\Product;
 use App\Models\ReturnPickup;
@@ -158,9 +159,12 @@ class SfqController extends Controller
 
     public function fulfillmentIndex()
     {
-        $orders = SalesOrder::with('items')->latest()->get();
+        $deliveryNotes = DeliveryNote::with('items', 'deliveryInstruction')
+            ->whereIn('status', ['released', 'processing', 'completed'])
+            ->latest()
+            ->get();
 
-        return view('dashboards.sfq.fulfillment', compact('orders'));
+        return view('dashboards.sfq.fulfillment', compact('deliveryNotes'));
     }
 
     public function fulfillmentUpdate(Request $request)
@@ -180,6 +184,19 @@ class SfqController extends Controller
         return back()->with('success', "Sales Order {$order->so_number} status updated to ".ucfirst($request->status));
     }
 
+    public function fulfillmentUpdateDeliveryNote(Request $request)
+    {
+        $request->validate([
+            'note_id' => 'required|exists:delivery_notes,id',
+            'status' => 'required|in:processing,completed',
+        ]);
+
+        $note = DeliveryNote::findOrFail($request->note_id);
+        $note->update(['status' => $request->status]);
+
+        return back()->with('success', "Delivery Note {$note->dn_number} status updated to ".ucfirst($request->status));
+    }
+
     public function deliveryIndex()
     {
         $orders = SalesOrder::where('status', 'completed')
@@ -191,7 +208,7 @@ class SfqController extends Controller
             return [
                 'ref' => 'DEL-'.$order->id,
                 'so' => $order->so_number,
-                'address' => $order->customer_name.' ('.($order->designation ?? 'N/A').')',
+                'address' => $order->customer_name.' ('.($order->customer_address ?? 'N/A').')',
                 'driver' => $order->driver ?? '-',
                 'vehicle' => $order->vehicle ?? '-',
                 'status' => $order->delivery_status ?: 'Pending Assignment',

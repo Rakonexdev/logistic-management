@@ -524,7 +524,7 @@
                         </div>
                         <div class="task-detail">
                             <i class="ph ph-map-pin"></i>
-                            <span>{{ $order->designation ?? 'N/A' }}</span>
+                            <span>{{ $order->customer_address ?? 'N/A' }}</span>
                         </div>
 
                         <!-- Expandable Drawer -->

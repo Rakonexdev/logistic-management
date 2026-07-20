@@ -7,6 +7,7 @@ use App\Models\DeliveryInstructionItem;
 use App\Models\DeliveryNote;
 use App\Models\DeliveryNoteItem;
 use App\Models\Product;
+use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
@@ -37,14 +38,16 @@ class DeliveryInstructionController extends Controller
     {
         $products = Product::orderBy('sku_code')->get();
         $remainingItems = [];
+        $salesOrders = SalesOrder::with('items')->where('user_id', Auth::id())->latest()->get();
 
-        return view('dashboards.delivery_instructions.create', compact('products', 'remainingItems'));
+        return view('dashboards.delivery_instructions.create', compact('products', 'remainingItems', 'salesOrders'));
     }
 
     public function fulfillRemaining($id)
     {
         $di = DeliveryInstruction::with('items')->where('user_id', Auth::id())->findOrFail($id);
         $products = Product::orderBy('sku_code')->get();
+        $salesOrders = SalesOrder::with('items')->where('user_id', Auth::id())->latest()->get();
 
         $remainingItems = [];
         foreach ($di->items as $item) {
@@ -62,6 +65,7 @@ class DeliveryInstructionController extends Controller
             'products' => $products,
             'remainingItems' => $remainingItems,
             'parentDi' => $di,
+            'salesOrders' => $salesOrders,
         ]);
     }
 
@@ -300,5 +304,13 @@ class DeliveryInstructionController extends Controller
         $note = DeliveryNote::with('items', 'deliveryInstruction')->findOrFail($id);
 
         return view('dashboards.delivery_instructions.print_dn', compact('note'));
+    }
+
+    public function releaseDeliveryNote($id)
+    {
+        $note = DeliveryNote::where('user_id', Auth::id())->findOrFail($id);
+        $note->update(['status' => 'released']);
+
+        return back()->with('success', "Delivery Note {$note->dn_number} released successfully.");
     }
 }

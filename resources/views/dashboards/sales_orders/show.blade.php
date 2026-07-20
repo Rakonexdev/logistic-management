@@ -149,8 +149,8 @@
                 <div class="detail-value">{{ $order->customer_name }}</div>
             </div>
             <div class="detail-item">
-                <div class="detail-label">Designation</div>
-                <div class="detail-value">{{ $order->designation ?: '—' }}</div>
+                <div class="detail-label">Customer Address</div>
+                <div class="detail-value">{{ $order->customer_address ?: '—' }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Order Date</div>

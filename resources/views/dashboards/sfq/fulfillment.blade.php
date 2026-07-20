@@ -121,60 +121,62 @@
     @endif
 
     <div class="form-panel glass">
-        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Orders Awaiting Fulfillment</h3>
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Delivery Notes Awaiting Fulfillment</h3>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>SO Number</th>
+                        <th>DN Number</th>
+                        <th>DI Number</th>
                         <th>Customer / Destination</th>
-                        <th>Order Date</th>
-                        <th>SKUs & Quantities</th>
+                        <th>Delivered Items & Serials</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($orders as $order)
+                    @forelse($deliveryNotes as $note)
                         <tr>
-                            <td><strong>{{ $order->so_number }}</strong></td>
-                            <td>{{ $order->customer_name }} @if($order->designation) ({{ $order->designation }}) @endif</td>
-                            <td>{{ $order->order_date->format('Y-m-d') }}</td>
+                            <td><strong>{{ $note->dn_number }}</strong></td>
+                            <td>{{ $note->deliveryInstruction->di_number ?? 'N/A' }}</td>
+                            <td>{{ $note->deliveryInstruction->customer_name ?? 'N/A' }}</td>
                             <td>
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    @foreach($order->items as $item)
+                                    @foreach($note->items as $item)
                                         <span style="font-size: 0.85rem;">
-                                            {{ $item->sku_code }} (Ordered: <strong>{{ $item->quantity }}</strong>)
+                                            {{ $item->sku_code }} (Qty: <strong>{{ $item->quantity }}</strong>)
+                                            @if($item->serial_numbers)
+                                                <span style="display: block; font-size: 0.75rem; color: var(--success);">
+                                                    S/N: {{ $item->serial_numbers }}
+                                                </span>
+                                            @endif
                                         </span>
                                     @endforeach
                                 </div>
                             </td>
                             <td>
-                                <span class="badge badge-{{ $order->status }}">
-                                    {{ $order->status }}
+                                <span class="badge badge-{{ $note->status === 'released' ? 'processing' : ($note->status === 'completed' ? 'completed' : $note->status) }}">
+                                    {{ $note->status }}
                                 </span>
                             </td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    @if($order->status === 'submitted')
-                                        <form action="{{ route('sfq.fulfillment.update') }}" method="POST">
+                                    @if($note->status === 'released')
+                                        <form action="{{ route('sfq.fulfillment.delivery-note') }}" method="POST">
                                             @csrf
-                                            <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                            <input type="hidden" name="note_id" value="{{ $note->id }}">
                                             <button type="submit" name="status" value="processing" class="btn btn-primary">
-                                                <i class="ph ph-hand-pointing"></i> Accept Order
+                                                <i class="ph ph-hand-pointing"></i> Accept Dispatch
                                             </button>
                                         </form>
-                                    @elseif($order->status === 'processing')
-                                        <form action="{{ route('sfq.fulfillment.update') }}" method="POST" style="display: inline-block;">
+                                    @elseif($note->status === 'processing')
+                                        <form action="{{ route('sfq.fulfillment.delivery-note') }}" method="POST">
                                             @csrf
-                                            <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                            <input type="hidden" name="note_id" value="{{ $note->id }}">
                                             <button type="submit" name="status" value="completed" class="btn btn-primary" style="background: var(--success); color: white;">
-                                                <i class="ph ph-package"></i> Pick & Pack Complete
+                                                <i class="ph ph-package"></i> Complete Dispatch
                                             </button>
                                         </form>
-                                        <button onclick="reportShortage('{{ $order->so_number }}')" class="btn btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
-                                            <i class="ph ph-warning-octagon"></i> Mark Shortage
-                                        </button>
                                     @else
                                         <span style="font-size: 0.85rem; color: var(--text-secondary);">No action required</span>
                                     @endif
@@ -183,7 +185,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">No Sales Orders found</td>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">No released Delivery Notes awaiting fulfillment</td>
                         </tr>
                     @endforelse
                 </tbody>

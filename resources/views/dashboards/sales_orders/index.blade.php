@@ -210,7 +210,7 @@
                     <tr>
                         <th>SO Number</th>
                         <th>Customer Name</th>
-                        <th>Designation</th>
+                        <th>Customer Address</th>
                         <th>Order Date</th>
                         <th>Items</th>
                         <th>Status</th>
@@ -222,7 +222,7 @@
                         <tr>
                             <td style="font-weight: 600;">{{ $order->so_number }}</td>
                             <td>{{ $order->customer_name }}</td>
-                            <td>{{ $order->designation ?: '—' }}</td>
+                            <td>{{ $order->customer_address ?: '—' }}</td>
                             <td>{{ $order->order_date->format('M d, Y') }}</td>
                             <td>{{ $order->items()->count() }} items</td>
                             <td>

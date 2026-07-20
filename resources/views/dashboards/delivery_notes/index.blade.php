@@ -60,7 +60,17 @@
                                 </div>
                             </td>
                             <td style="padding: 1rem;">{{ $note->created_at->format('Y-m-d H:i') }}</td>
-                            <td style="padding: 1rem;">
+                            <td style="padding: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                                @if($note->status === 'draft')
+                                    <form action="{{ route('delivery-notes.release', $note->id) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem; background: var(--accent-primary, #6366f1); border: none; color: white;">
+                                            <i class="ph ph-paper-plane-tilt"></i> Release Note
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="badge badge-success" style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; text-transform: capitalize;">{{ $note->status }}</span>
+                                @endif
                                 <a href="{{ route('delivery-notes.print', $note->id) }}" target="_blank" class="btn btn-outline"
                                     style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
                                     <i class="ph ph-printer"></i> Get Delivery Notes

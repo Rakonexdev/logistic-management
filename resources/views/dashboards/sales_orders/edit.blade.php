@@ -200,8 +200,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Designation</label>
-                    <input type="text" name="designation" class="form-input" value="{{ old('designation', $order->designation) }}" placeholder="Enter Designation (e.g. Procurement Manager)">
+                    <label class="form-label">Customer Address</label>
+                    <input type="text" name="customer_address" class="form-input" value="{{ old('customer_address', $order->customer_address) }}" placeholder="Enter Customer Address">
                 </div>
                 
                 <div class="form-group">

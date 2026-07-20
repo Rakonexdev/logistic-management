@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\SalesOrder;
+use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 
 uses(LazilyRefreshDatabase::class);
@@ -13,7 +13,7 @@ test('completed sales order appears in delivery planning index', function () {
     $order = SalesOrder::create([
         'so_number' => 'SO-DELIVERY-TEST-1',
         'customer_name' => 'John Client',
-        'designation' => 'Manhattan, NY',
+        'customer_address' => 'Manhattan, NY',
         'order_date' => '2026-07-14',
         'status' => 'completed',
         'delivery_status' => 'Pending Assignment',
@@ -34,7 +34,7 @@ test('operator can assign driver and vehicle to delivery', function () {
     $order = SalesOrder::create([
         'so_number' => 'SO-DELIVERY-TEST-2',
         'customer_name' => 'Jane Client',
-        'designation' => 'Queens, NY',
+        'customer_address' => 'Queens, NY',
         'order_date' => '2026-07-14',
         'status' => 'completed',
         'delivery_status' => 'Pending Assignment',
@@ -43,7 +43,7 @@ test('operator can assign driver and vehicle to delivery', function () {
 
     $response = $this->actingAs($user)
         ->post(route('sfq.deliveries.assign'), [
-            'delivery_ref' => 'DEL-' . $order->id,
+            'delivery_ref' => 'DEL-'.$order->id,
             'driver' => 'John Doe',
             'vehicle' => 'Truck A',
         ]);
@@ -63,7 +63,7 @@ test('operator can complete delivery', function () {
     $order = SalesOrder::create([
         'so_number' => 'SO-DELIVERY-TEST-3',
         'customer_name' => 'Bob Client',
-        'designation' => 'Brooklyn, NY',
+        'customer_address' => 'Brooklyn, NY',
         'order_date' => '2026-07-14',
         'status' => 'completed',
         'delivery_status' => 'Assigned',
@@ -74,7 +74,7 @@ test('operator can complete delivery', function () {
 
     $response = $this->actingAs($user)
         ->post(route('sfq.deliveries.complete'), [
-            'delivery_ref' => 'DEL-' . $order->id,
+            'delivery_ref' => 'DEL-'.$order->id,
         ]);
 
     $response->assertRedirect();

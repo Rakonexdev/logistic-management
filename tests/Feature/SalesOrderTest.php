@@ -30,7 +30,7 @@ test('end users can create a sales order draft', function () {
     $payload = [
         'so_number' => 'SO-TEST-1234',
         'customer_name' => 'Test Customer',
-        'designation' => 'Test Destination',
+        'customer_address' => 'Test Address',
         'order_date' => '2026-07-10',
         'remarks' => 'Some test remarks',
         'items' => [
@@ -48,7 +48,7 @@ test('end users can create a sales order draft', function () {
     $this->assertDatabaseHas('sales_orders', [
         'so_number' => 'SO-TEST-1234',
         'customer_name' => 'Test Customer',
-        'designation' => 'Test Destination',
+        'customer_address' => 'Test Address',
         'status' => 'draft',
         'user_id' => $user->id,
     ]);

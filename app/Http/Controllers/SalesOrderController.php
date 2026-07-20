@@ -25,7 +25,7 @@ class SalesOrderController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('so_number', 'like', "%{$search}%")
                     ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('designation', 'like', "%{$search}%");
+                    ->orWhere('customer_address', 'like', "%{$search}%");
             });
         }
 
@@ -50,7 +50,7 @@ class SalesOrderController extends Controller
         $request->validate([
             'so_number' => 'required|string|unique:sales_orders,so_number',
             'customer_name' => 'required|string|max:255',
-            'designation' => 'nullable|string|max:255',
+            'customer_address' => 'nullable|string|max:255',
             'order_date' => 'required|date',
             'remarks' => 'nullable|string',
             'excel_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:5120',
@@ -64,7 +64,7 @@ class SalesOrderController extends Controller
         $order = new SalesOrder;
         $order->so_number = $request->so_number;
         $order->customer_name = $request->customer_name;
-        $order->designation = $request->designation;
+        $order->customer_address = $request->customer_address;
         $order->order_date = $request->order_date;
         $order->remarks = $request->remarks;
         $order->status = $request->status;
@@ -113,7 +113,7 @@ class SalesOrderController extends Controller
         $request->validate([
             'so_number' => 'required|string|unique:sales_orders,so_number,'.$order->id,
             'customer_name' => 'required|string|max:255',
-            'designation' => 'nullable|string|max:255',
+            'customer_address' => 'nullable|string|max:255',
             'order_date' => 'required|date',
             'remarks' => 'nullable|string',
             'excel_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:5120',
@@ -126,7 +126,7 @@ class SalesOrderController extends Controller
 
         $order->so_number = $request->so_number;
         $order->customer_name = $request->customer_name;
-        $order->designation = $request->designation;
+        $order->customer_address = $request->customer_address;
         $order->order_date = $request->order_date;
         $order->remarks = $request->remarks;
         $order->status = $request->status;
@@ -246,7 +246,7 @@ class SalesOrderController extends Controller
 
         $callback = function () use ($request) {
             $file = fopen('php://output', 'w');
-            $columns = ['ID', 'SO Number', 'Customer Name', 'Designation', 'Order Date', 'Status', 'Created At'];
+            $columns = ['ID', 'SO Number', 'Customer Name', 'Customer Address', 'Order Date', 'Status', 'Created At'];
             fputcsv($file, $columns);
 
             $query = SalesOrder::where('user_id', Auth::id());
@@ -256,7 +256,7 @@ class SalesOrderController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('so_number', 'like', "%{$search}%")
                         ->orWhere('customer_name', 'like', "%{$search}%")
-                        ->orWhere('designation', 'like', "%{$search}%");
+                        ->orWhere('customer_address', 'like', "%{$search}%");
                 });
             }
 
@@ -270,7 +270,7 @@ class SalesOrderController extends Controller
                         $order->id,
                         $order->so_number,
                         $order->customer_name,
-                        $order->designation,
+                        $order->customer_address,
                         $order->order_date->format('Y-m-d'),
                         $order->status,
                         $order->created_at->format('Y-m-d H:i:s'),

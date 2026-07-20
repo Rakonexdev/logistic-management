@@ -13,6 +13,7 @@ class DeliveryNote extends Model
         'dn_number',
         'delivery_instruction_id',
         'user_id',
+        'status',
     ];
 
     public function deliveryInstruction()

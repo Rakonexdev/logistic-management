@@ -19,7 +19,7 @@ test('driver can view assigned deliveries, returns, and cheques', function () {
     $order = SalesOrder::create([
         'so_number' => 'SO-TEST-1',
         'customer_name' => 'Client A',
-        'designation' => 'NJ',
+        'customer_address' => 'NJ',
         'order_date' => '2026-07-14',
         'status' => 'completed',
         'delivery_status' => 'Assigned',
@@ -32,7 +32,7 @@ test('driver can view assigned deliveries, returns, and cheques', function () {
     $otherOrder = SalesOrder::create([
         'so_number' => 'SO-TEST-OTHER',
         'customer_name' => 'Client B',
-        'designation' => 'NY',
+        'customer_address' => 'NY',
         'order_date' => '2026-07-14',
         'status' => 'completed',
         'delivery_status' => 'Assigned',

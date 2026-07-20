@@ -71,6 +71,7 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('delivery-instructions/template', [DeliveryInstructionController::class, 'downloadTemplate'])->name('delivery-instructions.template');
     Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
     Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
+    Route::post('delivery-notes/{id}/release', [DeliveryInstructionController::class, 'releaseDeliveryNote'])->name('delivery-notes.release');
     Route::get('delivery-notes', [DeliveryInstructionController::class, 'deliveryNotesIndex'])->name('delivery-notes.index');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
 });
@@ -98,6 +99,7 @@ Route::middleware(['auth', 'role:sfq_user'])->group(function () {
 
     Route::get('/sfq/fulfillment', [SfqController::class, 'fulfillmentIndex'])->name('sfq.fulfillment.index');
     Route::post('/sfq/fulfillment/update', [SfqController::class, 'fulfillmentUpdate'])->name('sfq.fulfillment.update');
+    Route::post('/sfq/fulfillment/delivery-note', [SfqController::class, 'fulfillmentUpdateDeliveryNote'])->name('sfq.fulfillment.delivery-note');
 
     Route::get('/sfq/deliveries', [SfqController::class, 'deliveryIndex'])->name('sfq.deliveries.index');
     Route::post('/sfq/deliveries/assign', [SfqController::class, 'deliveryAssign'])->name('sfq.deliveries.assign');
