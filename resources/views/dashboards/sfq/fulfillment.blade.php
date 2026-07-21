@@ -142,7 +142,7 @@
                             <td>{{ $note->deliveryInstruction->customer_name ?? 'N/A' }}</td>
                             <td>
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    @foreach($note->items as $item)
+                                    @foreach($note->items->take(3) as $item)
                                         <span style="font-size: 0.85rem;">
                                             {{ $item->sku_code }} (Qty: <strong>{{ $item->quantity }}</strong>)
                                             @if($item->serial_numbers)
@@ -152,6 +152,13 @@
                                             @endif
                                         </span>
                                     @endforeach
+
+                                    @if(count($note->items) > 3)
+                                        <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; margin-top: 0.25rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.25rem;"
+                                                onclick="showItemsModal('{{ $note->dn_number }}', {{ htmlspecialchars(json_encode($note->items), ENT_QUOTES, 'UTF-8') }})">
+                                            <i class="ph ph-eye"></i> View More (+{{ count($note->items) - 3 }})
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                             <td>
@@ -192,6 +199,22 @@
             </table>
         </div>
     </div>
+
+    <!-- Items Modal -->
+    <div id="itemsModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+        <div class="glass" style="background: var(--panel-bg, #1a1b24); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding: 2rem; border-radius: 12px; width: 90%; max-width: 600px; position: relative; box-shadow: var(--shadow-lg); margin: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding-bottom: 0.75rem;">
+                <h3 id="modalTitle" style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">Delivery Note Items</h3>
+                <button type="button" onclick="closeItemsModal()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;">&times;</button>
+            </div>
+            <div id="modalBody" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 0.25rem;">
+                <!-- Items injected here -->
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding-top: 1rem;">
+                <button type="button" class="btn btn-outline" onclick="closeItemsModal()">Close</button>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -203,5 +226,50 @@
                 window.location.reload();
             }
         }
+
+        function showItemsModal(dnNumber, items) {
+            document.getElementById('modalTitle').textContent = 'Items for ' + dnNumber;
+            const body = document.getElementById('modalBody');
+            body.innerHTML = '';
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.style.padding = '0.75rem';
+                div.style.border = '1px solid var(--border-color, rgba(255,255,255,0.1))';
+                div.style.borderRadius = '8px';
+                div.style.background = 'rgba(255,255,255,0.02)';
+
+                let serialsHtml = '';
+                if (item.serial_numbers) {
+                    serialsHtml = `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; font-family: monospace;">
+                        <strong>S/N:</strong> ${item.serial_numbers}
+                    </div>`;
+                }
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                        <span style="color: var(--text-primary);">${item.sku_code}</span>
+                        <span style="color: var(--accent-primary, #6366f1);">${item.quantity}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${item.description || 'No Description'}</div>
+                    ${serialsHtml}
+                `;
+                body.appendChild(div);
+            });
+
+            const modal = document.getElementById('itemsModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeItemsModal() {
+            document.getElementById('itemsModal').style.display = 'none';
+        }
+
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('itemsModal');
+            if (e.target === modal) {
+                closeItemsModal();
+            }
+        });
     </script>
 @endpush
