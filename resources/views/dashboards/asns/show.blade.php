@@ -211,6 +211,11 @@
                                         S/N: {{ $item->serial_numbers }}
                                     </div>
                                 @endif
+                                @if($item->missing_serials)
+                                    <div style="font-size: 0.75rem; color: var(--danger); font-family: monospace; font-weight: 600; margin-top: 0.25rem;">
+                                        <i class="ph ph-warning"></i> Missing S/N: {{ $item->missing_serials }}
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $item->quantity }}</td>
                             <td>{{ $item->received_qty ?? '-' }}</td>
@@ -223,7 +228,14 @@
                                     -
                                 @endif
                             </td>
-                            <td>{{ $item->discrepancy_reason ?? '-' }}</td>
+                            <td>
+                                {{ $item->discrepancy_reason ? ucfirst($item->discrepancy_reason) : '-' }}
+                                @if($item->missing_serials)
+                                    <div style="font-size: 0.75rem; color: var(--danger); font-weight: 600; margin-top: 0.15rem;">
+                                        (Missing S/N: {{ $item->missing_serials }})
+                                    </div>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

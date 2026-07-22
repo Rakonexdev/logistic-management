@@ -377,6 +377,11 @@ We have received the products listed below. The following report contains the de
                                 S/N: {{ $item->serial_numbers }}
                             </div>
                         @endif
+                        @if($item->missing_serials)
+                            <div style="font-size: 0.7rem; color: #ef4444; font-family: monospace; font-weight: 600; margin-top: 0.2rem;">
+                                Missing S/N: {{ $item->missing_serials }}
+                            </div>
+                        @endif
                     </td>
                     <td>{{ $productName }}</td>
                     <td>{{ $orderedQty }}</td>

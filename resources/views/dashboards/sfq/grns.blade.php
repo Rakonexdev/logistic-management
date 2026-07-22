@@ -220,6 +220,7 @@
                             <tr>
                                 <th style="width: 50px; text-align: center;">Verify</th>
                                 <th>Product / SKU</th>
+                                <th>Serial Numbers</th>
                                 <th>Expected Qty</th>
                                 <th>Received Qty</th>
                                 <th>Discrepancy Qty</th>
@@ -229,7 +230,7 @@
                         </thead>
                         <tbody id="items-tbody">
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td>
+                                <td colspan="8" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td>
                             </tr>
                         </tbody>
                     </table>
@@ -325,11 +326,11 @@
             const tbody = document.getElementById('items-tbody');
 
             if (!asnId) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Select an ASN above to populate items</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Loading ASN items...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Loading ASN items...</td></tr>';
 
             // Query dynamic details
             fetch('{{ route('asns.index') }}/' + asnId, {
@@ -343,7 +344,7 @@
                 tbody.innerHTML = '';
                 const items = data.items || [];
                 if (items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No items found in this ASN</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No items found in this ASN</td></tr>';
                     return;
                 }
 
@@ -352,21 +353,32 @@
                     const isChecked = item.received_qty !== null ? 'checked' : '';
                     const rQty = item.received_qty !== null ? item.received_qty : item.quantity;
                     const dQty = item.discrepancy_qty !== null ? item.discrepancy_qty : 0;
+                    const serialsStr = item.serial_numbers || '-';
+                    const showMissingInput = dQty !== 0 || item.missing_serials ? '' : 'display: none;';
                     row.innerHTML = `
                         <td style="text-align: center;">
                             <input type="checkbox" name="verified[${item.sku_code}]" value="1" class="form-checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isChecked}>
                         </td>
                         <td><strong>${item.sku_code}</strong></td>
                         <td>
+                            <span style="font-size: 0.85rem; color: var(--text-primary); font-family: monospace; background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block;">
+                                ${serialsStr}
+                            </span>
+                            <input type="hidden" name="items[${idx}][serial_numbers]" value="${item.serial_numbers || ''}">
+                            <div id="missing-sn-wrap-${idx}" style="${showMissingInput} margin-top: 0.4rem;">
+                                <input type="text" name="missing_serials[${item.sku_code}]" id="missing-sn-${idx}" class="form-input" style="font-size: 0.8rem; padding: 0.35rem 0.5rem; border-color: var(--danger, #ef4444);" placeholder="Missing S/N (e.g. SN-1002)" value="${item.missing_serials || ''}">
+                            </div>
+                        </td>
+                        <td>
                             <span id="exp-qty-${idx}">${item.quantity}</span>
                             <input type="hidden" name="items[${idx}][sku_code]" value="${item.sku_code}">
                             <input type="hidden" name="items[${idx}][expected_qty]" value="${item.quantity}">
                         </td>
                         <td>
-                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}')">
+                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}', 'missing-sn-wrap-${idx}')">
                         </td>
                         <td>
-                            <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${dQty}">
+                            <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${dQty}" oninput="toggleMissingWrap('disc-${idx}', 'missing-sn-wrap-${idx}')">
                         </td>
                         <td>
                             <select name="discrepancy_reason[${item.sku_code}]" class="form-select" style="padding: 0.5rem;">
@@ -385,15 +397,30 @@
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Failed to load ASN items</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger);">Failed to load ASN items</td></tr>';
             });
         });
 
-        function calculateDiscrepancy(input, expected, discId) {
+        function calculateDiscrepancy(input, expected, discId, missingWrapId) {
             const received = parseInt(input.value) || 0;
             const discField = document.getElementById(discId);
+            const discQty = received - expected;
             if (discField) {
-                discField.value = received - expected;
+                discField.value = discQty;
+            }
+            toggleMissingWrap(discId, missingWrapId);
+        }
+
+        function toggleMissingWrap(discId, missingWrapId) {
+            const discField = document.getElementById(discId);
+            const missingWrap = document.getElementById(missingWrapId);
+            if (discField && missingWrap) {
+                const discQty = parseInt(discField.value) || 0;
+                if (discQty !== 0) {
+                    missingWrap.style.display = 'block';
+                } else {
+                    missingWrap.style.display = 'none';
+                }
             }
         }
 

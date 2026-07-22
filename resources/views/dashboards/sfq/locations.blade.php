@@ -266,11 +266,8 @@
             <i class="ph ph-stack"></i> Location & Stock Management
         </h1>
         <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-outline" onclick="alert('Export completed successfully!')">
+            <a href="{{ route('products.export') }}" class="btn btn-outline">
                 <i class="ph ph-export"></i> Export Inventory
-            </button>
-            <a href="{{ route('sfq.locations.create') }}" class="btn btn-primary">
-                <i class="ph ph-plus"></i> Create Location
             </a>
         </div>
     </div>
@@ -281,153 +278,75 @@
         </div>
     @endif
 
-    <div class="grid-panels">
-        <!-- Stock placement table -->
-        <div class="form-panel glass">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <h3 style="font-size: 1.1rem; color: var(--text-primary); margin: 0;">Warehouse Layout & Inventory</h3>
-                <form method="GET" action="{{ route('sfq.locations.index') }}" style="display: flex; gap: 0.5rem; max-width: 500px; width: 100%; align-items: center;">
-                    <input type="text" name="search" class="form-input" style="padding: 0.5rem 0.75rem;" placeholder="Search SKU or Location..." value="{{ request('search') }}">
-                    <select name="per_page" class="form-select" style="padding: 0.5rem 0.75rem; width: auto;" onchange="this.form.submit()">
-                        <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
-                        <option value="20" {{ request('per_page') == '20' ? 'selected' : '' }}>20 Per Page</option>
-                        <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
-                    </select>
-                    @if(request()->anyFilled(['search', 'per_page']))
-                        <a href="{{ route('sfq.locations.index') }}" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">Clear</a>
-                    @endif
-                </form>
+    <div class="glass" style="padding: 1.5rem; border-radius: 12px;">
+        <form method="GET" action="{{ route('sfq.locations.index') }}" id="filterForm" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="position: relative; flex: 1; min-width: 250px;">
+                <i class="ph ph-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-input" style="padding-left: 2.5rem;" placeholder="Search by SKU code, product name or serial number..." oninput="debouncedSearch()">
+                <button type="submit" style="display: none;"></button>
             </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                <select name="per_page" class="form-select" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
+                    <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
+                    <option value="20" {{ request('per_page') == '20' ? 'selected' : '' }}>20 Per Page</option>
+                    <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
+                    <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Per Page</option>
+                </select>
+                @if(request()->anyFilled(['search', 'per_page']))
+                    <a href="{{ route('sfq.locations.index') }}" class="btn btn-outline" style="padding: 0.6rem 1rem; font-size: 0.875rem;">Clear Filters</a>
+                @endif
+            </div>
+        </form>
 
-            <div class="table-responsive">
-                <table class="data-table" id="inventoryTable">
-                    <thead>
+        <script>
+            let searchTimeout;
+            function debouncedSearch() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 600);
+            }
+        </script>
+
+        <div class="table-responsive">
+            <table class="data-table" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>SKU Code</th>
+                        <th>Serial Number</th>
+                        <th>Product Name</th>
+                        <th>Location</th>
+                        <th>Available Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($products as $product)
                         <tr>
-                            <th>Warehouse</th>
-                            <th>Zone</th>
-                            <th>Rack</th>
-                            <th>Bin</th>
-                            <th>Level</th>
-                            <th>SKU Code</th>
-                            <th>Qty</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <td style="font-weight: 600;">{{ $product->sku_code }}</td>
+                            <td>{{ $product->serial_number ?: '-' }}</td>
+                            <td>{{ $product->name }}</td>
+                            <td>{{ $product->location_info }}</td>
+                            <td style="color: #6366f1; font-weight: 600; font-size: 0.95rem;">{{ $product->available_qty }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($locations as $loc)
-                            <tr>
-                                <td>{{ $loc->warehouse }}</td>
-                                <td><strong>{{ $loc->zone }}</strong></td>
-                                <td>{{ $loc->rack }}</td>
-                                <td>{{ $loc->bin }}</td>
-                                <td>{{ $loc->level }}</td>
-                                <td><strong>{{ $loc->sku }}</strong></td>
-                                <td>{{ $loc->qty }}</td>
-                                <td>
-                                    <span class="badge badge-{{ strtolower($loc->status) }}">
-                                        {{ $loc->status }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <a href="{{ route('sfq.locations.edit', $loc->id) }}" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.85rem;" title="Edit Location">
-                                            <i class="ph ph-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline" onclick="openDeleteModal('{{ route('sfq.locations.destroy', $loc->id) }}')" style="padding: 0.35rem 0.5rem; font-size: 0.85rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" title="Delete Location">
-                                            <i class="ph ph-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="pagination-wrapper">
-                <div style="color: var(--text-secondary); font-size: 0.875rem;">
-                    Showing {{ $locations->firstItem() ?? 0 }} to {{ $locations->lastItem() ?? 0 }} of {{ $locations->total() }} records
-                </div>
-                {{ $locations->links('pagination::bootstrap-4') }}
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                <i class="ph ph-archive" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                                No stock items found.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-
-        <!-- Transfer form -->
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <div class="form-panel glass">
-                <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Transfer Stock</h3>
-                <form action="{{ route('sfq.locations.transfer') }}" method="POST">
-                    @csrf
-
-                    <div class="form-group">
-                        <label class="form-label" for="transfer_ref">Transfer Reference</label>
-                        <input type="text" id="transfer_ref" name="transfer_ref" class="form-input" value="TRF-{{ time() }}" readonly required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="sku">SKU Code</label>
-                        <select id="sku" name="sku" class="form-select" required>
-                            <option value="">Select SKU</option>
-                            @foreach($products as $prod)
-                                <option value="{{ $prod->sku_code }}">{{ $prod->sku_code }} - {{ $prod->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="qty">Quantity</label>
-                        <input type="number" id="qty" name="qty" class="form-input" min="1" required placeholder="e.g. 50">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="source">Source Location</label>
-                        <input type="text" id="source" name="source" class="form-input" required placeholder="e.g. WH-Main-A-01">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="destination">Destination Location</label>
-                        <input type="text" id="destination" name="destination" class="form-input" required placeholder="e.g. WH-Main-B-05">
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
-                        <i class="ph ph-arrows-left-right"></i> Execute Transfer
-                    </button>
-                </form>
+        
+        <div class="pagination-wrapper" style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} records
             </div>
+            {{ $products->links('pagination::bootstrap-4') }}
         </div>
     </div>
 @endsection
-
-<!-- Custom Delete Confirmation Modal -->
-<div id="deleteModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content glass">
-        <h3 class="modal-title"><i class="ph ph-warning" style="color: var(--danger);"></i> Confirm Delete</h3>
-        <p class="modal-message">Are you sure you want to delete this warehouse location? This action cannot be undone.</p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
-            <form id="deleteForm" method="POST" style="margin: 0;">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-primary" style="background: var(--danger);">
-                    Yes, Delete
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-    <script>
-        function openDeleteModal(actionUrl) {
-            document.getElementById('deleteForm').action = actionUrl;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-    </script>
-@endpush
 
 

@@ -48,11 +48,29 @@ class SfqController extends Controller
             $item = AsnItem::where('asn_id', $asn->id)->where('sku_code', $sku)->first();
             if ($item) {
                 $discQty = isset($request->discrepancy_qty[$sku]) ? intval($request->discrepancy_qty[$sku]) : ($qty - $item->quantity);
+                $missingStr = $request->missing_serials[$sku] ?? null;
+
                 $item->update([
                     'received_qty' => $qty,
                     'discrepancy_qty' => $discQty,
                     'discrepancy_reason' => $request->discrepancy_reason[$sku] ?? null,
+                    'missing_serials' => $missingStr,
                 ]);
+
+                if ($qty > 0 && ($newStatus === 'completed' || $request->input('action') === 'submit')) {
+                    $product = Product::where('sku_code', $sku)->first();
+                    if ($product) {
+                        $product->increment('qty', $qty);
+                        if ($item->serial_numbers) {
+                            $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
+                            $allItemSerials = array_filter(array_map('trim', explode(',', $item->serial_numbers)));
+                            $missingSerialsList = $missingStr ? array_filter(array_map('trim', explode(',', $missingStr))) : [];
+                            $receivedSerials = array_diff($allItemSerials, $missingSerialsList);
+                            $combinedSerials = array_unique(array_merge($existingSerials, $receivedSerials));
+                            $product->update(['serial_number' => implode(', ', $combinedSerials)]);
+                        }
+                    }
+                }
             }
         }
 
@@ -61,28 +79,56 @@ class SfqController extends Controller
 
     public function locationIndex(Request $request)
     {
-        $query = Location::query();
+        $query = Product::query();
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('sku', 'like', "%{$search}%")
-                    ->orWhere('warehouse', 'like', "%{$search}%")
-                    ->orWhere('zone', 'like', "%{$search}%")
-                    ->orWhere('rack', 'like', "%{$search}%")
-                    ->orWhere('bin', 'like', "%{$search}%");
+                $q->where('sku_code', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
             });
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $perPage = $request->integer('per_page', 10);
-        if (! in_array($perPage, [10, 20, 50])) {
+        if (! in_array($perPage, [10, 20, 25, 50])) {
             $perPage = 10;
         }
 
-        $locations = $query->latest()->paginate($perPage)->withQueryString();
-        $products = $this->getVerifiedProducts();
+        $products = $query->latest()->paginate($perPage)->withQueryString();
 
-        return view('dashboards.sfq.locations', compact('locations', 'products'));
+        foreach ($products as $product) {
+            $inbound = $product->qty;
+
+            $outbound = AsnItem::where('sku_code', $product->sku_code)
+                ->whereHas('asn', function ($q) {
+                    $q->whereIn('status', ['draft', 'submitted', 'processing', 'completed', 'discrepancy']);
+                })->sum('quantity') + SalesOrderItem::where('sku_code', $product->sku_code)
+                ->whereHas('salesOrder', function ($q) {
+                    $q->whereIn('status', ['draft', 'submitted', 'processing', 'completed']);
+                })->sum('quantity');
+
+            $product->inbound_qty = $inbound;
+            $product->outbound_qty = $outbound;
+            $product->available_qty = max(0, $inbound - $outbound);
+
+            $locationsList = Location::where('sku', $product->sku_code)->get();
+            if ($locationsList->isEmpty()) {
+                $product->location_info = 'WH-2';
+            } else {
+                $locationStrings = [];
+                foreach ($locationsList as $loc) {
+                    $locationStrings[] = "{$loc->warehouse} ({$loc->zone}-{$loc->rack}-{$loc->bin}-{$loc->level})";
+                }
+                $product->location_info = implode(', ', $locationStrings);
+            }
+        }
+
+        return view('dashboards.sfq.locations', compact('products'));
     }
 
     public function locationCreate()

@@ -239,6 +239,14 @@ class DeliveryInstructionController extends Controller
                 $product = Product::where('sku_code', $sku)->first();
                 if ($product) {
                     $product->decrement('qty', $deliveredQty);
+                    if (! empty($serials)) {
+                        $deliveredSerials = array_filter(array_map('trim', explode(',', $serials)));
+                        $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
+                        $remainingSerials = array_values(array_filter($existingSerials, function ($s) use ($deliveredSerials) {
+                            return ! in_array(strtolower($s), array_map('strtolower', $deliveredSerials));
+                        }));
+                        $product->update(['serial_number' => implode(', ', $remainingSerials)]);
+                    }
                 }
             }
         }

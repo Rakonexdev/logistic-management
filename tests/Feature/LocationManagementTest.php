@@ -46,25 +46,22 @@ test('sfq users can view locations create page and store a location', function (
 
     $this->actingAs($user)
         ->get(route('sfq.locations.index'))
-        ->assertSee('WH-Test')
         ->assertSee('SKU-LOC-1')
-        ->assertSee('200');
+        ->assertSee('Loc Product');
 });
 
-test('sfq users can filter locations by per page limits', function () {
+test('sfq users can filter locations stock by per page limits', function () {
     $user = User::factory()->create(['role' => 'sfq_user']);
 
-    // Create 15 locations
+    // Create 15 products
     for ($i = 1; $i <= 15; $i++) {
-        Location::create([
-            'warehouse' => "WH-{$i}",
-            'zone' => 'A',
-            'rack' => '01',
-            'bin' => 'B1',
-            'level' => '1',
-            'sku' => 'SKU-LOC',
+        Product::create([
+            'sku_code' => "SKU-PROD-{$i}",
+            'name' => "Product {$i}",
+            'type' => 'physical',
+            'category' => 'apparel',
             'qty' => 10,
-            'status' => 'Available',
+            'status' => 'active',
         ]);
     }
 

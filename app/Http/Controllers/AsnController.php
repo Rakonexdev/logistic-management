@@ -53,7 +53,7 @@ class AsnController extends Controller
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.serial_numbers' => 'nullable|string',
+            'items.*.serial_numbers' => 'nullable',
             'status' => 'required|in:draft,submitted',
         ]);
 
@@ -67,7 +67,8 @@ class AsnController extends Controller
                 }
 
                 if ($product->type === 'physical') {
-                    $serialsStr = $item['serial_numbers'] ?? '';
+                    $serialsRaw = $item['serial_numbers'] ?? '';
+                    $serialsStr = is_array($serialsRaw) ? implode(',', $serialsRaw) : $serialsRaw;
                     $serials = array_filter(array_map('trim', explode(',', $serialsStr)));
 
                     if (empty($serials)) {
@@ -104,11 +105,13 @@ class AsnController extends Controller
         $asn->save();
 
         foreach ($request->items as $item) {
+            $serialsRaw = $item['serial_numbers'] ?? null;
+            $serialsVal = is_array($serialsRaw) ? implode(', ', array_filter(array_map('trim', $serialsRaw))) : $serialsRaw;
             AsnItem::create([
                 'asn_id' => $asn->id,
                 'sku_code' => $item['sku_code'],
                 'quantity' => $item['quantity'],
-                'serial_numbers' => $item['serial_numbers'] ?? null,
+                'serial_numbers' => $serialsVal,
             ]);
         }
 
@@ -163,7 +166,7 @@ class AsnController extends Controller
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.serial_numbers' => 'nullable|string',
+            'items.*.serial_numbers' => 'nullable',
             'status' => 'required|in:draft,submitted',
         ]);
 
@@ -177,7 +180,8 @@ class AsnController extends Controller
                 }
 
                 if ($product->type === 'physical') {
-                    $serialsStr = $item['serial_numbers'] ?? '';
+                    $serialsRaw = $item['serial_numbers'] ?? '';
+                    $serialsStr = is_array($serialsRaw) ? implode(',', $serialsRaw) : $serialsRaw;
                     $serials = array_filter(array_map('trim', explode(',', $serialsStr)));
 
                     if (empty($serials)) {
@@ -220,11 +224,13 @@ class AsnController extends Controller
         // Sync items
         $asn->items()->delete();
         foreach ($request->items as $item) {
+            $serialsRaw = $item['serial_numbers'] ?? null;
+            $serialsVal = is_array($serialsRaw) ? implode(', ', array_filter(array_map('trim', $serialsRaw))) : $serialsRaw;
             AsnItem::create([
                 'asn_id' => $asn->id,
                 'sku_code' => $item['sku_code'],
                 'quantity' => $item['quantity'],
-                'serial_numbers' => $item['serial_numbers'] ?? null,
+                'serial_numbers' => $serialsVal,
             ]);
         }
 
