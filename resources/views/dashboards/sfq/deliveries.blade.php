@@ -172,67 +172,82 @@
         </div>
     @endif
 
-    <div class="grid-panels">
-        <!-- Deliveries Table -->
-        <div class="form-panel glass">
-            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Current Delivery Trips</h3>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
+    <div class="form-panel glass" style="width: 100%; box-sizing: border-box;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Current Delivery Trips</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Delivery Ref</th>
+                        <th>Sales Order</th>
+                        <th>Address</th>
+                        <th>Driver</th>
+                        <th>Vehicle</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($deliveries as $del)
                         <tr>
-                            <th>Delivery Ref</th>
-                            <th>Sales Order</th>
-                            <th>Address</th>
-                            <th>Driver</th>
-                            <th>Vehicle</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($deliveries as $del)
-                            <tr>
-                                <td><strong>{{ $del['ref'] }}</strong></td>
-                                <td>{{ $del['so'] }}</td>
-                                <td>{{ $del['address'] }}</td>
-                                <td>{{ $del['driver'] }}</td>
-                                <td>{{ $del['vehicle'] }}</td>
-                                <td>
-                                    <span class="badge badge-{{ $del['status'] === 'Assigned' ? 'assigned' : ($del['status'] === 'Delivered' ? 'delivered' : 'pending') }}">
-                                        {{ $del['status'] }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($del['status'] === 'Assigned')
+                            <td><strong>{{ $del['ref'] }}</strong></td>
+                            <td>{{ $del['so'] }}</td>
+                            <td>{{ $del['address'] }}</td>
+                            <td>{{ $del['driver'] }}</td>
+                            <td>{{ $del['vehicle'] }}</td>
+                            <td>
+                                <span class="badge badge-{{ $del['status'] === 'Assigned' || $del['status'] === 'In Transit' ? 'assigned' : ($del['status'] === 'Delivered' ? 'delivered' : 'pending') }}">
+                                    {{ $del['status'] }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                    @if(!empty($del['id']))
+                                        <a href="{{ route('delivery-notes.print', $del['id']) }}" target="_blank" class="btn btn-outline" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; color: var(--accent-primary);" title="Download Delivery Note PDF">
+                                            <i class="ph ph-download-simple"></i> Download PDF
+                                        </a>
+                                    @endif
+
+                                    @if($del['status'] === 'Pending Assignment')
+                                        <button type="button" class="btn btn-primary" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;" onclick="openAssignModal('{{ $del['ref'] }}')">
+                                            <i class="ph ph-user-plus"></i> Assign Driver
+                                        </button>
+                                    @elseif($del['status'] === 'Assigned' || $del['status'] === 'In Transit')
                                         <form action="{{ route('sfq.deliveries.complete') }}" method="POST" style="display: inline;" onsubmit="return confirm('Mark delivery trip {{ $del['ref'] }} as Delivered?')">
                                             @csrf
                                             <input type="hidden" name="delivery_ref" value="{{ $del['ref'] }}">
-                                            <button type="submit" class="btn btn-outline" style="padding: 0.5rem; font-size: 0.8rem; color: var(--success); border-color: rgba(16, 185, 129, 0.2);">
+                                            <button type="submit" class="btn btn-outline" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; color: var(--success); border-color: rgba(16, 185, 129, 0.2);">
                                                 <i class="ph ph-check"></i> Complete
                                             </button>
                                         </form>
                                     @elseif($del['status'] === 'Delivered')
                                         <span style="font-size: 0.85rem; color: var(--success); font-weight: 600;"><i class="ph ph-check-circle"></i> Delivered</span>
-                                    @else
-                                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Awaiting Dispatch</span>
                                     @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <!-- Assignment Form -->
-        <div class="form-panel glass">
-            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Assign Driver & Vehicle</h3>
+    <!-- Assign Driver & Vehicle Modal -->
+    <div id="assignModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000;">
+        <div style="background: var(--surface-color, #ffffff); border: 1px solid var(--border-color, #e2e8f0); padding: 2rem; border-radius: 12px; width: 90%; max-width: 480px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); color: var(--text-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); padding-bottom: 0.75rem;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-user-plus" style="color: var(--accent-primary);"></i> Assign Driver & Vehicle
+                </h3>
+                <button type="button" onclick="closeAssignModal()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem;">&times;</button>
+            </div>
+
             <form action="{{ route('sfq.deliveries.assign') }}" method="POST">
                 @csrf
 
                 <div class="form-group">
-                    <label class="form-label" for="delivery_ref">Delivery / Trip Reference</label>
-                    <select id="delivery_ref" name="delivery_ref" class="form-select" required>
+                    <label class="form-label" for="modal_delivery_ref" style="color: var(--text-primary); font-weight: 600;">Delivery / Trip Reference</label>
+                    <select id="modal_delivery_ref" name="delivery_ref" class="form-select" required style="background: var(--bg-color, #ffffff); color: var(--text-primary); border: 1px solid var(--border-color, #cbd5e1);">
                         <option value="">Select Trip</option>
                         @foreach($deliveries as $del)
                             @if($del['status'] === 'Pending Assignment')
@@ -243,8 +258,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="driver">Assign Driver</label>
-                    <select id="driver" name="driver" class="form-select" required>
+                    <label class="form-label" for="modal_driver" style="color: var(--text-primary); font-weight: 600;">Assign Driver</label>
+                    <select id="modal_driver" name="driver" class="form-select" required style="background: var(--bg-color, #ffffff); color: var(--text-primary); border: 1px solid var(--border-color, #cbd5e1);">
                         <option value="">Select Driver</option>
                         @foreach($drivers as $driver)
                             <option value="{{ $driver->name }}">{{ $driver->name }}</option>
@@ -253,13 +268,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="vehicle">Vehicle / Trip Reference</label>
-                    <input type="text" id="vehicle" name="vehicle" class="form-input" placeholder="e.g. Truck-04-A" required>
+                    <label class="form-label" for="modal_vehicle" style="color: var(--text-primary); font-weight: 600;">Vehicle / Trip Reference</label>
+                    <input type="text" id="modal_vehicle" name="vehicle" class="form-input" placeholder="e.g. Truck-04-A" required style="background: var(--bg-color, #ffffff); color: var(--text-primary); border: 1px solid var(--border-color, #cbd5e1);">
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
-                    <i class="ph ph-user-plus"></i> Assign & Dispatch
-                </button>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closeAssignModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ph ph-user-plus"></i> Assign & Dispatch
+                    </button>
             </form>
         </div>
     </div>
@@ -267,11 +284,23 @@
 
 @push('scripts')
     <script>
-        function confirmDelivery(ref) {
-            const upload = confirm(`Upload Proof of Delivery photo for ${ref}?`);
-            if (upload) {
-                alert(`Delivery ${ref} completed successfully. POD registered.`);
-                window.location.reload();
+        function openAssignModal(prefillRef = '') {
+            const modal = document.getElementById('assignModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                if (prefillRef) {
+                    const refSelect = document.getElementById('modal_delivery_ref');
+                    if (refSelect) {
+                        refSelect.value = prefillRef;
+                    }
+                }
+            }
+        }
+
+        function closeAssignModal() {
+            const modal = document.getElementById('assignModal');
+            if (modal) {
+                modal.style.display = 'none';
             }
         }
     </script>

@@ -238,7 +238,10 @@ class SfqController extends Controller
         ]);
 
         $note = DeliveryNote::findOrFail($request->note_id);
-        $note->update(['status' => $request->status]);
+        $note->update([
+            'status' => $request->status,
+            'delivery_status' => 'Pending Assignment',
+        ]);
 
         return back()->with('success', "Delivery Note {$note->dn_number} status updated to ".ucfirst($request->status));
     }
@@ -252,31 +255,40 @@ class SfqController extends Controller
 
         $notes = DeliveryNote::with('deliveryInstruction')
             ->where('status', 'completed')
-            ->orWhereNotNull('delivery_status')
             ->latest()
             ->get();
 
         $deliveries = collect();
 
         foreach ($orders as $order) {
+            $status = $order->delivery_status ?: 'Pending Assignment';
+            if ($status === 'Arrived') {
+                $status = 'In Transit';
+            }
             $deliveries->push([
+                'id' => null,
                 'ref' => 'DEL-'.$order->id,
                 'so' => $order->so_number,
                 'address' => $order->customer_name.' ('.($order->customer_address ?? 'N/A').')',
                 'driver' => $order->driver ?? '-',
                 'vehicle' => $order->vehicle ?? '-',
-                'status' => $order->delivery_status ?: 'Pending Assignment',
+                'status' => $status,
             ]);
         }
 
         foreach ($notes as $note) {
+            $status = $note->delivery_status ?: 'Pending Assignment';
+            if ($status === 'Arrived') {
+                $status = 'In Transit';
+            }
             $deliveries->push([
+                'id' => $note->id,
                 'ref' => $note->dn_number,
                 'so' => $note->dn_number,
                 'address' => ($note->deliveryInstruction->customer_name ?? 'N/A').' ('.($note->deliveryInstruction->delivery_address ?? 'N/A').')',
                 'driver' => $note->driver ?? '-',
                 'vehicle' => $note->vehicle ?? '-',
-                'status' => $note->delivery_status ?: 'Pending Assignment',
+                'status' => $status,
             ]);
         }
 

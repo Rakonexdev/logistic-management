@@ -70,16 +70,16 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     // Delivery Instruction Routes
     Route::get('delivery-instructions/template', [DeliveryInstructionController::class, 'downloadTemplate'])->name('delivery-instructions.template');
     Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
-    Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
     Route::post('delivery-notes/{id}/release', [DeliveryInstructionController::class, 'releaseDeliveryNote'])->name('delivery-notes.release');
     Route::get('delivery-notes', [DeliveryInstructionController::class, 'deliveryNotesIndex'])->name('delivery-notes.index');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
 });
 
-// Shared ASN View Route (placed after resource/static routes to avoid wildcard conflicts)
+// Shared ASN & Delivery Note Routes (placed after resource/static routes to avoid wildcard conflicts)
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('asns/{asn}/report', [AsnController::class, 'generateReport'])->name('asns.report');
     Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
+    Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
 });
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
