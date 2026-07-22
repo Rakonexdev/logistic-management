@@ -188,7 +188,7 @@
 @section('content')
     <div class="page-header">
         <h1 class="page-title">
-            <i class="ph ph-stack"></i> Stock Visibility
+            <i class="ph ph-stack"></i> Stock
         </h1>
     </div>
 

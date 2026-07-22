@@ -241,7 +241,7 @@
     <div class="page-header">
         <h1 class="page-title">
             <i class="ph ph-box-box"></i>
-            Product / SKU Management
+            Product Management
         </h1>
         <div class="actions-group">
             <a href="{{ route('products.template') }}" class="btn btn-outline">
