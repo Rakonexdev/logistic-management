@@ -54,11 +54,38 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:physical,electronic',
             'qty' => 'required|integer|min:0',
-            'serial_number' => 'nullable|string|max:255|unique:products,serial_number',
             'vendor_id' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'status' => 'required|string',
         ]);
+
+        $serialNumbersArray = $request->input('serial_numbers', []);
+        $enteredSerials = array_filter(array_map('trim', $serialNumbersArray));
+
+        if (! empty($enteredSerials)) {
+            $duplicates = array_diff_assoc($enteredSerials, array_unique($enteredSerials));
+            if (! empty($duplicates)) {
+                $dupVal = implode(', ', array_unique($duplicates));
+
+                return back()->withErrors(['serial_number' => "Duplicate serial numbers found in your input: {$dupVal}."])->withInput();
+            }
+
+            foreach ($enteredSerials as $serial) {
+                $exists = Product::where(function ($q) use ($serial) {
+                    $q->where('serial_number', $serial)
+                        ->orWhere('serial_number', 'like', "%,{$serial}")
+                        ->orWhere('serial_number', 'like', "{$serial},%")
+                        ->orWhere('serial_number', 'like', "%,{$serial},%");
+                })->exists();
+
+                if ($exists) {
+                    return back()->withErrors(['serial_number' => "The serial number '{$serial}' has already been taken."])->withInput();
+                }
+            }
+            $validated['serial_number'] = implode(', ', $enteredSerials);
+        } else {
+            $validated['serial_number'] = null;
+        }
 
         Product::create($validated);
 
@@ -77,11 +104,39 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:physical,electronic',
             'qty' => 'required|integer|min:0',
-            'serial_number' => 'nullable|string|max:255|unique:products,serial_number,'.$product->id,
             'vendor_id' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'status' => 'required|string',
         ]);
+
+        $serialNumbersArray = $request->input('serial_numbers', []);
+        $enteredSerials = array_filter(array_map('trim', $serialNumbersArray));
+
+        if (! empty($enteredSerials)) {
+            $duplicates = array_diff_assoc($enteredSerials, array_unique($enteredSerials));
+            if (! empty($duplicates)) {
+                $dupVal = implode(', ', array_unique($duplicates));
+
+                return back()->withErrors(['serial_number' => "Duplicate serial numbers found in your input: {$dupVal}."])->withInput();
+            }
+
+            foreach ($enteredSerials as $serial) {
+                $exists = Product::where('id', '!=', $product->id)
+                    ->where(function ($q) use ($serial) {
+                        $q->where('serial_number', $serial)
+                            ->orWhere('serial_number', 'like', "%,{$serial}")
+                            ->orWhere('serial_number', 'like', "{$serial},%")
+                            ->orWhere('serial_number', 'like', "%,{$serial},%");
+                    })->exists();
+
+                if ($exists) {
+                    return back()->withErrors(['serial_number' => "The serial number '{$serial}' has already been taken."])->withInput();
+                }
+            }
+            $validated['serial_number'] = implode(', ', $enteredSerials);
+        } else {
+            $validated['serial_number'] = null;
+        }
 
         $product->update($validated);
 

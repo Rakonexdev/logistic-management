@@ -370,7 +370,14 @@ We have received the products listed below. The following report contains the de
                     }
                 @endphp
                 <tr>
-                    <td style="font-weight: 600;">{{ $item->sku_code }}</td>
+                    <td style="font-weight: 600;">
+                        {{ $item->sku_code }}
+                        @if($item->serial_numbers)
+                            <div style="font-size: 0.7rem; color: #10b981; font-family: monospace; font-weight: normal; margin-top: 0.2rem;">
+                                S/N: {{ $item->serial_numbers }}
+                            </div>
+                        @endif
+                    </td>
                     <td>{{ $productName }}</td>
                     <td>{{ $orderedQty }}</td>
                     <td>{{ $item->received_qty ?? '0' }}</td>

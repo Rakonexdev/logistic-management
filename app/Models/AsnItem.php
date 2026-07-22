@@ -13,6 +13,7 @@ class AsnItem extends Model
         'asn_id',
         'sku_code',
         'quantity',
+        'serial_numbers',
         'received_qty',
         'discrepancy_qty',
         'discrepancy_reason',

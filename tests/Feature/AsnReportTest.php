@@ -75,3 +75,69 @@ test('authorized users can view printable report', function () {
     $response->assertSee('Report Product');
     $response->assertSee('Prepared By');
 });
+
+test('submitting ASN with physical items validates serial numbers and quantity match', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+    Product::create([
+        'sku_code' => 'SKU-PHYS-1',
+        'name' => 'Physical Product 1',
+        'type' => 'physical',
+        'qty' => 10,
+        'status' => 'active',
+    ]);
+
+    // 1. Missing serial numbers fails validation
+    $this->actingAs($user)
+        ->from(route('asns.create'))
+        ->post(route('asns.store'), [
+            'asn_reference' => 'ASN-PHYS-TEST-1',
+            'airway_bill' => 'AWB-1',
+            'vendor_id' => 'Solutions Four W.L.L',
+            'items' => [
+                [
+                    'sku_code' => 'SKU-PHYS-1',
+                    'quantity' => 2,
+                    'serial_numbers' => '', // Empty
+                ],
+            ],
+            'status' => 'submitted',
+        ])
+        ->assertRedirect(route('asns.create'))
+        ->assertSessionHasErrors('items.0.serial_numbers');
+
+    // 2. Quantity and serial count mismatch fails validation
+    $this->actingAs($user)
+        ->from(route('asns.create'))
+        ->post(route('asns.store'), [
+            'asn_reference' => 'ASN-PHYS-TEST-2',
+            'airway_bill' => 'AWB-2',
+            'vendor_id' => 'Solutions Four W.L.L',
+            'items' => [
+                [
+                    'sku_code' => 'SKU-PHYS-1',
+                    'quantity' => 2,
+                    'serial_numbers' => 'SN-001', // Count is 1, qty is 2
+                ],
+            ],
+            'status' => 'submitted',
+        ])
+        ->assertRedirect(route('asns.create'))
+        ->assertSessionHasErrors('items.0.serial_numbers');
+
+    // 3. Correct match passes validation
+    $this->actingAs($user)
+        ->post(route('asns.store'), [
+            'asn_reference' => 'ASN-PHYS-TEST-3',
+            'airway_bill' => 'AWB-3',
+            'vendor_id' => 'Solutions Four W.L.L',
+            'items' => [
+                [
+                    'sku_code' => 'SKU-PHYS-1',
+                    'quantity' => 2,
+                    'serial_numbers' => 'SN-001, SN-002',
+                ],
+            ],
+            'status' => 'submitted',
+        ])
+        ->assertRedirect(route('asns.index'));
+});

@@ -204,7 +204,14 @@
                     @foreach($asn->items as $index => $item)
                         <tr>
                             <td style="color: var(--text-secondary);">{{ $index + 1 }}</td>
-                            <td style="font-weight: 600;">{{ $item->sku_code }}</td>
+                            <td style="font-weight: 600;">
+                                {{ $item->sku_code }}
+                                @if($item->serial_numbers)
+                                    <div style="font-size: 0.75rem; color: var(--success); font-family: monospace; font-weight: normal; margin-top: 0.25rem;">
+                                        S/N: {{ $item->serial_numbers }}
+                                    </div>
+                                @endif
+                            </td>
                             <td>{{ $item->quantity }}</td>
                             <td>{{ $item->received_qty ?? '-' }}</td>
                             <td>

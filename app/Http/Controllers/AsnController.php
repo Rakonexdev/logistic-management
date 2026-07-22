@@ -53,15 +53,35 @@ class AsnController extends Controller
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.serial_numbers' => 'nullable|string',
             'status' => 'required|in:draft,submitted',
         ]);
 
         foreach ($request->items as $index => $item) {
             $product = Product::where('sku_code', $item['sku_code'])->first();
-            if ($product && $item['quantity'] > $product->qty) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+            if ($product) {
+                if ($item['quantity'] > $product->qty) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+                }
+
+                if ($product->type === 'physical') {
+                    $serialsStr = $item['serial_numbers'] ?? '';
+                    $serials = array_filter(array_map('trim', explode(',', $serialsStr)));
+
+                    if (empty($serials)) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(["items.{$index}.serial_numbers" => "Serial numbers are required for physical SKU {$item['sku_code']}."]);
+                    }
+
+                    if (count($serials) !== (int) $item['quantity']) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(["items.{$index}.serial_numbers" => 'Number of serial numbers ('.count($serials).') does not match quantity ('.$item['quantity'].") for SKU {$item['sku_code']}."]);
+                    }
+                }
             }
         }
 
@@ -88,6 +108,7 @@ class AsnController extends Controller
                 'asn_id' => $asn->id,
                 'sku_code' => $item['sku_code'],
                 'quantity' => $item['quantity'],
+                'serial_numbers' => $item['serial_numbers'] ?? null,
             ]);
         }
 
@@ -142,15 +163,35 @@ class AsnController extends Controller
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string|exists:products,sku_code',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.serial_numbers' => 'nullable|string',
             'status' => 'required|in:draft,submitted',
         ]);
 
         foreach ($request->items as $index => $item) {
             $product = Product::where('sku_code', $item['sku_code'])->first();
-            if ($product && $item['quantity'] > $product->qty) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+            if ($product) {
+                if ($item['quantity'] > $product->qty) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(["items.{$index}.quantity" => "The quantity for SKU {$item['sku_code']} cannot exceed the actual product quantity ({$product->qty})."]);
+                }
+
+                if ($product->type === 'physical') {
+                    $serialsStr = $item['serial_numbers'] ?? '';
+                    $serials = array_filter(array_map('trim', explode(',', $serialsStr)));
+
+                    if (empty($serials)) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(["items.{$index}.serial_numbers" => "Serial numbers are required for physical SKU {$item['sku_code']}."]);
+                    }
+
+                    if (count($serials) !== (int) $item['quantity']) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(["items.{$index}.serial_numbers" => 'Number of serial numbers ('.count($serials).') does not match quantity ('.$item['quantity'].") for SKU {$item['sku_code']}."]);
+                    }
+                }
             }
         }
 
@@ -183,6 +224,7 @@ class AsnController extends Controller
                 'asn_id' => $asn->id,
                 'sku_code' => $item['sku_code'],
                 'quantity' => $item['quantity'],
+                'serial_numbers' => $item['serial_numbers'] ?? null,
             ]);
         }
 
@@ -195,7 +237,7 @@ class AsnController extends Controller
             'Content-type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename=equipment_list_template.csv',
         ];
-        $columns = ['sku_code', 'quantity'];
+        $columns = ['sku_code', 'quantity', 'serial_numbers'];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');

@@ -15,7 +15,7 @@ test('authenticated users can store and update product with serial number', func
         'name' => 'Serial Test Product',
         'type' => 'physical',
         'qty' => 5,
-        'serial_number' => 'FG100FTK25011385',
+        'serial_numbers' => ['FG100FTK25011385'],
         'vendor_id' => 'V-FORTINET',
         'category' => 'Firewall',
         'status' => 'active',
@@ -34,7 +34,7 @@ test('authenticated users can store and update product with serial number', func
     $product = Product::where('sku_code', 'SKU-SERIAL-TEST')->first();
 
     $this->actingAs($user)
-        ->put(route('products.update', $product->id), array_merge($payload, ['serial_number' => 'FG100FTK25011386']))
+        ->put(route('products.update', $product->id), array_merge($payload, ['serial_numbers' => ['FG100FTK25011386']]))
         ->assertRedirect(route('products.index'));
 
     $this->assertDatabaseHas('products', [
@@ -89,7 +89,48 @@ test('adding a product with duplicate serial number fails validation', function 
             'name' => 'Duplicate SN Product',
             'type' => 'physical',
             'qty' => 2,
-            'serial_number' => 'FG100FTK25011385', // duplicate
+            'serial_numbers' => ['FG100FTK25011385'], // duplicate
+            'status' => 'active',
+        ]);
+
+    $response->assertRedirect(route('products.create'));
+    $response->assertSessionHasErrors('serial_number');
+});
+
+test('adding a product with multiple serial numbers works and checks each for duplicates', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+
+    // Create a product with some serials
+    Product::create([
+        'sku_code' => 'SKU-A',
+        'name' => 'Product A',
+        'type' => 'physical',
+        'qty' => 2,
+        'serial_number' => 'SN-101, SN-102',
+        'status' => 'active',
+    ]);
+
+    // Storing another product with different serials should pass
+    $this->actingAs($user)
+        ->post(route('products.store'), [
+            'sku_code' => 'SKU-B',
+            'name' => 'Product B',
+            'type' => 'physical',
+            'qty' => 2,
+            'serial_numbers' => ['SN-103', 'SN-104'],
+            'status' => 'active',
+        ])
+        ->assertRedirect(route('products.index'));
+
+    // Storing a product containing a duplicate serial (e.g. SN-101) in its list should fail
+    $response = $this->actingAs($user)
+        ->from(route('products.create'))
+        ->post(route('products.store'), [
+            'sku_code' => 'SKU-C',
+            'name' => 'Product C',
+            'type' => 'physical',
+            'qty' => 2,
+            'serial_numbers' => ['SN-105', 'SN-101'], // SN-101 is duplicate
             'status' => 'active',
         ]);
 

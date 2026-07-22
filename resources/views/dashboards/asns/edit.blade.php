@@ -191,6 +191,7 @@
                     <tr>
                         <th>Product / SKU *</th>
                         <th>Quantity *</th>
+                        <th>Serial Numbers</th>
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
@@ -202,6 +203,9 @@
                         </td>
                         <td>
                             <input type="number" name="items[{{ $index }}][quantity]" class="form-input" required min="1" placeholder="Qty" value="{{ old('items.'.$index.'.quantity', $item->quantity) }}">
+                        </td>
+                        <td>
+                            <input type="text" name="items[{{ $index }}][serial_numbers]" class="form-input" placeholder="Comma-separated serials (e.g. SN-1, SN-2)" value="{{ old('items.'.$index.'.serial_numbers', $item->serial_numbers) }}">
                         </td>
                         <td>
                             <button type="button" class="remove-row" onclick="this.closest('tr').remove()">
@@ -260,7 +264,7 @@
     <script>
         let rowCount = {{ $asn->items->count() > 0 ? $asn->items->count() : 1 }};
 
-        function addRow(sku = '', qty = '') {
+        function addRow(sku = '', qty = '', serials = '') {
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -269,6 +273,9 @@
                 </td>
                 <td>
                     <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}">
+                </td>
+                <td>
+                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="Comma-separated serials (e.g. SN-1, SN-2)" value="${serials}">
                 </td>
                 <td>
                     <button type="button" class="remove-row" onclick="this.closest('tr').remove()">
@@ -385,7 +392,8 @@
                             }
                             
                             if (sku && !isNaN(qty)) {
-                                addRow(sku, qty);
+                                const serials = cols[5] ? cols[5].trim() : '';
+                                addRow(sku, qty, serials);
                                 addedCount++;
                             }
                         }
@@ -393,8 +401,9 @@
                         if (cols.length >= 2) {
                             const sku = cols[0].trim();
                             const qty = parseInt(cols[1].trim());
+                            const serials = cols[2] ? cols[2].trim() : '';
                             if (sku && !isNaN(qty)) {
-                                addRow(sku, qty);
+                                addRow(sku, qty, serials);
                                 addedCount++;
                             }
                         }

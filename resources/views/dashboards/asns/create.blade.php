@@ -190,6 +190,7 @@
                     <tr>
                         <th>Product / SKU *</th>
                         <th>Quantity *</th>
+                        <th>Serial Numbers</th>
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
@@ -200,6 +201,9 @@
                         </td>
                         <td>
                             <input type="number" name="items[0][quantity]" class="form-input" required min="1" placeholder="Qty">
+                        </td>
+                        <td>
+                            <input type="text" name="items[0][serial_numbers]" class="form-input" placeholder="Comma-separated serials (e.g. SN-1, SN-2)">
                         </td>
                         <td>
                             <button type="button" class="remove-row" onclick="this.closest('tr').remove()">
@@ -251,7 +255,7 @@
     <script>
         let rowCount = 1;
 
-        function addRow(sku = '', qty = '') {
+        function addRow(sku = '', qty = '', serials = '') {
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -260,6 +264,9 @@
                 </td>
                 <td>
                     <input type="number" name="items[${rowCount}][quantity]" class="form-input" required min="1" placeholder="Qty" value="${qty}">
+                </td>
+                <td>
+                    <input type="text" name="items[${rowCount}][serial_numbers]" class="form-input" placeholder="Comma-separated serials (e.g. SN-1, SN-2)" value="${serials}">
                 </td>
                 <td>
                     <button type="button" class="remove-row" onclick="this.closest('tr').remove()">
@@ -328,8 +335,9 @@
                     if (cols.length >= 2) {
                         const sku = cols[0].trim();
                         const qty = parseInt(cols[1].trim());
+                        const serials = cols[2] ? cols[2].trim() : '';
                         if (sku && !isNaN(qty)) {
-                            addRow(sku, qty);
+                            addRow(sku, qty, serials);
                             addedCount++;
                         }
                     }
