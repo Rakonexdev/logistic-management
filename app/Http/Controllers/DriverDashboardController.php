@@ -93,7 +93,7 @@ class DriverDashboardController extends Controller
     public function markDelivered(Request $request, $id)
     {
         $request->validate([
-            'recipient_name' => ['required', 'string', 'max:255'],
+            'recipient_name' => ['nullable', 'string', 'max:255'],
             'delivery_remarks' => ['nullable', 'string'],
             'signed_proof' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'delivery_photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -147,7 +147,7 @@ class DriverDashboardController extends Controller
 
         $model->update([
             'delivery_status' => 'Delivered',
-            'recipient_name' => $request->recipient_name,
+            'recipient_name' => $request->recipient_name ?? 'N/A',
             'signed_proof_path' => $signedProofPath,
             'delivery_photo_path' => $deliveryPhotoPath,
             'delivery_remarks' => $request->delivery_remarks,

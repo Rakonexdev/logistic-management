@@ -525,14 +525,7 @@
                         </div>
                         <div class="task-detail">
                             <i class="ph ph-map-pin" style="color: var(--accent-primary);"></i>
-                            @if($order->customer_address && $order->customer_address !== 'N/A')
-                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($order->customer_address) }}" target="_blank" onclick="event.stopPropagation();" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                    <span style="border-bottom: 1px dashed var(--text-secondary); cursor: pointer;" title="Open in Google Maps">{{ $order->customer_address }}</span>
-                                    <i class="ph ph-arrow-square-out" style="font-size: 0.85rem; opacity: 0.7;"></i>
-                                </a>
-                            @else
-                                <span>N/A</span>
-                            @endif
+                            <span>{{ $order->customer_address && $order->customer_address !== 'N/A' ? $order->customer_address : 'N/A' }}</span>
                         </div>
 
                         <!-- Expandable Drawer -->
@@ -594,31 +587,10 @@
                             @endif
 
                             <!-- Execution Actions -->
-                            @if($order->delivery_status === 'Assigned')
-                                <form action="{{ route('driver.deliveries.arrive', $cardId) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="ph ph-navigation-arrow"></i> Mark Arrived
-                                    </button>
-                                </form>
-                                <button type="button" class="btn btn-danger" onclick="toggleIssueBox(event, 'delivery-issue-{{ $cardId }}')">
-                                    <i class="ph ph-warning-octagon"></i> Report Issue
-                                </button>
-
-                                <div id="delivery-issue-{{ $cardId }}" class="issue-box">
-                                    <form action="{{ route('driver.deliveries.issue', $cardId) }}" method="POST">
-                                        @csrf
-                                        <input type="text" name="delivery_issue" placeholder="Describe the issue (e.g. Traffic, flat tire)" class="form-input" required>
-                                        <button type="submit" class="btn btn-danger">Submit Issue</button>
-                                    </form>
-                                </div>
-                            @elseif($order->delivery_status === 'Arrived')
+                            @if($order->delivery_status !== 'Delivered')
                                 <form action="{{ route('driver.deliveries.complete', $cardId) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <div class="form-group" style="margin-top: 1rem;">
-                                        <input type="text" name="recipient_name" placeholder="Recipient Name" class="form-input" required>
-                                        <input type="text" name="delivery_remarks" placeholder="Remarks / Delivery Notes" class="form-input">
-                                        
                                         <div class="form-file">
                                             <label for="signed_proof-{{ $cardId }}">Upload Signed Proof (POD)</label>
                                             <input type="file" id="signed_proof-{{ $cardId }}" name="signed_proof" accept="image/*" required>
