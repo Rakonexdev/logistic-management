@@ -415,7 +415,7 @@
 
                     <div class="nav-group">
                         <div class="nav-group-title">Reverse Logistics</div>
-                        <a href="#" class="nav-link">
+                        <a href="{{ route('return-instructions.index') }}" class="nav-link {{ request()->is('*/return-instructions*') ? 'active' : '' }}">
                             <i class="ph ph-arrow-u-up-left"></i> Return Instructions
                         </a>
                     </div>

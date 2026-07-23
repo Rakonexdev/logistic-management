@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
 use App\Http\Controllers\AsnController;
 use App\Http\Controllers\DeliveryInstructionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReturnInstructionController;
 use App\Http\Controllers\SalesOrderController;
 
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
@@ -73,13 +74,18 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::post('delivery-notes/{id}/release', [DeliveryInstructionController::class, 'releaseDeliveryNote'])->name('delivery-notes.release');
     Route::get('delivery-notes', [DeliveryInstructionController::class, 'deliveryNotesIndex'])->name('delivery-notes.index');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
+
+    // Return Instruction Routes
+    Route::post('return-instructions/{id}/inspection', [ReturnInstructionController::class, 'updateInspection'])->name('return-instructions.inspection');
+    Route::resource('return-instructions', ReturnInstructionController::class);
 });
 
-// Shared ASN & Delivery Note Routes (placed after resource/static routes to avoid wildcard conflicts)
+// Shared ASN, Delivery Note & Return Print Routes (placed after resource/static routes to avoid wildcard conflicts)
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('asns/{asn}/report', [AsnController::class, 'generateReport'])->name('asns.report');
     Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
     Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
+    Route::get('return-instructions/{id}/print', [ReturnInstructionController::class, 'print'])->name('return-instructions.print');
 });
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
@@ -106,6 +112,8 @@ Route::middleware(['auth', 'role:sfq_user'])->group(function () {
     Route::post('/sfq/deliveries/complete', [SfqController::class, 'deliveryComplete'])->name('sfq.deliveries.complete');
 
     Route::get('/sfq/returns', [SfqController::class, 'returnsIndex'])->name('sfq.returns.index');
+    Route::post('/sfq/returns/assign', [SfqController::class, 'returnsAssign'])->name('sfq.returns.assign');
+    Route::post('/sfq/returns/status', [SfqController::class, 'returnsStatusUpdate'])->name('sfq.returns.status');
     Route::post('/sfq/returns/classify', [SfqController::class, 'returnsClassify'])->name('sfq.returns.classify');
 
     Route::get('/sfq/cheques', [SfqController::class, 'chequesIndex'])->name('sfq.cheques.index');

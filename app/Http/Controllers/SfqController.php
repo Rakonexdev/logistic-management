@@ -8,6 +8,7 @@ use App\Models\ChequeCollection;
 use App\Models\DeliveryNote;
 use App\Models\Location;
 use App\Models\Product;
+use App\Models\ReturnInstruction;
 use App\Models\ReturnPickup;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
@@ -349,34 +350,127 @@ class SfqController extends Controller
 
     public function returnsIndex()
     {
-        $returns = ReturnPickup::latest()->get()->map(function ($ret) {
-            return [
-                'ref' => $ret->return_ref,
-                'driver' => $ret->driver ?? '-',
-                'sku' => $ret->product_sku,
-                'qty' => $ret->quantity,
-                'classification' => $ret->classification ?? 'Re-stockable',
-                'status' => $ret->status,
-            ];
-        });
+        $instructions = ReturnInstruction::with('items')->latest()->get();
+        $locations = Location::all();
 
-        return view('dashboards.sfq.returns', compact('returns'));
+        $legacyReturns = ReturnPickup::latest()->get();
+
+        return view('dashboards.sfq.returns', compact('instructions', 'locations', 'legacyReturns'));
+    }
+
+    public function returnsAssign(Request $request)
+    {
+        $request->validate([
+            'return_ref' => 'required|string|exists:return_instructions,return_ref',
+            'driver_name' => 'required|string|max:255',
+            'storing_location' => 'required|string|max:255',
+        ]);
+
+        $instruction = ReturnInstruction::where('return_ref', $request->return_ref)->firstOrFail();
+        $instruction->update([
+            'driver_name' => $request->driver_name,
+            'storing_location' => $request->storing_location,
+            'status' => 'Driver Assigned',
+        ]);
+
+        return back()->with('success', "Driver {$request->driver_name} and location {$request->storing_location} assigned to Return {$instruction->return_ref}.");
+    }
+
+    public function returnsStatusUpdate(Request $request)
+    {
+        $request->validate([
+            'return_ref' => 'required|string|exists:return_instructions,return_ref',
+            'status' => 'required|in:Picked Up,Stored',
+        ]);
+
+        $instruction = ReturnInstruction::with('items')->where('return_ref', $request->return_ref)->firstOrFail();
+        $updateData = ['status' => $request->status];
+
+        if ($request->status === 'Picked Up') {
+            $updateData['picking_date'] = now();
+        } elseif ($request->status === 'Stored') {
+            $updateData['storing_date'] = now();
+
+            // Auto restock inventory if classification is Re-stockable or default
+            if (empty($instruction->classification) || $instruction->classification === 'Re-stockable') {
+                foreach ($instruction->items as $item) {
+                    $product = Product::where('sku_code', $item->sku_code)->first();
+                    if ($product) {
+                        $product->increment('qty', $item->quantity);
+                        if ($item->serial_numbers) {
+                            $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
+                            $newSerials = array_filter(array_map('trim', explode(',', $item->serial_numbers)));
+                            $mergedSerials = array_values(array_unique(array_merge($existingSerials, $newSerials)));
+                            $product->update(['serial_number' => implode(', ', $mergedSerials)]);
+                        }
+                    }
+                }
+            }
+        }
+
+        $instruction->update($updateData);
+
+        return back()->with('success', "Return {$instruction->return_ref} status updated to {$request->status}.");
     }
 
     public function returnsClassify(Request $request)
     {
         $request->validate([
-            'return_ref' => 'required|string|exists:return_pickups,return_ref',
+            'return_ref' => 'required|string|exists:return_instructions,return_ref',
             'classification' => 'required|in:Defective,Re-stockable',
+            'ship_back' => 'nullable|boolean',
+            'tracking_number' => 'nullable|string|max:255',
+            'courier_name' => 'nullable|string|max:255',
+            'shipping_charges' => 'nullable|numeric|min:0',
         ]);
 
-        $return = ReturnPickup::where('return_ref', $request->return_ref)->firstOrFail();
-        $return->update([
+        $instruction = ReturnInstruction::with('items')->where('return_ref', $request->return_ref)->first();
+
+        if (! $instruction) {
+            // Legacy ReturnPickup fallback
+            $return = ReturnPickup::where('return_ref', $request->return_ref)->firstOrFail();
+            $return->update([
+                'classification' => $request->classification,
+                'status' => 'Returned to Warehouse',
+            ]);
+
+            return back()->with('success', "Return reference {$request->return_ref} classified as {$request->classification}.");
+        }
+
+        $updateData = [
             'classification' => $request->classification,
-            'status' => 'Returned to Warehouse',
-        ]);
+            'inspection_status' => $request->classification === 'Defective' ? 'Failed' : 'Passed',
+        ];
 
-        return back()->with('success', "Return reference {$request->return_ref} classified as {$request->classification}.");
+        if ($request->filled('ship_back') && $request->ship_back) {
+            $updateData['status'] = 'Shipped to END';
+            $updateData['shipped_back_date'] = now();
+            $updateData['tracking_number'] = $request->tracking_number;
+            $updateData['courier_name'] = $request->courier_name;
+            $updateData['shipping_charges'] = $request->shipping_charges;
+        } else {
+            $updateData['status'] = 'Completed';
+        }
+
+        // If classified as Re-stockable and not yet restocked
+        if ($request->classification === 'Re-stockable' && $instruction->status !== 'Stored') {
+            foreach ($instruction->items as $item) {
+                $product = Product::where('sku_code', $item->sku_code)->first();
+                if ($product) {
+                    $product->increment('qty', $item->quantity);
+                    if ($item->serial_numbers) {
+                        $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
+                        $newSerials = array_filter(array_map('trim', explode(',', $item->serial_numbers)));
+                        $mergedSerials = array_values(array_unique(array_merge($existingSerials, $newSerials)));
+                        $product->update(['serial_number' => implode(', ', $mergedSerials)]);
+                    }
+                }
+            }
+        }
+
+        $instruction->update($updateData);
+
+        return back()->with('success', "Return {$instruction->return_ref} classified as {$request->classification}.");
     }
 
     public function chequesIndex()
