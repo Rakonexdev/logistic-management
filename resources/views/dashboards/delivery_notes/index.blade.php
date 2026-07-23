@@ -27,7 +27,7 @@
                         <th style="padding: 1rem;">DN Number</th>
                         <th style="padding: 1rem;">DI Number</th>
                         <th style="padding: 1rem;">Customer</th>
-                        <th style="padding: 1rem;">Delivered Items & Serials</th>
+                        <th style="padding: 1rem;">PRODUCT / SERIAL NUMBER</th>
                         <th style="padding: 1rem;">Created At</th>
                         <th style="padding: 1rem;">Actions</th>
                     </tr>
@@ -39,24 +39,24 @@
                             <td style="padding: 1rem;">{{ $note->deliveryInstruction->di_number ?? 'N/A' }}</td>
                             <td style="padding: 1rem;">{{ $note->deliveryInstruction->customer_name ?? 'N/A' }}</td>
                             <td style="padding: 1rem;">
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    @foreach($note->items->take(2) as $item)
-                                        <div style="font-size: 0.85rem;">
-                                            {{ $item->sku_code }} - <span style="color: var(--text-secondary);">{{ $item->description ?? '' }}</span> (Qty: <strong>{{ $item->quantity }}</strong>)
+                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                    @foreach($note->items as $item)
+                                        <div class="serial-toggle-wrap" style="font-size: 0.85rem;">
                                             @if($item->serial_numbers)
-                                                <span style="display: block; font-size: 0.75rem; color: var(--success);">
+                                                <button type="button" class="serial-toggle-btn" onclick="toggleDnSerials(this)" style="background: none; border: none; padding: 0; color: var(--text-primary); font-size: 0.85rem; font-family: inherit; cursor: pointer; text-align: left; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                                    <strong>{{ $item->sku_code }}</strong>
+                                                    <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem; color: var(--accent-primary, #6366f1);"></i>
+                                                </button>
+                                                <div class="serial-full-text" style="display: none; font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; margin-top: 0.2rem; word-break: break-all; padding-left: 0.5rem; border-left: 2px solid var(--accent-primary, #6366f1);">
                                                     S/N: {{ $item->serial_numbers }}
-                                                </span>
+                                                </div>
+                                            @else
+                                                <div>
+                                                    <strong>{{ $item->sku_code }}</strong>
+                                                </div>
                                             @endif
                                         </div>
                                     @endforeach
-
-                                    @if(count($note->items) > 2)
-                                        <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; margin-top: 0.25rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.25rem;"
-                                                onclick="showItemsModal('{{ $note->dn_number }}', {{ htmlspecialchars(json_encode($note->items), ENT_QUOTES, 'UTF-8') }})">
-                                            <i class="ph ph-eye"></i> View More (+{{ count($note->items) - 2 }})
-                                        </button>
-                                    @endif
                                 </div>
                             </td>
                             <td style="padding: 1rem;">{{ $note->created_at->format('Y-m-d H:i') }}</td>
@@ -108,6 +108,26 @@
 
     @push('scripts')
         <script>
+            function toggleDnSerials(btn) {
+                const wrap = btn.closest('.serial-toggle-wrap');
+                const text = wrap.querySelector('.serial-full-text');
+                const icon = btn.querySelector('.serial-icon');
+
+                if (text.style.display === 'none') {
+                    text.style.display = 'block';
+                    if (icon) {
+                        icon.classList.remove('ph-caret-down');
+                        icon.classList.add('ph-caret-up');
+                    }
+                } else {
+                    text.style.display = 'none';
+                    if (icon) {
+                        icon.classList.remove('ph-caret-up');
+                        icon.classList.add('ph-caret-down');
+                    }
+                }
+            }
+
             function showItemsModal(dnNumber, items) {
                 document.getElementById('modalTitle').textContent = 'Items for ' + dnNumber;
                 const body = document.getElementById('modalBody');

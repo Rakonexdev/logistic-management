@@ -128,7 +128,7 @@
                         <th>Customer</th>
                         <th>Address</th>
                         <th>Status</th>
-                        <th>Items Status (Delivered / Ordered)</th>
+                        <th>PRODUCT / SERIAL NUMBER</th>
                         <th>Date</th>
                         <th>Actions</th>
                     </tr>
@@ -145,26 +145,24 @@
                                 </span>
                             </td>
                             <td>
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    @foreach($di->items->take(2) as $item)
-                                        <div style="font-size: 0.85rem;">
-                                            {{ $item->sku_code }} - <span
-                                                style="color: var(--text-secondary);">{{ $item->description ?? 'No Description' }}</span>
-                                            (<strong>{{ $item->delivered_quantity }}</strong> / {{ $item->quantity }})
+                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                    @foreach($di->items as $item)
+                                        <div class="serial-toggle-wrap" style="font-size: 0.85rem;">
                                             @if($item->serial_numbers)
-                                                <span style="display: block; font-size: 0.75rem; color: var(--text-secondary);">
+                                                <button type="button" class="serial-toggle-btn" onclick="toggleDiSerials(this)" style="background: none; border: none; padding: 0; color: var(--text-primary); font-size: 0.85rem; font-family: inherit; cursor: pointer; text-align: left; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                                    <strong>{{ $item->sku_code }}</strong>
+                                                    <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem; color: var(--accent-primary, #6366f1);"></i>
+                                                </button>
+                                                <div class="serial-full-text" style="display: none; font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; margin-top: 0.2rem; word-break: break-all; padding-left: 0.5rem; border-left: 2px solid var(--accent-primary, #6366f1);">
                                                     S/N: {{ $item->serial_numbers }}
-                                                </span>
+                                                </div>
+                                            @else
+                                                <div>
+                                                    <strong>{{ $item->sku_code }}</strong>
+                                                </div>
                                             @endif
                                         </div>
                                     @endforeach
-
-                                    @if(count($di->items) > 2)
-                                        <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; margin-top: 0.25rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.25rem;"
-                                                onclick="showItemsModal('{{ $di->di_number }}', {{ htmlspecialchars(json_encode($di->items), ENT_QUOTES, 'UTF-8') }})">
-                                            <i class="ph ph-eye"></i> View More (+{{ count($di->items) - 2 }})
-                                        </button>
-                                    @endif
                                 </div>
                             </td>
                             <td>{{ $di->created_at->format('Y-m-d H:i') }}</td>
@@ -222,6 +220,29 @@
 
     @push('scripts')
         <script>
+            function toggleDiSerials(btn) {
+                const wrap = btn.closest('.serial-toggle-wrap');
+                const text = wrap.querySelector('.serial-full-text');
+                const btnText = btn.querySelector('.serial-btn-text');
+                const icon = btn.querySelector('.serial-icon');
+
+                if (text.style.display === 'none') {
+                    text.style.display = 'block';
+                    btnText.textContent = 'Hide Serial Numbers';
+                    if (icon) {
+                        icon.classList.remove('ph-caret-down');
+                        icon.classList.add('ph-caret-up');
+                    }
+                } else {
+                    text.style.display = 'none';
+                    btnText.textContent = 'View Serial Numbers';
+                    if (icon) {
+                        icon.classList.remove('ph-caret-up');
+                        icon.classList.add('ph-caret-down');
+                    }
+                }
+            }
+
             function showItemsModal(diNumber, items) {
                 document.getElementById('modalTitle').textContent = 'Items for ' + diNumber;
                 const body = document.getElementById('modalBody');

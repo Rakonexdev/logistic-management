@@ -350,21 +350,38 @@
 
                 items.forEach((item, idx) => {
                     const row = document.createElement('tr');
-                    const isChecked = item.received_qty !== null ? 'checked' : '';
-                    const rQty = item.received_qty !== null ? item.received_qty : item.quantity;
+                    const isChecked = item.received_qty !== null && item.received_qty > 0 ? 'checked' : '';
+                    const rQty = item.received_qty !== null ? item.received_qty : 0;
                     const dQty = item.discrepancy_qty !== null ? item.discrepancy_qty : 0;
-                    const serialsStr = item.serial_numbers || '-';
                     const showMissingInput = dQty !== 0 || item.missing_serials ? '' : 'display: none;';
+
+                    const rawSerials = item.serial_numbers ? item.serial_numbers.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                    let serialsHtml = '';
+
+                    if (rawSerials.length > 0) {
+                        serialsHtml = `<div style="display: flex; flex-direction: column; gap: 0.35rem; padding: 0.25rem 0;">`;
+                        rawSerials.forEach((sn) => {
+                            const isSnChecked = item.received_qty !== null && item.received_qty > 0 ? 'checked' : '';
+                            serialsHtml += `
+                                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="serial-checkbox-${idx} form-checkbox" data-sn="${sn}" ${isSnChecked} onchange="onIndividualSerialChange(${idx}, '${item.sku_code}', ${item.quantity})" style="width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-family: monospace; font-size: 0.85rem; color: var(--text-primary);">${sn}</span>
+                                </label>
+                            `;
+                        });
+                        serialsHtml += `</div>`;
+                    } else {
+                        serialsHtml = '<span style="color: var(--text-secondary); font-size: 0.85rem;">-</span>';
+                    }
+
                     row.innerHTML = `
                         <td style="text-align: center;">
-                            <input type="checkbox" name="verified[${item.sku_code}]" value="1" class="form-checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isChecked}>
+                            <input type="checkbox" id="main-verify-${idx}" name="verified[${item.sku_code}]" value="1" class="form-checkbox" style="width: 18px; height: 18px; cursor: pointer;" ${isChecked} onchange="onMainVerifyChange(${idx}, '${item.sku_code}', ${item.quantity})">
                         </td>
                         <td><strong>${item.sku_code}</strong></td>
                         <td>
-                            <span style="font-size: 0.85rem; color: var(--text-primary); font-family: monospace; background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block;">
-                                ${serialsStr}
-                            </span>
-                            <input type="hidden" name="items[${idx}][serial_numbers]" value="${item.serial_numbers || ''}">
+                            ${serialsHtml}
+                            <input type="hidden" id="serial-hidden-${idx}" name="items[${idx}][serial_numbers]" value="${item.serial_numbers || ''}">
                             <div id="missing-sn-wrap-${idx}" style="${showMissingInput} margin-top: 0.4rem;">
                                 <input type="text" name="missing_serials[${item.sku_code}]" id="missing-sn-${idx}" class="form-input" style="font-size: 0.8rem; padding: 0.35rem 0.5rem; border-color: var(--danger, #ef4444);" placeholder="Missing S/N (e.g. SN-1002)" value="${item.missing_serials || ''}">
                             </div>
@@ -375,7 +392,7 @@
                             <input type="hidden" name="items[${idx}][expected_qty]" value="${item.quantity}">
                         </td>
                         <td>
-                            <input type="number" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}', 'missing-sn-wrap-${idx}')">
+                            <input type="number" id="rec-qty-${idx}" name="received_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${rQty}" min="0" oninput="calculateDiscrepancy(this, ${item.quantity}, 'disc-${idx}', 'missing-sn-wrap-${idx}')">
                         </td>
                         <td>
                             <input type="number" id="disc-${idx}" name="discrepancy_qty[${item.sku_code}]" class="form-input" style="width: 100px; padding: 0.5rem;" value="${dQty}" oninput="toggleMissingWrap('disc-${idx}', 'missing-sn-wrap-${idx}')">
@@ -400,6 +417,62 @@
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger);">Failed to load ASN items</td></tr>';
             });
         });
+
+        function onMainVerifyChange(idx, sku, expectedQty) {
+            const mainVerify = document.getElementById(`main-verify-${idx}`);
+            const serialCheckboxes = document.querySelectorAll(`.serial-checkbox-${idx}`);
+            const recQtyInput = document.getElementById(`rec-qty-${idx}`);
+
+            if (mainVerify && serialCheckboxes.length > 0) {
+                serialCheckboxes.forEach(cb => {
+                    cb.checked = mainVerify.checked;
+                });
+                onIndividualSerialChange(idx, sku, expectedQty);
+            } else if (mainVerify && recQtyInput) {
+                recQtyInput.value = mainVerify.checked ? expectedQty : 0;
+                calculateDiscrepancy(recQtyInput, expectedQty, `disc-${idx}`, `missing-sn-wrap-${idx}`);
+            }
+        }
+
+        function onIndividualSerialChange(idx, sku, expectedQty) {
+            const serialCheckboxes = document.querySelectorAll(`.serial-checkbox-${idx}`);
+            const mainVerify = document.getElementById(`main-verify-${idx}`);
+            const recQtyInput = document.getElementById(`rec-qty-${idx}`);
+            const missingInput = document.getElementById(`missing-sn-${idx}`);
+            const hiddenSerials = document.getElementById(`serial-hidden-${idx}`);
+
+            if (serialCheckboxes.length > 0) {
+                let checkedCount = 0;
+                let missingSerials = [];
+                let checkedSerials = [];
+
+                serialCheckboxes.forEach(cb => {
+                    if (cb.checked) {
+                        checkedCount++;
+                        checkedSerials.push(cb.getAttribute('data-sn'));
+                    } else {
+                        missingSerials.push(cb.getAttribute('data-sn'));
+                    }
+                });
+
+                if (mainVerify) {
+                    mainVerify.checked = (checkedCount === serialCheckboxes.length);
+                }
+
+                if (recQtyInput) {
+                    recQtyInput.value = checkedCount;
+                    calculateDiscrepancy(recQtyInput, expectedQty, `disc-${idx}`, `missing-sn-wrap-${idx}`);
+                }
+
+                if (missingInput) {
+                    missingInput.value = missingSerials.join(', ');
+                }
+
+                if (hiddenSerials) {
+                    hiddenSerials.value = checkedSerials.join(', ');
+                }
+            }
+        }
 
         function calculateDiscrepancy(input, expected, discId, missingWrapId) {
             const received = parseInt(input.value) || 0;

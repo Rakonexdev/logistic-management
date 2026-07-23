@@ -119,7 +119,7 @@ class SfqController extends Controller
 
             $locationsList = Location::where('sku', $product->sku_code)->get();
             if ($locationsList->isEmpty()) {
-                $product->location_info = 'WH-2';
+                $product->location_info = 'WH-1';
             } else {
                 $locationStrings = [];
                 foreach ($locationsList as $loc) {
