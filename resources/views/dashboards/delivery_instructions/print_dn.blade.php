@@ -227,13 +227,19 @@
             </div>
         </div>
 
+        <!-- Opening Salutation & Intro Paragraph -->
+        <div style="margin-bottom: 12px; font-size: 11px; line-height: 1.5; color: #222;">
+            <strong>Dear Sir,</strong><br>
+            Please release the following warehouse items as detailed below:
+        </div>
+
         <!-- Items Table -->
         <table class="data-table">
             <thead>
                 <tr>
                     <th style="width: 5%; text-align: center;">#</th>
                     <th style="width: 25%;">SKU</th>
-                    <th style="width: 40%;">Description</th>
+                    <th style="width: 40%;">DESCRIPTION</th>
                     <th style="width: 8%; text-align: center;">QTY</th>
                     <th style="width: 22%;">SERIAL NO</th>
                 </tr>
@@ -266,6 +272,11 @@
                 </tr>
             </tbody>
         </table>
+
+        <!-- Release Confirmation Paragraph -->
+        <div style="margin-top: 10px; margin-bottom: 12px; font-size: 10px; line-height: 1.5; color: #333;">
+            The items listed above have been inspected, verified, and released from the warehouse in good order and condition according to the delivery instruction requirements.
+        </div>
 
         <div class="footer-note">
             NOTE: "NO REEXPORT/RESALE/TRANSFER TO A DIFFERENT END USER"
