@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,7 +38,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             background-attachment: fixed;
@@ -308,7 +309,7 @@
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
         }
-        
+
         .btn-danger:hover {
             background: rgba(239, 68, 68, 0.2);
         }
@@ -326,13 +327,16 @@
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background: var(--bg-color);
         }
+
         ::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
@@ -344,6 +348,7 @@
                 z-index: 1000;
                 transition: transform 0.3s;
             }
+
             .sidebar.show {
                 transform: translateX(0);
             }
@@ -351,6 +356,7 @@
     </style>
     @stack('styles')
 </head>
+
 <body>
     <div class="layout-wrapper">
         <!-- Sidebar -->
@@ -361,134 +367,149 @@
                     LogisticsPro
                 </div>
             </div>
-            
+
             <nav class="sidebar-nav">
                 @if(Auth::user()->role === 'end_user')
-                <!-- End User Navigation -->
-                <div class="nav-group">
-                    <div class="nav-group-title">Overview</div>
-                    <a href="{{ url('end-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
-                        <i class="ph ph-squares-four"></i> Dashboard
-                    </a>
-                </div>
+                    <!-- End User Navigation -->
+                    <div class="nav-group">
+                        <div class="nav-group-title">Overview</div>
+                        <a href="{{ url('end-user/dashboard') }}"
+                            class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                            <i class="ph ph-squares-four"></i> Dashboard
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Inventory</div>
-                    <a href="{{ route('products.index') }}" class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
-                        <i class="ph ph-package"></i> Product Management
-                    </a>
-                    <a href="{{ route('products.stock-visibility') }}" class="nav-link {{ request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
-                        <i class="ph ph-stack"></i> Stock
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Inventory</div>
+                        <a href="{{ route('products.index') }}"
+                            class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
+                            <i class="ph ph-package"></i> Product Management
+                        </a>
+                        <a href="{{ route('products.stock-visibility') }}"
+                            class="nav-link {{ request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
+                            <i class="ph ph-stack"></i> Stock
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Inbound</div>
-                    <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*/asns*') ? 'active' : '' }}">
-                        <i class="ph ph-download-simple"></i> Advance Shipping Note
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Inbound</div>
+                        <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*/asns*') ? 'active' : '' }}">
+                            <i class="ph ph-download-simple"></i> Advance Shipping Note
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Outbound</div>
-                    <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*/sales-orders*') ? 'active' : '' }}">
-                        <i class="ph ph-shopping-cart"></i> Sales Orders
-                    </a>
-                    <a href="{{ route('delivery-instructions.index') }}" class="nav-link {{ request()->is('*/delivery-instructions*') ? 'active' : '' }}">
-                        <i class="ph ph-truck"></i> Delivery Instructions
-                    </a>
-                    <a href="{{ route('delivery-notes.index') }}" class="nav-link {{ request()->routeIs('delivery-notes.index') ? 'active' : '' }}">
-                        <i class="ph ph-note"></i> Delivery Notes
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Outbound</div>
+                        <!-- <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*/sales-orders*') ? 'active' : '' }}">
+                            <i class="ph ph-shopping-cart"></i> Sales Orders
+                        </a> -->
+                        <a href="{{ route('delivery-instructions.index') }}"
+                            class="nav-link {{ request()->is('*/delivery-instructions*') ? 'active' : '' }}">
+                            <i class="ph ph-truck"></i> Delivery Instructions
+                        </a>
+                        <a href="{{ route('delivery-notes.index') }}"
+                            class="nav-link {{ request()->routeIs('delivery-notes.index') ? 'active' : '' }}">
+                            <i class="ph ph-note"></i> Delivery Notes
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Reverse Logistics</div>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-arrow-u-up-left"></i> Return Instructions
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Reverse Logistics</div>
+                        <a href="#" class="nav-link">
+                            <i class="ph ph-arrow-u-up-left"></i> Return Instructions
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Finance</div>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-receipt"></i> Invoices
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-currency-circle-dollar"></i> Charge Proposals
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-bank"></i> Cheque Collections
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Finance</div>
+                        <a href="#" class="nav-link">
+                            <i class="ph ph-receipt"></i> Invoices
+                        </a>
+                        <a href="#" class="nav-link">
+                            <i class="ph ph-currency-circle-dollar"></i> Charge Proposals
+                        </a>
+                        <a href="#" class="nav-link">
+                            <i class="ph ph-bank"></i> Cheque Collections
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Reporting</div>
-                    <a href="#" class="nav-link">
-                        <i class="ph ph-chart-bar"></i> Reports
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Reporting</div>
+                        <a href="#" class="nav-link">
+                            <i class="ph ph-chart-bar"></i> Reports
+                        </a>
+                    </div>
                 @else
-                <!-- SFQ User Navigation -->
-                <div class="nav-group">
-                    <div class="nav-group-title">Overview</div>
-                    <a href="{{ url('sfq-user/dashboard') }}" class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
-                        <i class="ph ph-squares-four"></i> Dashboard
-                    </a>
-                </div>
+                    <!-- SFQ User Navigation -->
+                    <div class="nav-group">
+                        <div class="nav-group-title">Overview</div>
+                        <a href="{{ url('sfq-user/dashboard') }}"
+                            class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                            <i class="ph ph-squares-four"></i> Dashboard
+                        </a>
+                    </div>
 
 
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Inbound</div>
-                    <a href="{{ route('sfq.grns.index') }}" class="nav-link {{ request()->is('*/grns*') ? 'active' : '' }}">
-                        <i class="ph ph-download-simple"></i> GRN Confirmation
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Inbound</div>
+                        <a href="{{ route('sfq.grns.index') }}"
+                            class="nav-link {{ request()->is('*/grns*') ? 'active' : '' }}">
+                            <i class="ph ph-download-simple"></i> GRN Confirmation
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Warehouse</div>
-                    <a href="{{ route('sfq.locations.index') }}" class="nav-link {{ request()->is('*/locations*') ? 'active' : '' }}">
-                        <i class="ph ph-stack"></i> Location & Stock
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Warehouse</div>
+                        <a href="{{ route('sfq.locations.index') }}"
+                            class="nav-link {{ request()->is('*/locations*') ? 'active' : '' }}">
+                            <i class="ph ph-stack"></i> Location & Stock
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Outbound</div>
-                    <a href="{{ route('sfq.fulfillment.index') }}" class="nav-link {{ request()->is('*/fulfillment*') ? 'active' : '' }}">
-                        <i class="ph ph-shopping-cart"></i> Order Fulfillment
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Outbound</div>
+                        <a href="{{ route('sfq.fulfillment.index') }}"
+                            class="nav-link {{ request()->is('*/fulfillment*') ? 'active' : '' }}">
+                            <i class="ph ph-shopping-cart"></i> Order Fulfillment
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Logistics</div>
-                    <a href="{{ route('sfq.deliveries.index') }}" class="nav-link {{ request()->is('*/deliveries*') ? 'active' : '' }}">
-                        <i class="ph ph-truck"></i> Delivery Planning
-                    </a>
-                    <a href="{{ route('sfq.returns.index') }}" class="nav-link {{ request()->is('*/returns*') ? 'active' : '' }}">
-                        <i class="ph ph-arrow-u-up-left"></i> Returns Execution
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Logistics</div>
+                        <a href="{{ route('sfq.deliveries.index') }}"
+                            class="nav-link {{ request()->is('*/deliveries*') ? 'active' : '' }}">
+                            <i class="ph ph-truck"></i> Delivery Planning
+                        </a>
+                        <a href="{{ route('sfq.returns.index') }}"
+                            class="nav-link {{ request()->is('*/returns*') ? 'active' : '' }}">
+                            <i class="ph ph-arrow-u-up-left"></i> Returns Execution
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Finance</div>
-                    <a href="{{ route('sfq.cheques.index') }}" class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
-                        <i class="ph ph-bank"></i> Cheque Collections
-                    </a>
-                    <a href="{{ route('sfq.reconciliation.index') }}" class="nav-link {{ request()->is('*/reconciliation*') ? 'active' : '' }}">
-                        <i class="ph ph-currency-circle-dollar"></i> Charges Recon
-                    </a>
-                    <a href="{{ route('sfq.invoices.index') }}" class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
-                        <i class="ph ph-receipt"></i> Invoicing
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Finance</div>
+                        <a href="{{ route('sfq.cheques.index') }}"
+                            class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
+                            <i class="ph ph-bank"></i> Cheque Collections
+                        </a>
+                        <a href="{{ route('sfq.reconciliation.index') }}"
+                            class="nav-link {{ request()->is('*/reconciliation*') ? 'active' : '' }}">
+                            <i class="ph ph-currency-circle-dollar"></i> Charges Recon
+                        </a>
+                        <a href="{{ route('sfq.invoices.index') }}"
+                            class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
+                            <i class="ph ph-receipt"></i> Invoicing
+                        </a>
+                    </div>
 
-                <div class="nav-group">
-                    <div class="nav-group-title">Reporting</div>
-                    <a href="{{ route('sfq.reports.index') }}" class="nav-link {{ request()->is('*/reports*') ? 'active' : '' }}">
-                        <i class="ph ph-chart-bar"></i> Reports & Dashboards
-                    </a>
-                </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Reporting</div>
+                        <a href="{{ route('sfq.reports.index') }}"
+                            class="nav-link {{ request()->is('*/reports*') ? 'active' : '' }}">
+                            <i class="ph ph-chart-bar"></i> Reports & Dashboards
+                        </a>
+                    </div>
                 @endif
             </nav>
         </aside>
@@ -498,27 +519,40 @@
             <nav class="navbar glass">
                 <div style="flex: 1;"></div>
                 <div class="user-nav">
-                    <button class="icon-btn theme-toggle" id="theme-toggle" title="Toggle Theme" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <button class="icon-btn theme-toggle" id="theme-toggle" title="Toggle Theme"
+                        style="background: transparent; border: none; color: var(--text-primary); font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <i class="ph ph-sun"></i>
                     </button>
                     @auth
                         <!-- Notification Bell Dropdown -->
                         <div class="user-dropdown-wrapper" style="position: relative; margin-right: 1rem;">
-                            <div class="user-info" id="notificationDropdownTrigger" style="padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; justify-content: center; align-items: center; position: relative; cursor: pointer;">
+                            <div class="user-info" id="notificationDropdownTrigger"
+                                style="padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; justify-content: center; align-items: center; position: relative; cursor: pointer;">
                                 <i class="ph ph-bell" style="font-size: 1.25rem; color: var(--text-primary);"></i>
-                                <span id="notificationBadge" style="position: absolute; top: -2px; right: -2px; background: var(--danger); color: white; border-radius: 9999px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; line-height: 1; display: none;">0</span>
+                                <span id="notificationBadge"
+                                    style="position: absolute; top: -2px; right: -2px; background: var(--danger); color: white; border-radius: 9999px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; line-height: 1; display: none;">0</span>
                             </div>
-                            
-                            <div class="dropdown-menu glass" id="notificationDropdownMenu" style="position: absolute; right: 0; top: 100%; width: 360px; max-height: 480px; overflow-y: auto; z-index: 1000; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+
+                            <div class="dropdown-menu glass" id="notificationDropdownMenu"
+                                style="position: absolute; right: 0; top: 100%; width: 360px; max-height: 480px; overflow-y: auto; z-index: 1000; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                                     <span style="font-weight: 700; font-size: 0.95rem;">Notifications</span>
-                                    <button onclick="markAllNotificationsAsRead(event)" style="background: transparent; border: none; color: var(--accent-primary); font-size: 0.75rem; cursor: pointer; font-weight: 600;">Mark all as read</button>
+                                    <button onclick="markAllNotificationsAsRead(event)"
+                                        style="background: transparent; border: none; color: var(--accent-primary); font-size: 0.75rem; cursor: pointer; font-weight: 600;">Mark
+                                        all as read</button>
                                 </div>
-                                <div id="notificationList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
-                                    <div style="color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.85rem;">No new notifications</div>
+                                <div id="notificationList"
+                                    style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
+                                    <div
+                                        style="color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.85rem;">
+                                        No new notifications</div>
                                 </div>
-                                <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; text-align: center;">
-                                    <a href="{{ route('notifications.index') }}" style="color: var(--accent-primary); text-decoration: none; font-size: 0.8rem; font-weight: 600;">View All Notifications</a>
+                                <div
+                                    style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; text-align: center;">
+                                    <a href="{{ route('notifications.index') }}"
+                                        style="color: var(--accent-primary); text-decoration: none; font-size: 0.8rem; font-weight: 600;">View
+                                        All Notifications</a>
                                 </div>
                             </div>
                         </div>
@@ -531,7 +565,7 @@
                                 <span>{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
                                 <i class="ph ph-caret-down" style="font-size: 0.8rem; color: var(--text-secondary);"></i>
                             </div>
-                            
+
                             <div class="dropdown-menu" id="userDropdownMenu">
                                 <a href="{{ route('profile.edit') }}" class="dropdown-item">
                                     <i class="ph ph-user"></i> My Profile
@@ -557,7 +591,7 @@
             </main>
         </div>
     </div>
-    
+
     @stack('scripts')
     <script>
         const themeToggle = document.getElementById('theme-toggle');
@@ -572,7 +606,7 @@
 
         themeToggle.addEventListener('click', () => {
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-            
+
             if (isLight) {
                 document.documentElement.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'dark');
@@ -654,7 +688,7 @@
                     const list = document.getElementById('notificationList');
                     if (!list) return;
                     list.innerHTML = '';
-                    
+
                     const notifications = data.data || [];
                     if (notifications.length === 0) {
                         list.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.85rem;">No new notifications</div>';
@@ -672,7 +706,7 @@
                         item.style.cursor = 'pointer';
                         item.style.borderBottom = '1px solid var(--border-color)';
                         item.style.background = n.is_read ? 'transparent' : 'rgba(99, 102, 241, 0.05)';
-                        
+
                         let badgeColor = 'var(--text-secondary)';
                         let badgeBg = 'rgba(255, 255, 255, 0.05)';
                         if (n.type === 'success') { badgeColor = 'var(--success)'; badgeBg = 'rgba(16, 185, 129, 0.1)'; }
@@ -713,15 +747,15 @@
                     'Accept': 'application/json'
                 }
             })
-            .then(() => {
-                updateNotificationBadge();
-                if (actionUrl) {
-                    window.location.href = actionUrl;
-                } else {
-                    fetchNotificationsDropdown();
-                }
-            })
-            .catch(err => console.error('Error marking notification as read:', err));
+                .then(() => {
+                    updateNotificationBadge();
+                    if (actionUrl) {
+                        window.location.href = actionUrl;
+                    } else {
+                        fetchNotificationsDropdown();
+                    }
+                })
+                .catch(err => console.error('Error marking notification as read:', err));
         }
 
         function markAllNotificationsAsRead(e) {
@@ -734,14 +768,14 @@
                     'Accept': 'application/json'
                 }
             })
-            .then(() => {
-                updateNotificationBadge();
-                fetchNotificationsDropdown();
-                if (window.location.pathname === '/notifications') {
-                    window.location.reload();
-                }
-            })
-            .catch(err => console.error('Error marking all notifications as read:', err));
+                .then(() => {
+                    updateNotificationBadge();
+                    fetchNotificationsDropdown();
+                    if (window.location.pathname === '/notifications') {
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error('Error marking all notifications as read:', err));
         }
 
         // Initialize and poll notifications
@@ -751,4 +785,5 @@
         });
     </script>
 </body>
+
 </html>
