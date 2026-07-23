@@ -158,18 +158,6 @@
             <div class="section-title">General Information</div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Sales Order Reference (Prefill)</label>
-                    <select id="sales_order_select" class="form-input" style="height: auto; min-height: 43px;" onchange="prefillFromSalesOrder(this.value)">
-                        <option value="">-- Choose Sales Order --</option>
-                        @if(isset($salesOrders))
-                            @foreach($salesOrders as $so)
-                                <option value="{{ $so->id }}">{{ $so->so_number }} ({{ $so->customer_name }})</option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
-
-                <div class="form-group">
                     <label class="form-label">Delivery Instruction Number *</label>
                     <input type="text" name="di_number" class="form-input" required 
                            value="{{ old('di_number', isset($parentDi) ? 'DI-REF-'.rand(1000, 9999) : 'DI-'.date('Ymd').'-'.rand(100,999)) }}">
@@ -392,53 +380,5 @@
             };
             reader.readAsText(file);
         });
-
-        const salesOrders = @json($salesOrders ?? []);
-        const productsDbMap = @json($products->keyBy('sku_code'));
-
-        function prefillFromSalesOrder(soId) {
-            if (!soId) return;
-            const so = salesOrders.find(o => o.id == soId);
-            if (!so) return;
-
-            // Fill customer details
-            const customerInput = document.querySelector('[name="customer_name"]');
-            if (customerInput) {
-                customerInput.value = so.customer_name;
-            }
-
-            // Fill delivery address with customer_address or remarks
-            const addressInput = document.querySelector('[name="delivery_address"]');
-            if (addressInput) {
-                addressInput.value = so.customer_address || so.remarks || '';
-            }
-
-            // Clear table if first row is empty
-            const tbody = document.getElementById('itemsBody');
-            const rows = tbody.querySelectorAll('tr');
-            if (rows.length === 1) {
-                const skuInput = rows[0].querySelector('[name$="[sku_code]"]');
-                if (skuInput && !skuInput.value) {
-                    tbody.innerHTML = '';
-                }
-            }
-
-            // Add rows
-            if (so.items && so.items.length > 0) {
-                so.items.forEach(item => {
-                    const prod = productsDbMap[item.sku_code];
-                    const desc = prod ? prod.name : '';
-                    let serialsToPrefill = '';
-
-                    if (prod && prod.serial_number) {
-                        // Split the available serials and take up to the requested quantity
-                        const availableSerials = prod.serial_number.split(',').map(s => s.trim()).filter(s => s);
-                        serialsToPrefill = availableSerials.slice(0, item.quantity).join(', ');
-                    }
-
-                    addRow(item.sku_code, desc, item.quantity, serialsToPrefill);
-                });
-            }
-        }
     </script>
 @endsection

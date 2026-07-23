@@ -119,24 +119,25 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <input type="text" name="category" class="form-control" value="{{ old('category') }}">
-                    @error('category') <span class="text-danger">{{ $message }}</span> @enderror
+                    <label class="form-label">Status *</label>
+                    <select name="status" class="form-control" required>
+                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                    @error('status') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group" id="serial-numbers-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <label class="form-label" style="margin-bottom: 0;">Serial Numbers</label>
-                        <button type="button" class="btn btn-outline" id="add-serial-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                            <i class="ph ph-plus"></i> Add Serial
-                        </button>
-                    </div>
+                    <label class="form-label">Serial Numbers</label>
                     <div id="serial-inputs-wrapper" style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <div class="serial-input-row" style="display: flex; gap: 0.5rem; align-items: center;">
                             <input type="text" name="serial_numbers[]" class="form-control" placeholder="e.g. SN-12345" style="flex: 1;">
-                            <button type="button" class="btn btn-outline remove-serial-btn" style="padding: 0.5rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
+                            <button type="button" class="btn btn-outline add-serial-btn" style="padding: 0.5rem 0.75rem; color: var(--accent-primary); border-color: rgba(99, 102, 241, 0.3);" title="Add Serial Number">
+                                <i class="ph ph-plus" style="font-weight: bold;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline remove-serial-btn" style="padding: 0.5rem 0.75rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" title="Remove Serial Number">
                                 <i class="ph ph-trash"></i>
                             </button>
                         </div>
@@ -148,23 +149,6 @@
                     <label class="form-label">Quantity *</label>
                     <input type="number" name="qty" class="form-control" id="qty-input" value="{{ old('qty', 0) }}" min="0" required>
                     @error('qty') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Vendor ID</label>
-                    <input type="text" name="vendor_id" class="form-control" value="{{ old('vendor_id') }}">
-                    @error('vendor_id') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Status *</label>
-                    <select name="status" class="form-control" required>
-                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                    </select>
-                    @error('status') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
 
@@ -181,7 +165,6 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const wrapper = document.getElementById('serial-inputs-wrapper');
-                const addBtn = document.getElementById('add-serial-btn');
                 const qtyInput = document.getElementById('qty-input');
 
                 function updateQuantity() {
@@ -199,26 +182,40 @@
                     }
                 }
 
-                addBtn.addEventListener('click', function() {
+                function createSerialRow(value = '') {
                     const row = document.createElement('div');
                     row.className = 'serial-input-row';
                     row.style.display = 'flex';
                     row.style.gap = '0.5rem';
                     row.style.alignItems = 'center';
                     row.innerHTML = `
-                        <input type="text" name="serial_numbers[]" class="form-control" placeholder="e.g. SN-12345" style="flex: 1;">
-                        <button type="button" class="btn btn-outline remove-serial-btn" style="padding: 0.5rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
+                        <input type="text" name="serial_numbers[]" class="form-control" value="${value}" placeholder="e.g. SN-12345" style="flex: 1;">
+                        <button type="button" class="btn btn-outline add-serial-btn" style="padding: 0.5rem 0.75rem; color: var(--accent-primary); border-color: rgba(99, 102, 241, 0.3);" title="Add Serial Number">
+                            <i class="ph ph-plus" style="font-weight: bold;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline remove-serial-btn" style="padding: 0.5rem 0.75rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" title="Remove Serial Number">
                             <i class="ph ph-trash"></i>
                         </button>
                     `;
-                    wrapper.appendChild(row);
-                    row.querySelector('input').addEventListener('input', updateQuantity);
-                });
+                    return row;
+                }
 
                 wrapper.addEventListener('click', function(e) {
-                    const btn = e.target.closest('.remove-serial-btn');
-                    if (btn) {
-                        const row = btn.closest('.serial-input-row');
+                    const addBtn = e.target.closest('.add-serial-btn');
+                    if (addBtn) {
+                        const currentRow = addBtn.closest('.serial-input-row');
+                        const newRow = createSerialRow();
+                        currentRow.after(newRow);
+                        const newInput = newRow.querySelector('input');
+                        newInput.focus();
+                        newInput.addEventListener('input', updateQuantity);
+                        updateQuantity();
+                        return;
+                    }
+
+                    const removeBtn = e.target.closest('.remove-serial-btn');
+                    if (removeBtn) {
+                        const row = removeBtn.closest('.serial-input-row');
                         if (wrapper.querySelectorAll('.serial-input-row').length > 1) {
                             row.remove();
                             updateQuantity();

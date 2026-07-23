@@ -1,0 +1,21 @@
+sku_code,name,type,qty,serial_number,status
+SKU-SER-2001,Enterprise Rack Server R750,physical,5,"SN-R750-9001, SN-R750-9002, SN-R750-9003, SN-R750-9004, SN-R750-9005",active
+SKU-SER-2002,Blade Server Chassis B400,physical,4,"SN-B400-8001, SN-B400-8002, SN-B400-8003, SN-B400-8004",active
+SKU-MEM-2003,128GB DDR5 ECC RAM Module,physical,6,"SN-DDR5-7001, SN-DDR5-7002, SN-DDR5-7003, SN-DDR5-7004, SN-DDR5-7005, SN-DDR5-7006",active
+SKU-SSD-2004,15.36TB Enterprise NVMe SSD,physical,4,"SN-NVME-6001, SN-NVME-6002, SN-NVME-6003, SN-NVME-6004",active
+SKU-NIC-2005,Dual Port 100G PCIe NIC,physical,5,"SN-100G-5001, SN-100G-5002, SN-100G-5003, SN-100G-5004, SN-100G-5005",active
+SKU-SWI-2006,48-Port Managed Core Switch,physical,3,"SN-SWI-4001, SN-SWI-4002, SN-SWI-4003",active
+SKU-PWR-2007,2000W Hot-Swap Power Supply,physical,6,"SN-PWR-3001, SN-PWR-3002, SN-PWR-3003, SN-PWR-3004, SN-PWR-3005, SN-PWR-3006",active
+SKU-CPU-2008,64-Core High Performance Processor,physical,4,"SN-CPU-2001, SN-CPU-2002, SN-CPU-2003, SN-CPU-2004",active
+SKU-GPU-2009,AI Workstation Accelerator GPU 80GB,physical,3,"SN-GPU-1001, SN-GPU-1002, SN-GPU-1003",active
+SKU-CAB-2010,10G SFP+ Direct Attach Copper Cable,physical,5,"SN-CAB-0101, SN-CAB-0102, SN-CAB-0103, SN-CAB-0104, SN-CAB-0105",active
+SKU-ROU-2011,Industrial Edge Router,physical,3,"SN-ROU-0201, SN-ROU-0202, SN-ROU-0203",active
+SKU-PDU-2012,Smart Rack PDU 32A,physical,4,"SN-PDU-0301, SN-PDU-0302, SN-PDU-0303, SN-PDU-0304",active
+SKU-UPS-2013,3000VA Online Tower UPS,physical,2,"SN-UPS-0401, SN-UPS-0402",active
+SKU-SFP-2014,25G SFP28 Optical Transceiver,physical,6,"SN-SFP-0501, SN-SFP-0502, SN-SFP-0503, SN-SFP-0504, SN-SFP-0505, SN-SFP-0506",active
+SKU-FAN-2015,High CFM Server Cooling Fan Module,physical,5,"SN-FAN-0601, SN-FAN-0602, SN-FAN-0603, SN-FAN-0604, SN-FAN-0605",active
+SKU-RAI-2016,2U Sliding Server Rail Kit,physical,3,"SN-RAI-0701, SN-RAI-0702, SN-RAI-0703",active
+SKU-STG-2017,SAN Storage Array Expansion Enclosure,physical,2,"SN-STG-0801, SN-STG-0802",active
+SKU-KVM-2018,8-Port LCD Console KVM Switch,physical,3,"SN-KVM-0901, SN-KVM-0902, SN-KVM-0903",active
+SKU-MON-2019,27-inch 4K Rack Mount Monitor,physical,4,"SN-MON-1001, SN-MON-1002, SN-MON-1003, SN-MON-1004",active
+SKU-SEC-2020,Hardware Security Module Appliance,physical,2,"SN-SEC-1101, SN-SEC-1102",active

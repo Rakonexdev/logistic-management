@@ -287,12 +287,6 @@
                 <button type="submit" style="display: none;"></button>
             </div>
             <div class="actions-group">
-                <select name="category" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
-                    <option value="">All Categories</option>
-                    @foreach(\App\Models\Product::distinct('category')->whereNotNull('category')->pluck('category') as $cat)
-                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                    @endforeach
-                </select>
                 <select name="status" class="search-input" style="width: auto;" onchange="document.getElementById('filterForm').submit()">
                     <option value="">All Statuses</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
@@ -327,7 +321,6 @@
                         <th>Product Name</th>
                         <th>Type</th>
                         <th>QTY</th>
-                        <th>Category</th>
                         <th>Status</th>
                         <th style="width: 100px;">Actions</th>
                     </tr>
@@ -336,11 +329,29 @@
                     @forelse($products as $product)
                         <tr>
                             <td style="font-weight: 600;">{{ $product->sku_code }}</td>
-                            <td>{{ $product->serial_number ?? '-' }}</td>
+                            <td>
+                                @php
+                                    $serials = array_filter(array_map('trim', explode(',', $product->serial_number ?? '')));
+                                    $totalSerials = count($serials);
+                                @endphp
+                                @if($totalSerials === 0)
+                                    <span style="color: var(--text-secondary);">-</span>
+                                @elseif($totalSerials === 1)
+                                    <span>{{ $serials[0] }}</span>
+                                @else
+                                    <div class="serial-toggle-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                                        <span class="serial-short" style="font-size: 0.875rem;">{{ $serials[0] }}</span>
+                                        <span class="serial-full" style="display: none; font-size: 0.875rem; word-break: break-word;">{{ implode(', ', $serials) }}</span>
+                                        <button type="button" class="serial-toggle-btn" onclick="toggleSerials(this)" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); color: var(--accent-primary, #6366f1); font-size: 0.75rem; font-weight: 500; border-radius: 4px; padding: 0.15rem 0.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; transition: all 0.2s;">
+                                            <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem;"></i>
+                                            <span class="serial-btn-text">+{{ $totalSerials - 1 }} View More</span>
+                                        </button>
+                                    </div>
+                                @endif
+                            </td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->type) }}</td>
                             <td>{{ $product->qty }}</td>
-                            <td>{{ $product->category ?? '-' }}</td>
                             <td>
                                 <span class="badge {{ $product->status == 'active' ? 'badge-active' : 'badge-inactive' }}">
                                     {{ $product->status }}
@@ -359,7 +370,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                                 <i class="ph ph-archive" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
                                 No products found. Add one to get started.
                             </td>
@@ -405,6 +416,27 @@
 
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function toggleSerials(btn) {
+            const container = btn.closest('.serial-toggle-container');
+            const shortSpan = container.querySelector('.serial-short');
+            const fullSpan = container.querySelector('.serial-full');
+            const btnText = btn.querySelector('.serial-btn-text');
+            const icon = btn.querySelector('.serial-icon');
+            
+            if (fullSpan.style.display === 'none') {
+                fullSpan.style.display = 'inline';
+                shortSpan.style.display = 'none';
+                btnText.textContent = 'View Less';
+                if (icon) icon.className = 'ph ph-caret-up serial-icon';
+            } else {
+                fullSpan.style.display = 'none';
+                shortSpan.style.display = 'inline';
+                const total = fullSpan.textContent.split(',').length;
+                btnText.textContent = `+${total - 1} View More`;
+                if (icon) icon.className = 'ph ph-caret-down serial-icon';
+            }
         }
     </script>
 @endpush

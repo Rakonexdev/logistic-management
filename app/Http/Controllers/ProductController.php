@@ -154,25 +154,35 @@ class ProductController extends Controller
     {
         $headers = [
             'Content-type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=products_template.csv',
+            'Content-Disposition' => 'attachment; filename=sample_products_20.csv',
         ];
-        $columns = ['sku_code', 'name', 'type', 'qty', 'serial_number', 'vendor_id', 'category', 'status'];
+        $columns = ['sku_code', 'name', 'type', 'qty', 'serial_number', 'status'];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
             $samples = [
-                ['SKU-1001', 'Wireless Keyboard', 'electronic', '0', '', 'V-001', 'Electronics', 'active'],
-                ['SKU-1002', 'Ergonomic Mouse', 'electronic', '0', '', 'V-001', 'Electronics', 'active'],
-                ['SKU-1003', 'Desk Organizer', 'physical', '1', 'SN-KEYBOARD-3', 'V-002', 'Office Supplies', 'active'],
-                ['SKU-1004', '24-inch Monitor', 'electronic', '0', '', 'V-003', 'Electronics', 'active'],
-                ['SKU-1005', 'Noise Cancelling Headphones', 'electronic', '0', '', 'V-003', 'Audio', 'active'],
-                ['SKU-1006', 'Standing Desk', 'physical', '1', 'SN-STAND-DESK', 'V-004', 'Furniture', 'active'],
-                ['SKU-1007', 'Office Chair', 'physical', '1', 'SN-CHAIR-OFFICE', 'V-004', 'Furniture', 'inactive'],
-                ['SKU-1008', 'USB-C Hub', 'electronic', '0', '', 'V-001', 'Electronics', 'active'],
-                ['SKU-1009', 'Webcam 1080p', 'electronic', '0', '', 'V-002', 'Electronics', 'active'],
-                ['SKU-1010', 'Notebook A4', 'physical', '1', 'SN-NOTEBOOK-A4', 'V-005', 'Office Supplies', 'active'],
+                ['SKU-SER-2001', 'Enterprise Rack Server R750', 'physical', 5, 'SN-R750-9001, SN-R750-9002, SN-R750-9003, SN-R750-9004, SN-R750-9005', 'active'],
+                ['SKU-SER-2002', 'Blade Server Chassis B400', 'physical', 4, 'SN-B400-8001, SN-B400-8002, SN-B400-8003, SN-B400-8004', 'active'],
+                ['SKU-MEM-2003', '128GB DDR5 ECC RAM Module', 'physical', 6, 'SN-DDR5-7001, SN-DDR5-7002, SN-DDR5-7003, SN-DDR5-7004, SN-DDR5-7005, SN-DDR5-7006', 'active'],
+                ['SKU-SSD-2004', '15.36TB Enterprise NVMe SSD', 'physical', 4, 'SN-NVME-6001, SN-NVME-6002, SN-NVME-6003, SN-NVME-6004', 'active'],
+                ['SKU-NIC-2005', 'Dual Port 100G PCIe NIC', 'physical', 5, 'SN-100G-5001, SN-100G-5002, SN-100G-5003, SN-100G-5004, SN-100G-5005', 'active'],
+                ['SKU-SWI-2006', '48-Port Managed Core Switch', 'physical', 3, 'SN-SWI-4001, SN-SWI-4002, SN-SWI-4003', 'active'],
+                ['SKU-PWR-2007', '2000W Hot-Swap Power Supply', 'physical', 6, 'SN-PWR-3001, SN-PWR-3002, SN-PWR-3003, SN-PWR-3004, SN-PWR-3005, SN-PWR-3006', 'active'],
+                ['SKU-CPU-2008', '64-Core High Performance Processor', 'physical', 4, 'SN-CPU-2001, SN-CPU-2002, SN-CPU-2003, SN-CPU-2004', 'active'],
+                ['SKU-GPU-2009', 'AI Workstation Accelerator GPU 80GB', 'physical', 3, 'SN-GPU-1001, SN-GPU-1002, SN-GPU-1003', 'active'],
+                ['SKU-CAB-2010', '10G SFP+ Direct Attach Copper Cable', 'physical', 5, 'SN-CAB-0101, SN-CAB-0102, SN-CAB-0103, SN-CAB-0104, SN-CAB-0105', 'active'],
+                ['SKU-ROU-2011', 'Industrial Edge Router', 'physical', 3, 'SN-ROU-0201, SN-ROU-0202, SN-ROU-0203', 'active'],
+                ['SKU-PDU-2012', 'Smart Rack PDU 32A', 'physical', 4, 'SN-PDU-0301, SN-PDU-0302, SN-PDU-0303, SN-PDU-0304', 'active'],
+                ['SKU-UPS-2013', '3000VA Online Tower UPS', 'physical', 2, 'SN-UPS-0401, SN-UPS-0402', 'active'],
+                ['SKU-SFP-2014', '25G SFP28 Optical Transceiver', 'physical', 6, 'SN-SFP-0501, SN-SFP-0502, SN-SFP-0503, SN-SFP-0504, SN-SFP-0505, SN-SFP-0506', 'active'],
+                ['SKU-FAN-2015', 'High CFM Server Cooling Fan Module', 'physical', 5, 'SN-FAN-0601, SN-FAN-0602, SN-FAN-0603, SN-FAN-0604, SN-FAN-0605', 'active'],
+                ['SKU-RAI-2016', '2U Sliding Server Rail Kit', 'physical', 3, 'SN-RAI-0701, SN-RAI-0702, SN-RAI-0703', 'active'],
+                ['SKU-STG-2017', 'SAN Storage Array Expansion Enclosure', 'physical', 2, 'SN-STG-0801, SN-STG-0802', 'active'],
+                ['SKU-KVM-2018', '8-Port LCD Console KVM Switch', 'physical', 3, 'SN-KVM-0901, SN-KVM-0902, SN-KVM-0903', 'active'],
+                ['SKU-MON-2019', '27-inch 4K Rack Mount Monitor', 'physical', 4, 'SN-MON-1001, SN-MON-1002, SN-MON-1003, SN-MON-1004', 'active'],
+                ['SKU-SEC-2020', 'Hardware Security Module Appliance', 'physical', 2, 'SN-SEC-1101, SN-SEC-1102', 'active'],
             ];
 
             foreach ($samples as $sample) {
@@ -228,30 +238,62 @@ class ProductController extends Controller
         $file = $request->file('csv_file');
         $handle = fopen($file->path(), 'r');
 
-        // Skip header
-        fgetcsv($handle);
+        $header = fgetcsv($handle);
+        if (! $header) {
+            fclose($handle);
+
+            return back()->withErrors(['csv_file' => 'Uploaded CSV file is empty.']);
+        }
+
+        // Check if first row is header line
+        if (isset($header[0]) && ! str_contains(strtolower($header[0]), 'sku')) {
+            rewind($handle);
+        }
 
         $count = 0;
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 8) {
+            if (count($row) < 2) {
                 continue;
-            } // Basic validation
+            }
 
-            $sku = trim($row[0]);
+            $sku = trim($row[0] ?? '');
             if (empty($sku)) {
                 continue;
+            }
+
+            $name = trim($row[1] ?? 'Product '.$sku);
+            $type = isset($row[2]) && strtolower(trim($row[2])) === 'electronic' ? 'electronic' : 'physical';
+            $inputQty = isset($row[3]) ? intval(trim($row[3])) : 0;
+            $serialsStr = isset($row[4]) ? trim($row[4]) : null;
+
+            $serials = $serialsStr ? array_filter(array_map('trim', explode(',', $serialsStr))) : [];
+            $serialsCount = count($serials);
+
+            $qty = ($serialsCount > 0) ? max($inputQty, $serialsCount) : $inputQty;
+            $finalSerialsStr = ! empty($serials) ? implode(', ', $serials) : null;
+
+            $vendorId = isset($row[5]) ? trim($row[5]) : null;
+            $category = isset($row[6]) ? trim($row[6]) : null;
+
+            $status = 'active';
+            foreach ($row as $colVal) {
+                $val = strtolower(trim($colVal));
+                if ($val === 'inactive') {
+                    $status = 'inactive';
+                    break;
+                }
             }
 
             Product::updateOrCreate(
                 ['sku_code' => $sku],
                 [
-                    'name' => trim($row[1]),
-                    'type' => strtolower(trim($row[2])) == 'electronic' ? 'electronic' : 'physical',
-                    'qty' => intval(trim($row[3])),
-                    'serial_number' => empty(trim($row[4])) ? null : trim($row[4]),
-                    'vendor_id' => trim($row[5]),
-                    'category' => trim($row[6]),
-                    'status' => strtolower(trim($row[7])) == 'inactive' ? 'inactive' : 'active',
+                    'name' => $name,
+                    'type' => $type,
+                    'qty' => $qty,
+                    'serial_number' => $finalSerialsStr,
+                    'vendor_id' => $vendorId,
+                    'category' => $category,
+                    'status' => $status,
                 ]
             );
             $count++;

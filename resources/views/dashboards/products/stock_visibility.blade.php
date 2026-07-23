@@ -202,19 +202,6 @@
             </div>
 
             <div style="position: relative;">
-                <select name="category" class="filter-select" onchange="this.form.submit()">
-                    <option value="">All Categories</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>
-                            {{ ucfirst($cat) }}
-                        </option>
-                    @endforeach
-                </select>
-                <i class="ph ph-caret-down"
-                    style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
-            </div>
-
-            <div style="position: relative;">
                 <select name="per_page" class="filter-select" onchange="this.form.submit()">
                     <option value="10" {{ request('per_page', '10') == '10' ? 'selected' : '' }}>10 Per Page</option>
                     <option value="25" {{ request('per_page') == '25' ? 'selected' : '' }}>25 Per Page</option>
@@ -224,7 +211,7 @@
                     style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);"></i>
             </div>
 
-            @if(request()->anyFilled(['search', 'category', 'per_page']))
+            @if(request()->anyFilled(['search', 'per_page']))
                 <a href="{{ route('products.stock-visibility') }}" class="btn btn-outline"
                     style="padding: 0.75rem 1rem; font-size: 0.875rem; border-radius: 8px;">
                     Clear Filters
@@ -240,7 +227,6 @@
                         <th>SKU Code</th>
                         <th>Serial Number</th>
                         <th>Product Name</th>
-                        <th>Category</th>
                         <th>Location</th>
                         <th>Available Qty</th>
                     </tr>
@@ -249,15 +235,33 @@
                     @forelse($products as $product)
                         <tr>
                             <td><strong>{{ $product->sku_code }}</strong></td>
-                            <td>{{ $product->serial_number ?: '-' }}</td>
+                            <td>
+                                @php
+                                    $serials = array_filter(array_map('trim', explode(',', $product->serial_number ?? '')));
+                                    $totalSerials = count($serials);
+                                @endphp
+                                @if($totalSerials === 0)
+                                    <span style="color: var(--text-secondary);">-</span>
+                                @elseif($totalSerials === 1)
+                                    <span>{{ $serials[0] }}</span>
+                                @else
+                                    <div class="serial-toggle-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                                        <span class="serial-short" style="font-size: 0.875rem;">{{ $serials[0] }}</span>
+                                        <span class="serial-full" style="display: none; font-size: 0.875rem; word-break: break-word;">{{ implode(', ', $serials) }}</span>
+                                        <button type="button" class="serial-toggle-btn" onclick="toggleSerials(this)" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); color: var(--accent-primary, #6366f1); font-size: 0.75rem; font-weight: 500; border-radius: 4px; padding: 0.15rem 0.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; transition: all 0.2s;">
+                                            <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem;"></i>
+                                            <span class="serial-btn-text">+{{ $totalSerials - 1 }} View More</span>
+                                        </button>
+                                    </div>
+                                @endif
+                            </td>
                             <td>{{ $product->name }}</td>
-                            <td>{{ ucfirst($product->category) ?: 'N/A' }}</td>
                             <td>{{ $product->location_info }}</td>
                             <td class="stock-qty stock-available">{{ $product->available_qty }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
                                 No products found.
                             </td>
                         </tr>
@@ -283,6 +287,27 @@
                 searchTimeout = setTimeout(() => {
                     document.getElementById('filterForm').submit();
                 }, 600);
+            }
+
+            function toggleSerials(btn) {
+                const container = btn.closest('.serial-toggle-container');
+                const shortSpan = container.querySelector('.serial-short');
+                const fullSpan = container.querySelector('.serial-full');
+                const btnText = btn.querySelector('.serial-btn-text');
+                const icon = btn.querySelector('.serial-icon');
+                
+                if (fullSpan.style.display === 'none') {
+                    fullSpan.style.display = 'inline';
+                    shortSpan.style.display = 'none';
+                    btnText.textContent = 'View Less';
+                    if (icon) icon.className = 'ph ph-caret-up serial-icon';
+                } else {
+                    fullSpan.style.display = 'none';
+                    shortSpan.style.display = 'inline';
+                    const total = fullSpan.textContent.split(',').length;
+                    btnText.textContent = `+${total - 1} View More`;
+                    if (icon) icon.className = 'ph ph-caret-down serial-icon';
+                }
             }
         </script>
     @endpush
