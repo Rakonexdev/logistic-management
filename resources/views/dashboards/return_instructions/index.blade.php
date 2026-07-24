@@ -151,7 +151,12 @@
                 <tbody>
                     @forelse($instructions as $ret)
                         <tr>
-                            <td><strong>{{ $ret->return_ref }}</strong></td>
+                            <td>
+                                <strong>{{ $ret->return_ref }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--accent-primary, #6366f1); font-weight: 500; margin-top: 0.15rem;">
+                                    {{ $ret->return_type ?? 'Return to Warehouse' }}
+                                </div>
+                            </td>
                             <td>
                                 <div><strong>{{ $ret->customer_name }}</strong></div>
                                 <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ $ret->pickup_address }}</div>
@@ -183,13 +188,18 @@
                                 </span>
                             </td>
                             <td>
-                                <div style="display: flex; gap: 0.5rem;">
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <a href="{{ route('return-instructions.show', $ret->id) }}" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="View Workflow & Timeline">
                                         <i class="ph ph-eye"></i> View
                                     </a>
                                     <a href="{{ route('return-instructions.print', $ret->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="Print Return Document">
                                         <i class="ph ph-printer"></i>
                                     </a>
+                                    @if($ret->attachment)
+                                        <a href="{{ route('return-instructions.attachment', $ret->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);" title="View Attachment">
+                                            <i class="ph ph-file-text"></i> Attachment
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

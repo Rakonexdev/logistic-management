@@ -47,9 +47,11 @@ class ReturnInstructionController extends Controller
         $request->validate([
             'return_ref' => 'required|string|unique:return_instructions,return_ref',
             'customer_name' => 'required|string|max:255',
+            'return_type' => 'nullable|string|in:Return to Warehouse,Shipping to Company Return',
             'pickup_address' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'contact_phone' => 'nullable|string|max:255',
+            'attachment' => 'nullable|file|max:10240',
             'remarks' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string',
@@ -58,13 +60,20 @@ class ReturnInstructionController extends Controller
             'items.*.serial_numbers' => 'nullable|string',
         ]);
 
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('returns', 'public');
+        }
+
         $instruction = ReturnInstruction::create([
             'user_id' => Auth::id(),
             'return_ref' => $request->return_ref,
             'customer_name' => $request->customer_name,
+            'return_type' => $request->return_type ?? 'Return to Warehouse',
             'pickup_address' => $request->pickup_address,
             'contact_person' => $request->contact_person,
             'contact_phone' => $request->contact_phone,
+            'attachment' => $attachmentPath,
             'status' => 'Created',
             'instruction_received_date' => now(),
             'remarks' => $request->remarks,
@@ -126,5 +135,24 @@ class ReturnInstructionController extends Controller
         ]);
 
         return back()->with('success', "Quality Inspection updated to {$request->inspection_status}.");
+    }
+
+    public function downloadAttachment($id)
+    {
+        $instruction = ReturnInstruction::findOrFail($id);
+        if (! $instruction->attachment) {
+            abort(404, 'No attachment uploaded for this Return Instruction.');
+        }
+
+        $fullPath = storage_path('app/public/'.$instruction->attachment);
+        if (! file_exists($fullPath)) {
+            $fullPath = storage_path('app/'.$instruction->attachment);
+        }
+
+        if (! file_exists($fullPath)) {
+            abort(404, 'File not found on server.');
+        }
+
+        return response()->file($fullPath);
     }
 }

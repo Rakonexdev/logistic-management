@@ -139,11 +139,25 @@
     @endif
 
     <div class="glass form-panel">
-        <form action="{{ route('return-instructions.store') }}" method="POST">
+        <form action="{{ route('return-instructions.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <div class="section-title">Return Details</div>
             <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label class="form-label" style="font-weight: 700; margin-bottom: 0.5rem;">Return Destination / Type *</label>
+                    <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="return_type" value="Return to Warehouse" {{ old('return_type', 'Return to Warehouse') == 'Return to Warehouse' ? 'checked' : '' }} style="accent-color: var(--accent-primary, #6366f1); width: 1.1rem; height: 1.1rem;">
+                            <span><i class="ph ph-warehouse" style="color: var(--accent-primary, #6366f1);"></i> Return to Warehouse</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="return_type" value="Shipping to Company Return" {{ old('return_type') == 'Shipping to Company Return' ? 'checked' : '' }} style="accent-color: var(--accent-primary, #6366f1); width: 1.1rem; height: 1.1rem;">
+                            <span><i class="ph ph-truck" style="color: var(--accent-primary, #6366f1);"></i> Shipping to Company Return</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Return Reference *</label>
                     <input type="text" name="return_ref" class="form-input" required value="{{ old('return_ref', $defaultRef) }}">
@@ -167,6 +181,11 @@
                 <div class="form-group">
                     <label class="form-label">Contact Phone</label>
                     <input type="text" name="contact_phone" class="form-input" placeholder="Phone number" value="{{ old('contact_phone') }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Return Document</label>
+                    <input type="file" name="attachment" class="form-input" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="padding: 0.5rem 0.75rem;">
                 </div>
             </div>
 

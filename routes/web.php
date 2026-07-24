@@ -87,6 +87,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
     Route::get('delivery-instructions/{id}/attachment', [DeliveryInstructionController::class, 'downloadAttachment'])->name('delivery-instructions.attachment');
     Route::get('return-instructions/{id}/print', [ReturnInstructionController::class, 'print'])->name('return-instructions.print');
+    Route::get('return-instructions/{id}/attachment', [ReturnInstructionController::class, 'downloadAttachment'])->name('return-instructions.attachment');
 });
 
 Route::middleware(['auth', 'role:sfq_user'])->group(function () {
