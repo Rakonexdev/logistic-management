@@ -55,6 +55,13 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::get('products/stock-visibility', [ProductController::class, 'stockVisibility'])->name('products.stock-visibility');
     Route::resource('products', ProductController::class);
+
+    // Delivery Invoice Routes
+    Route::resource('delivery-invoices', DeliveryInvoiceController::class);
+
+    // Rent Invoice Routes
+    Route::post('rent-invoices/{id}/mark-paid', [RentInvoiceController::class, 'markPaid'])->name('rent-invoices.mark-paid');
+    Route::resource('rent-invoices', RentInvoiceController::class);
 });
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
@@ -80,13 +87,6 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     // Return Instruction Routes
     Route::post('return-instructions/{id}/inspection', [ReturnInstructionController::class, 'updateInspection'])->name('return-instructions.inspection');
     Route::resource('return-instructions', ReturnInstructionController::class);
-
-    // Delivery Invoice Routes
-    Route::resource('delivery-invoices', DeliveryInvoiceController::class);
-
-    // Rent Invoice Routes
-    Route::post('rent-invoices/{id}/mark-paid', [RentInvoiceController::class, 'markPaid'])->name('rent-invoices.mark-paid');
-    Route::resource('rent-invoices', RentInvoiceController::class);
 });
 
 // Shared ASN, Delivery Note & Return Print Routes (placed after resource/static routes to avoid wildcard conflicts)

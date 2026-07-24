@@ -485,12 +485,12 @@
 
                     <div class="nav-group">
                         <div class="nav-group-title">Finance</div>
-                        <a href="{{ route('sfq.invoices.index') }}"
-                            class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
+                        <a href="{{ route('delivery-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/delivery-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
-                        <a href="{{ route('sfq.reconciliation.index') }}"
-                            class="nav-link {{ request()->is('*/reconciliation*') ? 'active' : '' }}">
+                        <a href="{{ route('rent-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
                         <a href="{{ route('sfq.cheques.index') }}"

@@ -14,6 +14,14 @@ test('end user can view delivery invoices page', function () {
     $response->assertStatus(200);
 });
 
+test('sfq user can view delivery invoices page', function () {
+    $user = User::factory()->create(['role' => 'sfq_user']);
+
+    $response = $this->actingAs($user)->get(route('delivery-invoices.index'));
+
+    $response->assertStatus(200);
+});
+
 test('end user can create a delivery invoice with serial charges and auto total', function () {
     $user = User::factory()->create(['role' => 'end_user']);
 

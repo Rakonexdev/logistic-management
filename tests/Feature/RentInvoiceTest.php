@@ -27,6 +27,14 @@ test('end user can view rent invoices index page with stats', function () {
     $response->assertSee('1,200.00');
 });
 
+test('sfq user can view rent invoices index page', function () {
+    $user = User::factory()->create(['role' => 'sfq_user']);
+
+    $response = $this->actingAs($user)->get(route('rent-invoices.index'));
+
+    $response->assertStatus(200);
+});
+
 test('end user can create a rent invoice for warehouse rent', function () {
     $user = User::factory()->create(['role' => 'end_user']);
 
