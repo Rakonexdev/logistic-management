@@ -210,17 +210,16 @@
                 </div>
             </div>
 
-            <div class="section-title">
-                Equipment List
-                <div>
-                    <input type="file" id="csvUpload" accept=".csv" style="display: none;">
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('csvUpload').click()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
-                        <i class="ph ph-upload-simple"></i> Bulk Upload CSV
-                    </button>
-                    <a href="{{ route('asns.template') }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
-                        <i class="ph ph-download-simple"></i> Download Template
-                    </a>
-                </div>
+            <div class="section-title">Equipment List</div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.75rem; margin-bottom: 1rem;">
+                <input type="file" id="csvUpload" accept=".csv" style="display: none;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('csvUpload').click()" style="padding: 0.4rem 0.85rem; font-size: 0.875rem;">
+                    <i class="ph ph-upload-simple"></i> Bulk Upload CSV
+                </button>
+                <a href="{{ route('asns.template') }}" class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.875rem;">
+                    <i class="ph ph-download-simple"></i> Download Template
+                </a>
             </div>
             
             <table class="items-table" id="itemsTable">

@@ -407,10 +407,6 @@
                             class="nav-link {{ request()->is('*/delivery-instructions*') ? 'active' : '' }}">
                             <i class="ph ph-truck"></i> Delivery Instructions
                         </a>
-                        <a href="{{ route('delivery-notes.index') }}"
-                            class="nav-link {{ request()->routeIs('delivery-notes.index') ? 'active' : '' }}">
-                            <i class="ph ph-note"></i> Delivery Notes
-                        </a>
                     </div>
 
                     <div class="nav-group">

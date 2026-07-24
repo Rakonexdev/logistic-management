@@ -137,7 +137,15 @@
                     @forelse($instructions as $di)
                         <tr>
                             <td><strong>{{ $di->di_number }}</strong></td>
-                            <td>{{ $di->customer_name }}</td>
+                            <td>
+                                <strong>{{ $di->customer_name }}</strong>
+                                @if($di->end_user_name)
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">End User: {{ $di->end_user_name }}</div>
+                                @endif
+                                @if($di->so_reference)
+                                    <div style="font-size: 0.75rem; color: var(--accent-primary, #6366f1); font-weight: 500;">SO Ref: {{ $di->so_reference }}</div>
+                                @endif
+                            </td>
                             <td>{{ $di->delivery_address }}</td>
                             <td>
                                 <span class="status-badge status-{{ $di->status }}">
@@ -167,21 +175,44 @@
                             </td>
                             <td>{{ $di->created_at->format('Y-m-d H:i') }}</td>
                             <td>
-                                <div style="display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
+                                <div style="display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; min-width: 170px;">
                                     @if($di->status === 'partial')
                                         <a href="{{ route('delivery-instructions.fulfill-remaining', $di->id) }}"
                                             class="btn btn-outline"
-                                            style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3); font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                            style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3); font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem;">
                                             <i class="ph ph-arrow-counter-clockwise"></i> Fulfill Remaining
                                         </a>
                                     @endif
 
                                     @foreach($di->deliveryNotes as $dn)
-                                        <a href="{{ route('delivery-notes.print', $dn->id) }}" target="_blank"
-                                            class="btn btn-outline"
-                                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                            <i class="ph ph-printer"></i> Print DN
-                                        </a>
+                                        <div style="display: flex; flex-direction: column; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.45rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+                                            <div style="font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; align-items: center;">
+                                                <span>{{ $dn->dn_number }}</span>
+                                                <span class="status-badge status-{{ $dn->status }}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">{{ $dn->status }}</span>
+                                            </div>
+                                            <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.2rem;">
+                                                @if($dn->status === 'draft')
+                                                    <form action="{{ route('delivery-notes.release', $dn->id) }}" method="POST" style="margin: 0;">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: var(--accent-primary, #6366f1); border-color: var(--accent-primary, #6366f1);">
+                                                            <i class="ph ph-paper-plane-tilt"></i> Release to Warehouse
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                <a href="{{ route('delivery-notes.print', $dn->id) }}" target="_blank"
+                                                    class="btn btn-outline"
+                                                    style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                                    <i class="ph ph-printer"></i> Print DN
+                                                </a>
+                                                @if($dn->delivery_note_attachment || $di->delivery_note_attachment)
+                                                    <a href="{{ route('delivery-instructions.attachment', $di->id) }}" target="_blank"
+                                                        class="btn btn-outline"
+                                                        style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);">
+                                                        <i class="ph ph-file-text"></i> View Uploaded DN
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </div>
                                     @endforeach
                                 </div>
                             </td>

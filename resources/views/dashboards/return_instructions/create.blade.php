@@ -121,7 +121,7 @@
 @section('content')
     <div class="page-header">
         <h1 class="page-title">
-            <i class="ph ph-plus-circle"></i> Issue Return Instruction
+            <i class="ph ph-plus-circle"></i> Create Return Instruction
         </h1>
         <a href="{{ route('return-instructions.index') }}" class="btn btn-outline">
             <i class="ph ph-arrow-left"></i> Back to Return Instructions

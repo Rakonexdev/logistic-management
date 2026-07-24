@@ -163,7 +163,7 @@
     @endif
 
     <div class="glass form-panel">
-        <form action="{{ route('delivery-instructions.store') }}" method="POST">
+        <form action="{{ route('delivery-instructions.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="section-title">General Information</div>
@@ -179,6 +179,23 @@
                     <input type="text" name="customer_name" class="form-input" required 
                            value="{{ old('customer_name', isset($parentDi) ? $parentDi->customer_name : '') }}">
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">End User Name</label>
+                    <input type="text" name="end_user_name" class="form-input" placeholder="e.g. Acme Health System" 
+                           value="{{ old('end_user_name', isset($parentDi) ? $parentDi->end_user_name : '') }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">SO Reference Number</label>
+                    <input type="text" name="so_reference" class="form-input" placeholder="e.g. SO-2026-991" 
+                           value="{{ old('so_reference', isset($parentDi) ? $parentDi->so_reference : '') }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Delivery Note Document</label>
+                    <input type="file" name="delivery_note_attachment" class="form-input" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="padding: 0.5rem 0.75rem;">
+                </div>
                 
                 <div class="form-group">
                     <label class="form-label">Delivery Address *</label>
@@ -187,17 +204,16 @@
                 </div>
             </div>
 
-            <div class="section-title">
-                Requested Items List
-                <div>
-                    <input type="file" id="csvUpload" accept=".csv" style="display: none;">
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('csvUpload').click()" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
-                        <i class="ph ph-upload-simple"></i> Bulk Upload CSV
-                    </button>
-                    <a href="{{ route('delivery-instructions.template') }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
-                        <i class="ph ph-download-simple"></i> Download Template
-                    </a>
-                </div>
+            <div class="section-title">Requested Items List</div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.75rem; margin-bottom: 1rem;">
+                <input type="file" id="csvUpload" accept=".csv" style="display: none;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('csvUpload').click()" style="padding: 0.4rem 0.85rem; font-size: 0.875rem;">
+                    <i class="ph ph-upload-simple"></i> Bulk Upload CSV
+                </button>
+                <a href="{{ route('delivery-instructions.template') }}" class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.875rem;">
+                    <i class="ph ph-download-simple"></i> Download Template
+                </a>
             </div>
             
             <table class="items-table" id="itemsTable">

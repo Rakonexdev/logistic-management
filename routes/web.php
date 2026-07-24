@@ -85,6 +85,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('asns/{asn}/report', [AsnController::class, 'generateReport'])->name('asns.report');
     Route::get('asns/{asn}', [AsnController::class, 'show'])->name('asns.show');
     Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
+    Route::get('delivery-instructions/{id}/attachment', [DeliveryInstructionController::class, 'downloadAttachment'])->name('delivery-instructions.attachment');
     Route::get('return-instructions/{id}/print', [ReturnInstructionController::class, 'print'])->name('return-instructions.print');
 });
 

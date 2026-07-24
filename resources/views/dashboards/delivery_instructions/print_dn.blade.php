@@ -183,20 +183,32 @@
         <!-- Top Header -->
         <div class="header">
             <div class="company-info">
-                <h2>Network Distributors FZ LLC.</h2>
-                Office # 3502-3507, 35th Floor, Shatha Tower<br>
-                Dubai Media City,<br>
-                Dubai, U.A.E.<br>
-                Phone : +971 4 3757612 Fax : +971 4 4380497<br>
-                TRN: 100375068200003
+                <h2>Solutions Four WLL</h2>
+                MR GEORGE THOMAS<br>
+                C/O EXECUTIVE NETWORKS ME<br>
+                OPP OF AL AREEKAH CO<br>
+                3F9M+R7V8BIRKAT AL AWAMER, QATAR,<br>
+                DOHA, BUHAMOUR<br>
+                QATAR<br>
+                Contact: +97455848627
             </div>
-            <div class="logo-box">
-                <h1>EXCLUSIVE</h1>
-                <div class="logo-sub">NETWORKS</div>
+            <div class="logo-box" style="text-align: right;">
+                <div style="display: inline-flex; flex-direction: column; align-items: flex-end;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-family: Arial, sans-serif; font-weight: 900; font-size: 22px; color: #0255a5; letter-spacing: -0.5px;">solutions<span style="font-weight: 900;">four</span></span>
+                        <svg width="34" height="18" viewBox="0 0 34 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="26" cy="4" r="3.5" fill="#0255a5"/>
+                            <circle cx="16" cy="11" r="3.5" fill="#0255a5"/>
+                            <circle cx="24" cy="11" r="3.5" fill="#0255a5"/>
+                            <circle cx="31" cy="11" r="2.5" fill="#0255a5"/>
+                        </svg>
+                    </div>
+                    <div style="font-family: Arial, sans-serif; font-weight: 900; font-size: 14px; color: #0255a5; letter-spacing: 4px; margin-top: -2px; text-transform: uppercase;">QATAR</div>
+                </div>
             </div>
         </div>
 
-        <div class="title">DELIVERY NOTE</div>
+        <div class="title">MATERIAL RELEASE NOTE</div>
 
         <!-- Info Grid -->
         <div class="info-grid">
@@ -217,11 +229,11 @@
                     </tr>
                     <tr>
                         <td class="label">Customer PO</td>
-                        <td>{{ $note->deliveryInstruction->di_number ?? 'N/A' }}</td>
+                        <td>{{ $note->deliveryInstruction->so_reference ?? $note->deliveryInstruction->di_number ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <td class="label">End User</td>
-                        <td>{{ $note->deliveryInstruction->customer_name ?? 'N/A' }}</td>
+                        <td>{{ $note->deliveryInstruction->end_user_name ?? $note->deliveryInstruction->customer_name ?? 'N/A' }}</td>
                     </tr>
                 </table>
             </div>

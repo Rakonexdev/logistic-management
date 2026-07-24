@@ -12,6 +12,9 @@ class DeliveryInstruction extends Model
     protected $fillable = [
         'di_number',
         'customer_name',
+        'end_user_name',
+        'so_reference',
+        'delivery_note_attachment',
         'delivery_address',
         'status',
         'user_id',

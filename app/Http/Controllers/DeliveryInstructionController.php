@@ -21,6 +21,28 @@ class DeliveryInstructionController extends Controller
             ->latest()
             ->paginate(10);
 
+        foreach ($instructions as $di) {
+            if ($di->deliveryNotes->isEmpty()) {
+                $dn = DeliveryNote::create([
+                    'dn_number' => 'DN-'.date('Ymd').'-'.rand(100, 999),
+                    'delivery_instruction_id' => $di->id,
+                    'user_id' => $di->user_id,
+                    'status' => 'draft',
+                ]);
+                foreach ($di->items as $item) {
+                    DeliveryNoteItem::create([
+                        'delivery_note_id' => $dn->id,
+                        'sku_code' => $item->sku_code,
+                        'description' => $item->description ?? '',
+                        'quantity' => $item->quantity,
+                        'serial_numbers' => $item->serial_numbers,
+                    ]);
+                }
+                $di->unsetRelation('deliveryNotes');
+                $di->load('deliveryNotes');
+            }
+        }
+
         return view('dashboards.delivery_instructions.index', compact('instructions'));
     }
 
@@ -74,6 +96,8 @@ class DeliveryInstructionController extends Controller
         $request->validate([
             'di_number' => 'required|string',
             'customer_name' => 'required|string|max:255',
+            'end_user_name' => 'nullable|string|max:255',
+            'so_reference' => 'nullable|string|max:255',
             'delivery_address' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string',
@@ -181,6 +205,8 @@ class DeliveryInstructionController extends Controller
             return view('dashboards.delivery_instructions.warning', [
                 'di_number' => $request->di_number,
                 'customer_name' => $request->customer_name,
+                'end_user_name' => $request->end_user_name,
+                'so_reference' => $request->so_reference,
                 'delivery_address' => $request->delivery_address,
                 'mismatches' => $mismatches,
                 'available_items' => $availableItems,
@@ -194,10 +220,18 @@ class DeliveryInstructionController extends Controller
             return back()->withInput()->withErrors(['di_number' => 'The Delivery Instruction number has already been taken.']);
         }
 
+        $attachmentPath = null;
+        if ($request->hasFile('delivery_note_attachment')) {
+            $attachmentPath = $request->file('delivery_note_attachment')->store('delivery_notes', 'public');
+        }
+
         // Create Delivery Instruction
         $di = DeliveryInstruction::create([
             'di_number' => $request->di_number,
             'customer_name' => $request->customer_name,
+            'end_user_name' => $request->end_user_name,
+            'so_reference' => $request->so_reference,
+            'delivery_note_attachment' => $attachmentPath,
             'delivery_address' => $request->delivery_address,
             'status' => $hasMismatches ? 'partial' : 'completed',
             'user_id' => Auth::id(),
@@ -238,37 +272,53 @@ class DeliveryInstructionController extends Controller
             if ($deliveredQty > 0) {
                 $product = Product::where('sku_code', $sku)->first();
                 if ($product) {
-                    $product->decrement('qty', $deliveredQty);
+                    $newQty = max(0, $product->qty - $deliveredQty);
                     if (! empty($serials)) {
                         $deliveredSerials = array_filter(array_map('trim', explode(',', $serials)));
                         $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
                         $remainingSerials = array_values(array_filter($existingSerials, function ($s) use ($deliveredSerials) {
                             return ! in_array(strtolower($s), array_map('strtolower', $deliveredSerials));
                         }));
-                        $product->update(['serial_number' => implode(', ', $remainingSerials)]);
+                        $product->update([
+                            'qty' => $newQty,
+                            'serial_number' => implode(', ', $remainingSerials),
+                        ]);
+                    } else {
+                        $product->update(['qty' => $newQty]);
                     }
                 }
             }
         }
 
-        $totalDelivered = collect($availableItems)->sum('quantity');
-        if ($totalDelivered > 0) {
-            $dn = DeliveryNote::create([
-                'dn_number' => 'DN-'.date('Ymd').'-'.rand(100, 999),
-                'delivery_instruction_id' => $di->id,
-                'user_id' => Auth::id(),
-            ]);
+        $dnItems = ! empty($availableItems) ? $availableItems : array_map(function ($item) {
+            $serialsStr = $item['serial_numbers'] ?? '';
+            $serialsArr = is_array($serialsStr) ? $serialsStr : array_filter(array_map('trim', explode(',', $serialsStr)));
 
-            foreach ($availableItems as $avail) {
-                if ($avail['quantity'] > 0) {
-                    DeliveryNoteItem::create([
-                        'delivery_note_id' => $dn->id,
-                        'sku_code' => $avail['sku_code'],
-                        'description' => $avail['description'] ?? '',
-                        'quantity' => $avail['quantity'],
-                        'serial_numbers' => implode(', ', $avail['serial_numbers']),
-                    ]);
-                }
+            return [
+                'sku_code' => $item['sku_code'],
+                'description' => $item['description'] ?? '',
+                'quantity' => (int) $item['quantity'],
+                'serial_numbers' => $serialsArr,
+            ];
+        }, $items);
+
+        $dn = DeliveryNote::create([
+            'dn_number' => 'DN-'.date('Ymd').'-'.rand(100, 999),
+            'delivery_instruction_id' => $di->id,
+            'user_id' => Auth::id(),
+            'status' => 'draft',
+            'delivery_note_attachment' => $attachmentPath,
+        ]);
+
+        foreach ($dnItems as $dnItem) {
+            if ($dnItem['quantity'] > 0) {
+                DeliveryNoteItem::create([
+                    'delivery_note_id' => $dn->id,
+                    'sku_code' => $dnItem['sku_code'],
+                    'description' => $dnItem['description'] ?? '',
+                    'quantity' => $dnItem['quantity'],
+                    'serial_numbers' => is_array($dnItem['serial_numbers']) ? implode(', ', $dnItem['serial_numbers']) : $dnItem['serial_numbers'],
+                ]);
             }
         }
 
@@ -320,5 +370,33 @@ class DeliveryInstructionController extends Controller
         $note->update(['status' => 'released']);
 
         return back()->with('success', "Delivery Note {$note->dn_number} released successfully.");
+    }
+
+    public function downloadAttachment($id)
+    {
+        $di = DeliveryInstruction::findOrFail($id);
+        $attachment = $di->delivery_note_attachment;
+
+        if (! $attachment) {
+            $dn = DeliveryNote::where('delivery_instruction_id', $id)->whereNotNull('delivery_note_attachment')->first();
+            if ($dn) {
+                $attachment = $dn->delivery_note_attachment;
+            }
+        }
+
+        if (! $attachment) {
+            abort(404, 'No attachment uploaded for this Delivery Instruction.');
+        }
+
+        $fullPath = storage_path('app/public/'.$attachment);
+        if (! file_exists($fullPath)) {
+            $fullPath = storage_path('app/'.$attachment);
+        }
+
+        if (! file_exists($fullPath)) {
+            abort(404, 'File not found on server.');
+        }
+
+        return response()->file($fullPath);
     }
 }

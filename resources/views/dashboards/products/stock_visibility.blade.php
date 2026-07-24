@@ -240,8 +240,10 @@
                                     $serials = array_filter(array_map('trim', explode(',', $product->serial_number ?? '')));
                                     $totalSerials = count($serials);
                                 @endphp
-                                @if($totalSerials === 0)
-                                    <span style="color: var(--text-secondary);">-</span>
+                                @if($product->available_qty <= 0)
+                                    <span style="color: var(--danger, #ef4444); font-style: italic; font-weight: 500;">Stock Not Available</span>
+                                @elseif($totalSerials === 0)
+                                    <span style="color: var(--text-secondary); font-style: italic;">No Serial Number</span>
                                 @elseif($totalSerials === 1)
                                     <span>{{ $serials[0] }}</span>
                                 @else

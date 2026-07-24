@@ -320,7 +320,6 @@
                         <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Type</th>
-                        <th>QTY</th>
                         <th>Status</th>
                         <th style="width: 100px;">Actions</th>
                     </tr>
@@ -334,8 +333,10 @@
                                     $serials = array_filter(array_map('trim', explode(',', $product->serial_number ?? '')));
                                     $totalSerials = count($serials);
                                 @endphp
-                                @if($totalSerials === 0)
-                                    <span style="color: var(--text-secondary);">-</span>
+                                @if($product->qty <= 0)
+                                    <span style="color: var(--danger, #ef4444); font-style: italic; font-weight: 500;">Stock Not Available</span>
+                                @elseif($totalSerials === 0)
+                                    <span style="color: var(--text-secondary); font-style: italic;">No Serial Number</span>
                                 @elseif($totalSerials === 1)
                                     <span>{{ $serials[0] }}</span>
                                 @else
@@ -351,7 +352,6 @@
                             </td>
                             <td>{{ $product->name }}</td>
                             <td>{{ ucfirst($product->type) }}</td>
-                            <td>{{ $product->qty }}</td>
                             <td>
                                 <span class="badge {{ $product->status == 'active' ? 'badge-active' : 'badge-inactive' }}">
                                     {{ $product->status }}
@@ -370,7 +370,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                                 <i class="ph ph-archive" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
                                 No products found. Add one to get started.
                             </td>

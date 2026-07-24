@@ -107,7 +107,7 @@
             <i class="ph ph-arrow-u-up-left"></i> Return Instructions
         </h1>
         <a href="{{ route('return-instructions.create') }}" class="btn btn-primary">
-            <i class="ph ph-plus"></i> Issue Return Instruction
+            <i class="ph ph-plus"></i> Create Return Instruction
         </a>
     </div>
 
@@ -197,7 +197,7 @@
                         <tr>
                             <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
                                 <i class="ph ph-arrow-u-up-left" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                                No Return Instructions issued yet. Click "Issue Return Instruction" to create one.
+                                No Return Instructions created yet. Click "Create Return Instruction" to create one.
                             </td>
                         </tr>
                     @endforelse
