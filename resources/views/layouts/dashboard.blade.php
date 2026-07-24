@@ -422,7 +422,8 @@
                             class="nav-link {{ request()->is('*/delivery-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
-                        <a href="#" class="nav-link">
+                        <a href="{{ route('rent-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
                         <a href="#" class="nav-link">

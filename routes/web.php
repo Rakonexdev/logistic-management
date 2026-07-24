@@ -44,6 +44,7 @@ use App\Http\Controllers\AsnController;
 use App\Http\Controllers\DeliveryInstructionController;
 use App\Http\Controllers\DeliveryInvoiceController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RentInvoiceController;
 use App\Http\Controllers\ReturnInstructionController;
 use App\Http\Controllers\SalesOrderController;
 
@@ -82,6 +83,10 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
 
     // Delivery Invoice Routes
     Route::resource('delivery-invoices', DeliveryInvoiceController::class);
+
+    // Rent Invoice Routes
+    Route::post('rent-invoices/{id}/mark-paid', [RentInvoiceController::class, 'markPaid'])->name('rent-invoices.mark-paid');
+    Route::resource('rent-invoices', RentInvoiceController::class);
 });
 
 // Shared ASN, Delivery Note & Return Print Routes (placed after resource/static routes to avoid wildcard conflicts)
@@ -91,6 +96,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('delivery-notes/{id}/print', [DeliveryInstructionController::class, 'printDeliveryNote'])->name('delivery-notes.print');
     Route::get('delivery-instructions/{id}/attachment', [DeliveryInstructionController::class, 'downloadAttachment'])->name('delivery-instructions.attachment');
     Route::get('delivery-invoices/{id}/print', [DeliveryInvoiceController::class, 'print'])->name('delivery-invoices.print');
+    Route::get('rent-invoices/{id}/print', [RentInvoiceController::class, 'print'])->name('rent-invoices.print');
     Route::get('return-instructions/{id}/print', [ReturnInstructionController::class, 'print'])->name('return-instructions.print');
     Route::get('return-instructions/{id}/attachment', [ReturnInstructionController::class, 'downloadAttachment'])->name('return-instructions.attachment');
 });
