@@ -418,14 +418,15 @@
 
                     <div class="nav-group">
                         <div class="nav-group-title">Finance</div>
-                        <a href="#" class="nav-link">
-                            <i class="ph ph-receipt"></i> Invoices
+                        <a href="{{ route('delivery-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/delivery-invoices*') ? 'active' : '' }}">
+                            <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
                         <a href="#" class="nav-link">
-                            <i class="ph ph-currency-circle-dollar"></i> Charge Proposals
+                            <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
                         <a href="#" class="nav-link">
-                            <i class="ph ph-bank"></i> Cheque Collections
+                            <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>
 
@@ -444,8 +445,6 @@
                             <i class="ph ph-squares-four"></i> Dashboard
                         </a>
                     </div>
-
-
 
                     <div class="nav-group">
                         <div class="nav-group-title">Inbound</div>
@@ -485,17 +484,17 @@
 
                     <div class="nav-group">
                         <div class="nav-group-title">Finance</div>
-                        <a href="{{ route('sfq.cheques.index') }}"
-                            class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
-                            <i class="ph ph-bank"></i> Cheque Collections
+                        <a href="{{ route('sfq.invoices.index') }}"
+                            class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
+                            <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
                         <a href="{{ route('sfq.reconciliation.index') }}"
                             class="nav-link {{ request()->is('*/reconciliation*') ? 'active' : '' }}">
-                            <i class="ph ph-currency-circle-dollar"></i> Charges Recon
+                            <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
-                        <a href="{{ route('sfq.invoices.index') }}"
-                            class="nav-link {{ request()->is('*/invoices*') ? 'active' : '' }}">
-                            <i class="ph ph-receipt"></i> Invoicing
+                        <a href="{{ route('sfq.cheques.index') }}"
+                            class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
+                            <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>
 
