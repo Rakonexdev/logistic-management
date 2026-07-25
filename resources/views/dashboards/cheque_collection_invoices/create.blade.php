@@ -42,7 +42,7 @@
             color: var(--text-secondary);
         }
 
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             box-sizing: border-box;
             padding: 0.75rem 1rem;
@@ -54,11 +54,18 @@
             transition: all 0.2s;
         }
 
-        [data-theme="light"] .form-input {
+        [data-theme="light"] .form-input,
+        [data-theme="light"] .form-select {
             background: rgba(0, 0, 0, 0.02);
+            color: var(--text-primary, #1e293b);
         }
 
-        .form-input:focus {
+        .form-select option {
+            background: var(--bg-color, #ffffff);
+            color: var(--text-primary, #1e293b);
+        }
+
+        .form-input:focus, .form-select:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
@@ -153,12 +160,28 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Select Delivery Invoice (Auto-fill Customer & Ref)</label>
+                    <select id="deliveryInvoiceSelect" class="form-select" onchange="onSelectDeliveryInvoice(this)">
+                        <option value="">Select Delivery Invoice</option>
+                        @foreach($deliveryInvoices as $delInv)
+                            <option value="{{ $delInv->id }}"
+                                    data-customer="{{ $delInv->customer_name }}"
+                                    data-invoice-ref="{{ $delInv->invoice_number }}"
+                                    data-so-ref="{{ $delInv->deliveryInstruction->di_number ?? '' }}"
+                                    data-amount="{{ number_format($delInv->total_amount, 2) }}">
+                                {{ $delInv->invoice_number }} - {{ $delInv->customer_name }} (QAR {{ number_format($delInv->total_amount, 2) }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Customer / Client Name *</label>
                     <input type="text" name="customer_name" id="customerNameInput" class="form-input" required placeholder="e.g. Acme Corporation" value="{{ old('customer_name') }}">
                 </div>
             </div>
 
-            <div class="section-title">Select Collected Cheques to Invoice (Collection Charge: QAR 35.00 / Cheque)</div>
+            <div class="section-title">Select Collected Cheques / Delivery Invoices to Invoice</div>
 
             @if($cheques->isEmpty())
                 <div style="padding: 2rem; text-align: center; color: var(--text-secondary); background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 1.5rem;">
@@ -169,19 +192,19 @@
                 <table class="cheques-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%; text-align: center;">Select</th>
-                            <th style="width: 15%;">Ref #</th>
-                            <th style="width: 25%;">Customer</th>
-                            <th style="width: 25%;">Cheque & Reference Info</th>
-                            <th style="width: 15%;">Cheque Amount</th>
-                            <th style="width: 15%;">Collection Fee (QAR)</th>
+                            <th style="width: 8%; text-align: center;">Select</th>
+                            <th style="width: 20%;">Ref #</th>
+                            <th style="width: 27%;">Customer</th>
+                            <th style="width: 27%;">Cheque & Reference Info</th>
+                            <th style="width: 18%;">Cheque Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($cheques as $index => $chq)
                             <tr>
                                 <td style="text-align: center;">
-                                    <input type="checkbox" class="cheque-checkbox" value="{{ $chq->id }}" onchange="toggleChequeRow(this, {{ $chq->id }}, '{{ addslashes($chq->customer_name) }}')" style="width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--accent-primary, #6366f1);">
+                                    <input type="checkbox" class="cheque-checkbox" value="{{ $chq->id }}" data-amount="{{ $chq->amount }}" onchange="toggleChequeRow(this, {{ $chq->id }}, '{{ addslashes($chq->customer_name) }}')" style="width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--accent-primary, #6366f1);">
+                                    <input type="hidden" name="items[{{ $index }}][cheque_collection_id]" value="{{ $chq->id }}" id="item_input_{{ $chq->id }}" disabled>
                                 </td>
                                 <td><strong>{{ $chq->collection_ref }}</strong></td>
                                 <td>{{ $chq->customer_name }}</td>
@@ -198,13 +221,6 @@
                                         <div style="font-size: 0.75rem; color: var(--text-secondary);">(USD ${{ number_format($chq->amount_usd, 2) }})</div>
                                     @endif
                                 </td>
-                                <td>
-                                    <div id="feeBox_{{ $chq->id }}" style="display: none;">
-                                        <input type="number" step="0.01" min="0" name="items[{{ $index }}][collection_fee]" value="35.00" class="form-input fee-input" required oninput="calculateTotals()" style="padding: 0.4rem 0.75rem;">
-                                        <input type="hidden" name="items[{{ $index }}][cheque_collection_id]" value="{{ $chq->id }}">
-                                    </div>
-                                    <span id="feePlaceholder_{{ $chq->id }}" style="color: var(--text-secondary); font-style: italic;">QAR 35.00</span>
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -213,7 +229,7 @@
 
             <div class="total-summary-card">
                 <div class="total-summary-label">
-                    <i class="ph ph-calculator" style="margin-right: 0.5rem;"></i> Total Invoice Collection Fee:
+                    <i class="ph ph-calculator" style="margin-right: 0.5rem;"></i> Total Invoice Amount:
                 </div>
                 <div class="total-summary-value" id="totalInvoiceAmountText">
                     QAR 0.00
@@ -228,45 +244,79 @@
             </div>
         </form>
     </div>
-
-    @push('scripts')
-        <script>
-            function toggleChequeRow(checkbox, id, customerName) {
-                const feeBox = document.getElementById(`feeBox_${id}`);
-                const feePlaceholder = document.getElementById(`feePlaceholder_${id}`);
-
-                if (checkbox.checked) {
-                    feeBox.style.display = 'block';
-                    feePlaceholder.style.display = 'none';
-
-                    const customerInput = document.getElementById('customerNameInput');
-                    if (!customerInput.value) {
-                        customerInput.value = customerName;
-                    }
-                } else {
-                    feeBox.style.display = 'none';
-                    feePlaceholder.style.display = 'inline';
-                }
-
-                calculateTotals();
-            }
-
-            function calculateTotals() {
-                let grandTotal = 0;
-                let selectedCount = 0;
-
-                const checkboxes = document.querySelectorAll('.cheque-checkbox:checked');
-                checkboxes.forEach(cb => {
-                    const id = cb.value;
-                    const feeInput = document.querySelector(`#feeBox_${id} .fee-input`);
-                    const fee = parseFloat(feeInput ? feeInput.value : 35) || 35;
-                    grandTotal += fee;
-                    selectedCount++;
-                });
-
-                document.getElementById('totalInvoiceAmountText').textContent = 'QAR ' + grandTotal.toFixed(2);
-                document.getElementById('submitBtn').disabled = (selectedCount === 0);
-            }
-        </script>
-    @endpush
 @endsection
+
+@push('scripts')
+    <script>
+        function onSelectDeliveryInvoice(select) {
+            const selectedOpt = select.options[select.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) return;
+
+            const customer = selectedOpt.getAttribute('data-customer');
+            const invoiceRef = selectedOpt.getAttribute('data-invoice-ref');
+
+            if (customer) {
+                document.getElementById('customerNameInput').value = customer;
+            }
+
+            const rows = document.querySelectorAll('.cheques-table tbody tr');
+            let foundMatch = false;
+
+            rows.forEach(tr => {
+                const rowText = tr.textContent || '';
+                if (invoiceRef && rowText.includes(invoiceRef)) {
+                    const cb = tr.querySelector('.cheque-checkbox');
+                    if (cb && !cb.checked) {
+                        cb.checked = true;
+                        cb.dispatchEvent(new Event('change'));
+                        foundMatch = true;
+                    }
+                }
+            });
+
+            if (!foundMatch && customer) {
+                rows.forEach(tr => {
+                    const rowText = tr.textContent || '';
+                    if (rowText.includes(customer)) {
+                        const cb = tr.querySelector('.cheque-checkbox');
+                        if (cb && !cb.checked) {
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            }
+        }
+
+        function toggleChequeRow(checkbox, id, customerName) {
+            const itemInput = document.getElementById(`item_input_${id}`);
+            if (itemInput) {
+                itemInput.disabled = !checkbox.checked;
+            }
+
+            if (checkbox.checked) {
+                const customerInput = document.getElementById('customerNameInput');
+                if (!customerInput.value) {
+                    customerInput.value = customerName;
+                }
+            }
+
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let grandTotal = 0;
+            let selectedCount = 0;
+
+            const checkboxes = document.querySelectorAll('.cheque-checkbox:checked');
+            checkboxes.forEach(cb => {
+                const amount = parseFloat(cb.getAttribute('data-amount')) || 0;
+                grandTotal += amount;
+                selectedCount++;
+            });
+
+            document.getElementById('totalInvoiceAmountText').textContent = 'QAR ' + grandTotal.toFixed(2);
+            document.getElementById('submitBtn').disabled = (selectedCount === 0);
+        }
+    </script>
+@endpush

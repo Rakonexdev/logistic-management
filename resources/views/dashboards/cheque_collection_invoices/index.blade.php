@@ -131,6 +131,7 @@
         }
 
         .badge-unpaid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-partially-paid { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
         .badge-paid { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
     </style>
 @endpush
@@ -158,7 +159,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-value">QAR {{ number_format($totalFeeSum, 2) }}</div>
-                <div class="stat-label">Total Collection Fees Invoiced (QAR 35/cheque)</div>
+                <div class="stat-label">Total Invoiced Amount</div>
             </div>
         </div>
 
@@ -198,7 +199,8 @@
                         <th>Invoice #</th>
                         <th>Customer / Client</th>
                         <th>Cheques Invoiced</th>
-                        <th>Total Fee Amount</th>
+                        <th>Total Amount</th>
+                        <th>Paid Amount</th>
                         <th>Status</th>
                         <th>Date Issued</th>
                         <th style="width: 170px;">Actions</th>
@@ -206,39 +208,63 @@
                 </thead>
                 <tbody>
                     @forelse($invoices as $inv)
+                        @php
+                            $collectedCount = 0;
+                            $paidAmountSum = 0;
+
+                            foreach ($inv->items as $item) {
+                                $chq = $item->chequeCollection;
+                                if ($chq) {
+                                    if ($chq->payments && $chq->payments->count() > 0) {
+                                        $collectedCount += $chq->payments->count();
+                                        $paidAmountSum += (float) $chq->payments->sum('paid_amount');
+                                    } elseif (in_array($chq->status, ['Collected', 'Submitted']) && (float) $chq->paid_amount > 0) {
+                                        $collectedCount += 1;
+                                        $paidAmountSum += (float) $chq->paid_amount;
+                                    }
+                                }
+                            }
+
+                            $computedStatus = 'Unpaid';
+                            if ($paidAmountSum >= (float) $inv->total_amount && (float) $inv->total_amount > 0) {
+                                $computedStatus = 'Paid';
+                            } elseif ($paidAmountSum > 0) {
+                                $computedStatus = 'Partially Paid';
+                            }
+                        @endphp
                         <tr>
                             <td><strong>{{ $inv->invoice_number }}</strong></td>
                             <td><strong>{{ $inv->customer_name }}</strong></td>
                             <td>
-                                <span style="font-weight: 600; color: var(--accent-primary, #6366f1); background: rgba(99, 102, 241, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px;">
-                                    <i class="ph ph-files"></i> {{ $inv->items->count() }} Cheque(s)
+                                <span style="font-weight: 600; color: {{ $collectedCount > 0 ? '#10b981' : 'var(--accent-primary, #6366f1)' }}; background: {{ $collectedCount > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.1)' }}; padding: 0.2rem 0.6rem; border-radius: 6px;">
+                                    <i class="ph ph-files"></i> {{ $collectedCount }} Cheque(s)
                                 </span>
                             </td>
                             <td style="font-weight: 800; color: var(--accent-primary, #6366f1);">
                                 QAR {{ number_format($inv->total_amount, 2) }}
                             </td>
+                            <td style="font-weight: 800; color: {{ $paidAmountSum > 0 ? '#10b981' : 'var(--text-secondary)' }};">
+                                QAR {{ number_format($paidAmountSum, 2) }}
+                            </td>
                             <td>
-                                <span class="badge badge-{{ strtolower($inv->status) }}">
-                                    <i class="ph {{ strtolower($inv->status) === 'paid' ? 'ph-check-circle' : 'ph-clock' }}"></i> {{ ucfirst($inv->status) }}
+                                <span class="badge badge-{{ strtolower(str_replace(' ', '-', $computedStatus)) }}">
+                                    <i class="ph {{ strtolower($computedStatus) === 'paid' ? 'ph-check-circle' : (strtolower($computedStatus) === 'partially paid' ? 'ph-clock-counter-clockwise' : 'ph-clock') }}"></i> {{ ucfirst($computedStatus) }}
                                 </span>
                             </td>
                             <td>{{ $inv->created_at->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    @if(Auth::user()->role === 'sfq_user')
+                                        <button type="button" class="btn btn-outline" onclick="openAssignDriverModal({{ $inv->id }}, '{{ $inv->invoice_number }}')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="Assign Driver">
+                                            <i class="ph ph-user-plus"></i> Assign Driver
+                                        </button>
+                                    @endif
                                     <a href="{{ route('cheque-collection-invoices.show', $inv->id) }}" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="View Invoice">
                                         <i class="ph ph-eye"></i> View
                                     </a>
                                     <a href="{{ route('cheque-collection-invoices.print', $inv->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="Print Invoice">
                                         <i class="ph ph-printer"></i>
                                     </a>
-                                    @if(strtolower($inv->status) === 'unpaid')
-                                        <form action="{{ route('cheque-collection-invoices.mark-paid', $inv->id) }}" method="POST" style="display: inline;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);" title="Mark as Paid">
-                                                <i class="ph ph-check"></i> Paid
-                                            </button>
-                                        </form>
-                                    @endif
                                     <button type="button" class="btn btn-outline" onclick="openDeleteModal({{ $inv->id }}, '{{ $inv->invoice_number }}')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Delete Invoice">
                                         <i class="ph ph-trash"></i>
                                     </button>
@@ -288,6 +314,38 @@
         </div>
     </div>
 
+    <!-- Assign Driver Modal Popup -->
+    <div id="assignDriverModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="glass" style="width: 90%; max-width: 440px; padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: left; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);"><i class="ph ph-user-plus"></i> Assign Driver</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+                Select driver to collect payment/cheque for invoice <strong id="assignInvoiceNumberText" style="color: var(--text-primary);"></strong>:
+            </p>
+
+            <form id="assignDriverForm" method="POST" action="">
+                @csrf
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 0.5rem; display: block; font-size: 0.875rem; color: var(--text-secondary);">Select Delivery Driver *</label>
+                    <select name="driver" id="modalDriverSelect" class="form-select" required style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary);">
+                        <option value="">Select Driver</option>
+                        @foreach($drivers as $drv)
+                            <option value="{{ $drv->name }}">{{ $drv->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closeAssignDriverModal()" style="padding: 0.65rem 1rem;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1rem;">
+                        Save Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             let searchTimeout;
@@ -296,6 +354,21 @@
                 searchTimeout = setTimeout(() => {
                     document.getElementById('filterForm').submit();
                 }, 600);
+            }
+
+            function openAssignDriverModal(invoiceId, invoiceNumber) {
+                const modal = document.getElementById('assignDriverModal');
+                const form = document.getElementById('assignDriverForm');
+                const invoiceText = document.getElementById('assignInvoiceNumberText');
+
+                form.action = `{{ url('cheque-collection-invoices') }}/${invoiceId}/assign-driver`;
+                invoiceText.textContent = invoiceNumber;
+                modal.style.display = 'flex';
+            }
+
+            function closeAssignDriverModal() {
+                const modal = document.getElementById('assignDriverModal');
+                modal.style.display = 'none';
             }
 
             function openDeleteModal(invoiceId, invoiceNumber) {
@@ -314,9 +387,13 @@
             }
 
             window.addEventListener('click', function(e) {
-                const modal = document.getElementById('deleteModal');
-                if (e.target === modal) {
+                const deleteModal = document.getElementById('deleteModal');
+                const assignModal = document.getElementById('assignDriverModal');
+                if (e.target === deleteModal) {
                     closeDeleteModal();
+                }
+                if (e.target === assignModal) {
+                    closeAssignDriverModal();
                 }
             });
         </script>

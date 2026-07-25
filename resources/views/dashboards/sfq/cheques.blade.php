@@ -49,7 +49,8 @@
             color: var(--text-secondary);
         }
 
-        .form-input, .form-select {
+        .form-input,
+        .form-select {
             width: 100%;
             box-sizing: border-box;
             padding: 0.75rem 1rem;
@@ -66,7 +67,8 @@
             background: rgba(0, 0, 0, 0.02);
         }
 
-        .form-input:focus, .form-select:focus {
+        .form-input:focus,
+        .form-select:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
@@ -87,7 +89,8 @@
             text-align: left;
         }
 
-        .data-table th, .data-table td {
+        .data-table th,
+        .data-table td {
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -153,8 +156,15 @@
             font-weight: 600;
         }
 
-        .badge-collected { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-        .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .badge-collected {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
     </style>
 @endpush
 
@@ -174,7 +184,8 @@
     <div class="grid-panels">
         <!-- Cheques Table -->
         <div class="form-panel glass">
-            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Cheque Collection Requests</h3>
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Cheque Collection Requests
+            </h3>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
@@ -193,10 +204,12 @@
                                 <td><strong>{{ $chq['ref'] }}</strong></td>
                                 <td>
                                     @if(!empty($chq['invoice_reference']))
-                                        <div style="font-weight: 600; color: var(--accent-primary, #6366f1);">{{ $chq['invoice_reference'] }}</div>
+                                        <div style="font-weight: 600; color: var(--accent-primary, #6366f1);">
+                                            {{ $chq['invoice_reference'] }}</div>
                                     @endif
                                     @if(!empty($chq['so_reference']))
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">DI: {{ $chq['so_reference'] }}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">DI:
+                                            {{ $chq['so_reference'] }}</div>
                                     @elseif(empty($chq['invoice_reference']))
                                         <span style="color: var(--text-secondary);">-</span>
                                     @endif
@@ -205,7 +218,8 @@
                                 <td>{{ $chq['driver'] }}</td>
                                 <td>QAR {{ number_format($chq['amount'], 2) }}</td>
                                 <td>
-                                    <span class="badge badge-{{ strtolower($chq['status']) === 'collected' || strtolower($chq['status']) === 'submitted' ? 'collected' : 'pending' }}">
+                                    <span
+                                        class="badge badge-{{ strtolower($chq['status']) === 'collected' || strtolower($chq['status']) === 'submitted' ? 'collected' : 'pending' }}">
                                         {{ $chq['status'] }}
                                     </span>
                                 </td>
@@ -246,7 +260,8 @@
                     <input type="file" id="cheque_image" name="cheque_image" class="form-input" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; margin-top: 1rem;">
                     <i class="ph ph-check-square"></i> Submit Collection
                 </button>
             </form>
@@ -256,7 +271,7 @@
 
 @push('scripts')
     <script>
-        document.getElementById('cheque_ref').addEventListener('change', function() {
+        document.getElementById('cheque_ref').addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
             const amount = selectedOption.getAttribute('data-amount') || '';
             document.getElementById('amount').value = amount;

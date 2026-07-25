@@ -66,6 +66,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
 
     // Cheque Collection Invoice Routes
     Route::post('cheque-collection-invoices/{id}/mark-paid', [ChequeCollectionInvoiceController::class, 'markPaid'])->name('cheque-collection-invoices.mark-paid');
+    Route::post('cheque-collection-invoices/{id}/assign-driver', [ChequeCollectionInvoiceController::class, 'assignDriver'])->name('cheque-collection-invoices.assign-driver');
     Route::resource('cheque-collection-invoices', ChequeCollectionInvoiceController::class);
 });
 

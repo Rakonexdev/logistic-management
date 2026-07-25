@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ChequeCollection extends Model
@@ -17,6 +18,7 @@ class ChequeCollection extends Model
         'customer_name',
         'collection_location',
         'amount',
+        'paid_amount',
         'amount_usd',
         'cheque_number',
         'cheque_date',
@@ -33,6 +35,7 @@ class ChequeCollection extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'amount_usd' => 'decimal:2',
         'collection_fee' => 'decimal:2',
         'cheque_date' => 'date',
@@ -47,5 +50,10 @@ class ChequeCollection extends Model
     public function invoiceItem(): HasOne
     {
         return $this->hasOne(ChequeCollectionInvoiceItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(ChequeCollectionPayment::class)->orderBy('payment_number');
     }
 }

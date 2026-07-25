@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ChequeCollection;
 use App\Models\ChequeCollectionInvoice;
+use App\Models\DeliveryInvoice;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +13,7 @@ class ChequeCollectionInvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ChequeCollectionInvoice::with(['items.chequeCollection', 'user']);
+        $query = ChequeCollectionInvoice::with(['items.chequeCollection.payments', 'user']);
 
         if (Auth::user()->role === 'end_user') {
             $query->where('user_id', Auth::id());
@@ -39,24 +41,63 @@ class ChequeCollectionInvoiceController extends Controller
             $q->where('user_id', Auth::id());
         })->where('status', 'Paid')->count();
 
-        return view('dashboards.cheque_collection_invoices.index', compact('invoices', 'totalFeeSum', 'unpaidCount', 'paidCount'));
+        $drivers = User::where('role', 'driver')->orderBy('name')->get();
+
+        return view('dashboards.cheque_collection_invoices.index', compact('invoices', 'totalFeeSum', 'unpaidCount', 'paidCount', 'drivers'));
     }
 
     public function create()
     {
-        $chequesQuery = ChequeCollection::doesntHave('invoiceItem');
+        $deliveryInvoicesQuery = DeliveryInvoice::whereHas('user', function ($q) {
+            $q->where('role', 'end_user');
+        })->with(['deliveryInstruction.deliveryNotes', 'user']);
 
         if (Auth::user()->role === 'end_user') {
-            $chequesQuery->where(function ($q) {
-                $q->where('user_id', Auth::id())->orWhereNull('user_id');
+            $deliveryInvoicesQuery->where('user_id', Auth::id());
+        }
+        $deliveryInvoices = $deliveryInvoicesQuery->latest()->get();
+
+        // Ensure every DeliveryInvoice created by END User has a corresponding ChequeCollection record
+        foreach ($deliveryInvoices as $delInv) {
+            $exists = ChequeCollection::where('invoice_reference', $delInv->invoice_number)->exists();
+            if (! $exists) {
+                $driverName = null;
+                if ($delInv->deliveryInstruction) {
+                    $dn = $delInv->deliveryInstruction->deliveryNotes()->whereNotNull('driver')->first();
+                    if ($dn) {
+                        $driverName = $dn->driver;
+                    }
+                }
+
+                ChequeCollection::create([
+                    'collection_ref' => 'CHQ-'.date('Ymd').'-'.rand(1000, 9999),
+                    'customer_name' => $delInv->customer_name,
+                    'collection_location' => $delInv->deliveryInstruction->delivery_address ?? 'Customer Site',
+                    'amount' => $delInv->total_amount,
+                    'amount_usd' => $delInv->total_amount / 3.64,
+                    'invoice_reference' => $delInv->invoice_number,
+                    'so_reference' => $delInv->deliveryInstruction->di_number ?? null,
+                    'status' => 'Pending Collection',
+                    'user_id' => $delInv->user_id,
+                    'driver' => $driverName ?: '-',
+                ]);
+            }
+        }
+
+        $chequesQuery = ChequeCollection::doesntHave('invoiceItem')
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'end_user');
             });
+
+        if (Auth::user()->role === 'end_user') {
+            $chequesQuery->where('user_id', Auth::id());
         }
 
         $cheques = $chequesQuery->latest()->get();
 
         $defaultInvoiceNum = 'CHQ-INV-'.date('Ymd').'-'.rand(100, 999);
 
-        return view('dashboards.cheque_collection_invoices.create', compact('cheques', 'defaultInvoiceNum'));
+        return view('dashboards.cheque_collection_invoices.create', compact('cheques', 'deliveryInvoices', 'defaultInvoiceNum'));
     }
 
     public function store(Request $request)
@@ -66,7 +107,6 @@ class ChequeCollectionInvoiceController extends Controller
             'customer_name' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.cheque_collection_id' => 'required|exists:cheque_collections,id',
-            'items.*.collection_fee' => 'required|numeric|min:0',
         ]);
 
         $totalInvoiceAmount = 0;
@@ -74,15 +114,22 @@ class ChequeCollectionInvoiceController extends Controller
 
         foreach ($request->items as $item) {
             $cheque = ChequeCollection::findOrFail($item['cheque_collection_id']);
-            $fee = (float) $item['collection_fee'];
-            $totalInvoiceAmount += $fee;
+            $amount = (float) $cheque->amount;
+            $totalInvoiceAmount += $amount;
+
+            if ($cheque->payments()->count() === 0) {
+                $cheque->update([
+                    'status' => 'Pending Collection',
+                    'paid_amount' => 0.00,
+                ]);
+            }
 
             $itemsData[] = [
                 'cheque_collection_id' => $cheque->id,
                 'collection_ref' => $cheque->collection_ref,
                 'cheque_number' => $cheque->cheque_number ?: $cheque->collection_ref,
-                'cheque_amount' => $cheque->amount,
-                'collection_fee' => $fee,
+                'cheque_amount' => $amount,
+                'collection_fee' => $amount,
             ];
         }
 
@@ -103,14 +150,14 @@ class ChequeCollectionInvoiceController extends Controller
 
     public function show($id)
     {
-        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection', 'user'])->findOrFail($id);
+        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection.payments', 'user'])->findOrFail($id);
 
         return view('dashboards.cheque_collection_invoices.show', compact('invoice'));
     }
 
     public function print($id)
     {
-        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection', 'user'])->findOrFail($id);
+        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection.payments', 'user'])->findOrFail($id);
 
         return view('dashboards.cheque_collection_invoices.print', compact('invoice'));
     }
@@ -121,6 +168,30 @@ class ChequeCollectionInvoiceController extends Controller
         $invoice->update(['status' => 'Paid']);
 
         return redirect()->back()->with('success', "Cheque Collection Invoice {$invoice->invoice_number} marked as Paid.");
+    }
+
+    public function assignDriver(Request $request, $id)
+    {
+        if (Auth::user()->role !== 'sfq_user') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'driver' => 'required|string|max:255',
+        ]);
+
+        $invoice = ChequeCollectionInvoice::with('items.chequeCollection')->findOrFail($id);
+
+        foreach ($invoice->items as $item) {
+            if ($item->chequeCollection) {
+                $item->chequeCollection->update([
+                    'driver' => $request->driver,
+                    'status' => 'Pending Collection',
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', "Driver {$request->driver} assigned to Cheque Invoice {$invoice->invoice_number}.");
     }
 
     public function destroy($id)

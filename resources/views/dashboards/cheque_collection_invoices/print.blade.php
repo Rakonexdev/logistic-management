@@ -218,14 +218,14 @@
                                 -
                             @endif
                         </td>
-                        <td class="right">QAR {{ number_format($item->cheque_amount, 2) }}</td>
-                        <td class="right"><strong>QAR {{ number_format($item->collection_fee, 2) }}</strong></td>
+                        <td class="right"><strong>QAR {{ number_format($item->cheque_amount, 2) }}</strong></td>
+                        <td class="right">QAR 35.00</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="5" style="text-align: right;">TOTAL CHEQUE COLLECTION SERVICE FEE (QAR):</td>
+                    <td colspan="5" style="text-align: right;">TOTAL INVOICE AMOUNT (QAR):</td>
                     <td class="right" style="font-size: 12px; color: #0255a5;">QAR {{ number_format($invoice->total_amount, 2) }}</td>
                 </tr>
             </tfoot>

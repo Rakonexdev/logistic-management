@@ -18,7 +18,7 @@ test('end user and sfq user can view cheque collection invoices index page', fun
     $responseSfq->assertStatus(200);
 });
 
-test('user can create a cheque collection invoice with QAR 35 fee per cheque', function () {
+test('user can create a cheque collection invoice with total cheque amount', function () {
     $user = User::factory()->create(['role' => 'end_user']);
 
     $cheque1 = ChequeCollection::create([
@@ -43,7 +43,6 @@ test('user can create a cheque collection invoice with QAR 35 fee per cheque', f
         'items' => [
             [
                 'cheque_collection_id' => $cheque1->id,
-                'collection_fee' => 35.00,
             ],
         ],
     ];
@@ -55,13 +54,13 @@ test('user can create a cheque collection invoice with QAR 35 fee per cheque', f
     $this->assertDatabaseHas('cheque_collection_invoices', [
         'invoice_number' => 'CHQ-INV-20260724-999',
         'customer_name' => 'Acme Qatar',
-        'total_amount' => 35.00,
+        'total_amount' => 5000.00,
         'status' => 'Unpaid',
     ]);
 
     $this->assertDatabaseHas('cheque_collection_invoice_items', [
         'cheque_collection_id' => $cheque1->id,
-        'collection_fee' => 35.00,
+        'cheque_amount' => 5000.00,
     ]);
 });
 

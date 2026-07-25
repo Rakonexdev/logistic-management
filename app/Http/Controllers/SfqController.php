@@ -523,13 +523,50 @@ class SfqController extends Controller
         ]);
 
         $cheque = ChequeCollection::where('collection_ref', $request->cheque_ref)->firstOrFail();
+
+        $totalAmount = (float) $cheque->amount;
+        $currentPaidAmount = (float) $request->amount;
+        $previousPaid = (float) $cheque->paid_amount;
+        $newTotalPaid = $previousPaid + $currentPaidAmount;
+        $remainingBalance = max(0, $totalAmount - $newTotalPaid);
+
+        $existingPaymentCount = $cheque->payments()->count();
+        $nextPaymentNumber = $existingPaymentCount + 1;
+
+        $photoPath = null;
+        if ($request->hasFile('cheque_image')) {
+            $file = $request->file('cheque_image');
+            $filename = time().'_chq_'.$cheque->id.'_'.rand(100, 999).'.'.$file->getClientOriginalExtension();
+            if (app()->environment('testing')) {
+                $file->storeAs('uploads/cheques', $filename, 'public');
+            } else {
+                $dir = public_path('uploads/cheques');
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $file->move($dir, $filename);
+            }
+            $photoPath = 'uploads/cheques/'.$filename;
+        }
+
+        $cheque->payments()->create([
+            'payment_number' => $nextPaymentNumber,
+            'paid_amount' => $currentPaidAmount,
+            'remaining_balance' => $remainingBalance,
+            'cheque_number' => $cheque->cheque_number ?: $cheque->collection_ref.'-P'.$nextPaymentNumber,
+            'cheque_date' => now(),
+            'photo_path' => $photoPath ?: $cheque->photo_path,
+            'driver' => Auth::user()->name,
+            'remarks' => 'Registered by SFQ',
+        ]);
+
         $cheque->update([
-            'amount' => $request->amount,
+            'paid_amount' => $newTotalPaid,
             'status' => 'Submitted',
             'submission_time' => now(),
         ]);
 
-        return back()->with('success', "Cheque collection record {$request->cheque_ref} submitted successfully.");
+        return back()->with('success', "Cheque collection record {$request->cheque_ref} payment #{$nextPaymentNumber} of QAR ".number_format($currentPaidAmount, 2).' submitted successfully.');
     }
 
     public function reconciliationIndex()

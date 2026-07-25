@@ -96,14 +96,6 @@
             <i class="ph ph-bank"></i> Cheque Collection Invoice: {{ $invoice->invoice_number }}
         </h1>
         <div style="display: flex; gap: 0.75rem;">
-            @if(strtolower($invoice->status) === 'unpaid')
-                <form action="{{ route('cheque-collection-invoices.mark-paid', $invoice->id) }}" method="POST" style="display: inline;">
-                    @csrf
-                    <button type="submit" class="btn btn-primary" style="background: #10b981; border-color: #10b981;">
-                        <i class="ph ph-check"></i> Mark as Paid
-                    </button>
-                </form>
-            @endif
             <a href="{{ route('cheque-collection-invoices.print', $invoice->id) }}" target="_blank" class="btn btn-outline">
                 <i class="ph ph-printer"></i> Print Invoice
             </a>
@@ -114,6 +106,56 @@
     </div>
 
     <div class="glass details-panel">
+        @php
+            $totalPaidSum = 0;
+            $allPayments = collect();
+
+            foreach ($invoice->items as $item) {
+                $chq = $item->chequeCollection;
+                if ($chq) {
+                    if ($chq->payments && $chq->payments->count() > 0) {
+                        foreach ($chq->payments as $p) {
+                            $allPayments->push([
+                                'payment_number' => $p->payment_number,
+                                'collection_ref' => $chq->collection_ref,
+                                'cheque_number' => $p->cheque_number ?: $chq->cheque_number ?: $chq->collection_ref,
+                                'paid_amount' => $p->paid_amount,
+                                'remaining_balance' => $p->remaining_balance,
+                                'date' => $p->created_at ? $p->created_at->format('Y-m-d H:i') : ($p->cheque_date ? $p->cheque_date->format('Y-m-d') : '-'),
+                                'driver' => $p->driver ?: $chq->driver ?: 'Driver',
+                                'photo_path' => $p->photo_path ?: $chq->photo_path,
+                                'status' => 'Collected',
+                            ]);
+                            $totalPaidSum += (float) $p->paid_amount;
+                        }
+                    } else if (in_array($chq->status, ['Collected', 'Submitted']) && (float) $chq->paid_amount > 0) {
+                        $paid = (float) $chq->paid_amount;
+                        $rem = max(0, (float)$chq->amount - $paid);
+                        $allPayments->push([
+                            'payment_number' => 1,
+                            'collection_ref' => $chq->collection_ref,
+                            'cheque_number' => $chq->cheque_number ?: $chq->collection_ref,
+                            'paid_amount' => $paid,
+                            'remaining_balance' => $rem,
+                            'date' => $chq->submission_time ? $chq->submission_time->format('Y-m-d H:i') : $chq->updated_at->format('Y-m-d H:i'),
+                            'driver' => $chq->driver ?: 'Driver',
+                            'photo_path' => $chq->photo_path,
+                            'status' => $chq->status,
+                        ]);
+                        $totalPaidSum += $paid;
+                    }
+                }
+            }
+            $remainingBalanceTotal = max(0, (float) $invoice->total_amount - $totalPaidSum);
+
+            $computedStatus = 'Unpaid';
+            if ($totalPaidSum >= (float) $invoice->total_amount && (float) $invoice->total_amount > 0) {
+                $computedStatus = 'Paid';
+            } elseif ($totalPaidSum > 0) {
+                $computedStatus = 'Partially Paid';
+            }
+        @endphp
+
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Invoice Number</span>
@@ -130,68 +172,119 @@
             <div class="info-item">
                 <span class="info-label">Status</span>
                 <div>
-                    <span class="badge badge-{{ strtolower($invoice->status) }}">
-                        <i class="ph {{ strtolower($invoice->status) === 'paid' ? 'ph-check-circle' : 'ph-clock' }}"></i> {{ ucfirst($invoice->status) }}
+                    <span class="badge badge-{{ strtolower(str_replace(' ', '-', $computedStatus)) }}">
+                        <i class="ph {{ strtolower($computedStatus) === 'paid' ? 'ph-check-circle' : (strtolower($computedStatus) === 'partially paid' ? 'ph-clock-counter-clockwise' : 'ph-clock') }}"></i> {{ ucfirst($computedStatus) }}
                     </span>
                 </div>
             </div>
             <div class="info-item">
-                <span class="info-label">Total Collection Fee</span>
-                <span class="info-value" style="color: var(--accent-primary, #6366f1); font-size: 1.25rem;">
+                <span class="info-label">Assigned Driver</span>
+                <span class="info-value">
+                    <i class="ph ph-user"></i> {{ $invoice->items->first()?->chequeCollection?->driver ?: 'Not Assigned' }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Invoice Amount</span>
+                <span class="info-value" style="color: var(--accent-primary, #6366f1); font-size: 1.2rem;">
                     QAR {{ number_format($invoice->total_amount, 2) }}
                 </span>
             </div>
+            <div class="info-item">
+                <span class="info-label">Total Paid Amount</span>
+                <span class="info-value" style="color: #10b981; font-size: 1.2rem;">
+                    QAR {{ number_format($totalPaidSum, 2) }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Remaining Balance</span>
+                <span class="info-value" style="color: {{ $remainingBalanceTotal > 0 ? '#f59e0b' : '#10b981' }}; font-size: 1.2rem;">
+                    QAR {{ number_format($remainingBalanceTotal, 2) }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Collection Fee Rate</span>
+                <span class="info-value">QAR 35.00 / Cheque</span>
+            </div>
         </div>
 
-        <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Cheque Details & Collection Fee Breakdown</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--text-primary);"><i class="ph ph-receipt"></i> Customer Payment & Cheque Collection History</h3>
 
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Collection Ref</th>
-                    <th>Cheque Number</th>
-                    <th>Reference IDs (PO / SO / Inv)</th>
-                    <th style="text-align: right;">Collected Cheque Amount</th>
-                    <th style="text-align: right;">Collection Fee</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($invoice->items as $index => $item)
+        @if($allPayments->isEmpty())
+            <div style="padding: 2rem; text-align: center; color: var(--text-secondary); background: rgba(0,0,0,0.1); border-radius: 10px; margin-bottom: 1.5rem;">
+                <i class="ph ph-clock" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #f59e0b;"></i>
+                No payments collected by driver yet. Outstanding Balance: <strong>QAR {{ number_format($invoice->total_amount, 2) }}</strong>
+            </div>
+        @else
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td><strong>{{ $item->collection_ref }}</strong></td>
-                        <td>
-                            <span style="font-family: monospace; background: rgba(99, 102, 241, 0.1); color: var(--accent-primary, #6366f1); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
-                                {{ $item->cheque_number ?: $item->collection_ref }}
-                            </span>
-                        </td>
-                        <td>
-                            @if($item->chequeCollection)
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                                    PO: {{ $item->chequeCollection->po_reference ?: '-' }} | 
-                                    SO: {{ $item->chequeCollection->so_reference ?: '-' }} | 
-                                    Inv: {{ $item->chequeCollection->invoice_reference ?: '-' }}
-                                </div>
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td style="text-align: right;">QAR {{ number_format($item->cheque_amount, 2) }}</td>
-                        <td style="text-align: right; font-weight: 700; color: var(--accent-primary, #6366f1);">
-                            QAR {{ number_format($item->collection_fee, 2) }}
-                        </td>
+                        <th>Payment #</th>
+                        <th>Collection Ref</th>
+                        <th>Cheque Number</th>
+                        <th>Date Collected</th>
+                        <th style="text-align: right;">Paid Amount</th>
+                        <th style="text-align: right;">Collection Fee</th>
+                        <th style="text-align: right;">Remaining Balance</th>
+                        <th>Collector / Driver</th>
+                        <th>Proof Photo</th>
+                        <th>Status</th>
                     </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5" style="text-align: right; font-weight: 700; font-size: 1rem;">TOTAL SERVICE FEE AMOUNT:</td>
-                    <td style="text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--accent-primary, #6366f1);">
-                        QAR {{ number_format($invoice->total_amount, 2) }}
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach($allPayments as $idx => $p)
+                        <tr>
+                            <td><strong>Payment #{{ $p['payment_number'] ?? ($idx + 1) }}</strong></td>
+                            <td>{{ $p['collection_ref'] }}</td>
+                            <td>
+                                <span style="font-family: monospace; background: rgba(99, 102, 241, 0.1); color: var(--accent-primary, #6366f1); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+                                    {{ $p['cheque_number'] }}
+                                </span>
+                            </td>
+                            <td>{{ $p['date'] }}</td>
+                            <td style="text-align: right; font-weight: 700; color: #10b981;">
+                                QAR {{ number_format($p['paid_amount'], 2) }}
+                            </td>
+                            <td style="text-align: right; font-weight: 600; color: var(--text-secondary);">
+                                QAR 35.00
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: {{ $p['remaining_balance'] > 0 ? '#f59e0b' : '#10b981' }};">
+                                QAR {{ number_format($p['remaining_balance'], 2) }}
+                            </td>
+                            <td><i class="ph ph-user"></i> {{ $p['driver'] }}</td>
+                            <td>
+                                @if(!empty($p['photo_path']))
+                                    <a href="{{ asset($p['photo_path']) }}" target="_blank" style="color: var(--accent-primary, #6366f1); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="ph ph-image"></i> View Proof
+                                    </a>
+                                @else
+                                    <span style="color: var(--text-secondary);">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge badge-paid">
+                                    <i class="ph ph-check-circle"></i> {{ $p['status'] }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align: right; font-weight: 700; font-size: 1rem;">TOTAL SUMMARY:</td>
+                        <td style="text-align: right; font-weight: 800; font-size: 1.1rem; color: #10b981;">
+                            QAR {{ number_format($totalPaidSum, 2) }}
+                        </td>
+                        <td style="text-align: right; font-weight: 700; font-size: 1rem; color: var(--text-secondary);">
+                            QAR {{ number_format($allPayments->count() * 35, 2) }}
+                        </td>
+                        <td style="text-align: right; font-weight: 800; font-size: 1.1rem; color: {{ $remainingBalanceTotal > 0 ? '#f59e0b' : '#10b981' }};">
+                            QAR {{ number_format($remainingBalanceTotal, 2) }}
+                        </td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        @endif
+    </div>
     </div>
 @endsection

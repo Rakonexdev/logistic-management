@@ -286,6 +286,9 @@ class DriverDashboardController extends Controller
         }
 
         $request->validate([
+            'amount' => ['nullable', 'numeric', 'min:0.01'],
+            'cheque_number' => ['nullable', 'string', 'max:255'],
+            'cheque_date' => ['nullable', 'date'],
             'photo' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,webp,pdf,heic,svg', 'max:15360'],
             'remarks' => ['nullable', 'string'],
         ]);
@@ -293,7 +296,7 @@ class DriverDashboardController extends Controller
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $filename = time().'_chq_'.$chequeCollection->id.'.'.$file->getClientOriginalExtension();
+            $filename = time().'_chq_'.$chequeCollection->id.'_'.rand(100, 999).'.'.$file->getClientOriginalExtension();
             if (app()->environment('testing')) {
                 $file->storeAs('uploads/cheques', $filename, 'public');
             } else {
@@ -306,14 +309,39 @@ class DriverDashboardController extends Controller
             $photoPath = 'uploads/cheques/'.$filename;
         }
 
+        $totalAmount = (float) $chequeCollection->amount;
+        $currentPaidAmount = (float) ($request->amount ?: $chequeCollection->amount);
+        $previousPaid = (float) $chequeCollection->paid_amount;
+        $newTotalPaid = $previousPaid + $currentPaidAmount;
+        $remainingBalance = max(0, $totalAmount - $newTotalPaid);
+
+        $existingPaymentCount = $chequeCollection->payments()->count();
+        $nextPaymentNumber = $existingPaymentCount + 1;
+
+        $chequeNumber = $request->cheque_number ?: ($chequeCollection->cheque_number ?: $chequeCollection->collection_ref.'-P'.$nextPaymentNumber);
+
+        $chequeCollection->payments()->create([
+            'payment_number' => $nextPaymentNumber,
+            'paid_amount' => $currentPaidAmount,
+            'remaining_balance' => $remainingBalance,
+            'cheque_number' => $chequeNumber,
+            'cheque_date' => $request->cheque_date ?: now(),
+            'photo_path' => $photoPath,
+            'driver' => Auth::user()->name,
+            'remarks' => $request->remarks,
+        ]);
+
         $chequeCollection->update([
+            'paid_amount' => $newTotalPaid,
+            'cheque_number' => $chequeNumber,
+            'cheque_date' => $request->cheque_date ?: ($chequeCollection->cheque_date ?: now()),
             'status' => 'Collected',
             'photo_path' => $photoPath,
-            'remarks' => $request->remarks,
+            'remarks' => $request->remarks ?: $chequeCollection->remarks,
             'submission_time' => now(),
         ]);
 
-        return back()->with('success', "Cheque {$chequeCollection->collection_ref} collected successfully.");
+        return back()->with('success', "Payment #{$nextPaymentNumber} of QAR ".number_format($currentPaidAmount, 2)." recorded for {$chequeCollection->collection_ref}. Remaining balance: QAR ".number_format($remainingBalance, 2).'.');
     }
 
     public function submitCheque(ChequeCollection $chequeCollection)
