@@ -136,7 +136,17 @@
                     @forelse($invoices as $inv)
                         <tr>
                             <td><strong>{{ $inv->invoice_number }}</strong></td>
-                            <td>{{ $inv->deliveryInstruction->di_number ?? '-' }}</td>
+                            <td>
+                                <div><strong>{{ $inv->deliveryInstruction->di_number ?? '-' }}</strong></div>
+                                @php
+                                    $assignedDriver = $inv->deliveryInstruction ? $inv->deliveryInstruction->deliveryNotes->pluck('driver')->filter()->first() : null;
+                                @endphp
+                                @if($assignedDriver)
+                                    <div style="font-size: 0.75rem; color: var(--accent-primary, #6366f1); display: flex; align-items: center; gap: 0.2rem; margin-top: 0.2rem;">
+                                        <i class="ph ph-user"></i> {{ $assignedDriver }}
+                                    </div>
+                                @endif
+                            </td>
                             <td>
                                 <div><strong>{{ $inv->customer_name }}</strong></div>
                                 @if($inv->end_user_name)

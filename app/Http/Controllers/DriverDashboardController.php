@@ -95,8 +95,8 @@ class DriverDashboardController extends Controller
         $request->validate([
             'recipient_name' => ['nullable', 'string', 'max:255'],
             'delivery_remarks' => ['nullable', 'string'],
-            'signed_proof' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'delivery_photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'signed_proof' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,webp,pdf,heic,svg', 'max:15360'],
+            'delivery_photo' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,webp,pdf,heic,svg', 'max:15360'],
         ]);
 
         $isDn = str_starts_with($id, 'dn-');
@@ -211,7 +211,7 @@ class DriverDashboardController extends Controller
             'quantity_picked_up' => ['required', 'integer', 'min:0'],
             'condition_data' => ['required', 'string'],
             'remarks' => ['nullable', 'string'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'photo' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,webp,pdf,heic,svg', 'max:15360'],
         ]);
 
         $photoPath = null;
@@ -261,7 +261,7 @@ class DriverDashboardController extends Controller
         }
 
         $request->validate([
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'photo' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,webp,pdf,heic,svg', 'max:15360'],
             'remarks' => ['nullable', 'string'],
         ]);
 

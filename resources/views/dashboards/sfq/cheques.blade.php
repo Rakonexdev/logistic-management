@@ -180,6 +180,7 @@
                     <thead>
                         <tr>
                             <th>Ref Code</th>
+                            <th>Invoice / DI Ref</th>
                             <th>Customer</th>
                             <th>Assigned Driver</th>
                             <th>Amount</th>
@@ -190,11 +191,21 @@
                         @foreach($cheques as $chq)
                             <tr>
                                 <td><strong>{{ $chq['ref'] }}</strong></td>
+                                <td>
+                                    @if(!empty($chq['invoice_reference']))
+                                        <div style="font-weight: 600; color: var(--accent-primary, #6366f1);">{{ $chq['invoice_reference'] }}</div>
+                                    @endif
+                                    @if(!empty($chq['so_reference']))
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">DI: {{ $chq['so_reference'] }}</div>
+                                    @elseif(empty($chq['invoice_reference']))
+                                        <span style="color: var(--text-secondary);">-</span>
+                                    @endif
+                                </td>
                                 <td>{{ $chq['customer'] }}</td>
                                 <td>{{ $chq['driver'] }}</td>
-                                <td>${{ number_format($chq['amount'], 2) }}</td>
+                                <td>QAR {{ number_format($chq['amount'], 2) }}</td>
                                 <td>
-                                    <span class="badge badge-{{ strtolower($chq['status']) === 'collected' ? 'collected' : 'pending' }}">
+                                    <span class="badge badge-{{ strtolower($chq['status']) === 'collected' || strtolower($chq['status']) === 'submitted' ? 'collected' : 'pending' }}">
                                         {{ $chq['status'] }}
                                     </span>
                                 </td>

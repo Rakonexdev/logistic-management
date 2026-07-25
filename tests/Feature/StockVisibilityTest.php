@@ -89,3 +89,13 @@ test('end users can change per page limit on stock visibility', function () {
         ->assertSuccessful()
         ->assertSee('Showing 1 to 15 of 15');
 });
+
+test('sfq users can view stock visibility page and see sidebar link', function () {
+    $sfqUser = User::factory()->create(['role' => 'sfq_user']);
+
+    $response = $this->actingAs($sfqUser)->get(route('products.stock-visibility'));
+
+    $response->assertSuccessful();
+    $response->assertSee('Stock');
+    $response->assertSee(route('products.stock-visibility'));
+});

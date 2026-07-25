@@ -457,12 +457,14 @@
                     </div>
 
                     <div class="nav-group">
-                        <div class="nav-group-title">Warehouse</div>
-                        <a href="{{ route('sfq.locations.index') }}"
-                            class="nav-link {{ request()->is('*/locations*') ? 'active' : '' }}">
-                            <i class="ph ph-stack"></i> Location & Stock
+                        <div class="nav-group-title">Inventory</div>
+                        <a href="{{ route('products.stock-visibility') }}"
+                            class="nav-link {{ request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
+                            <i class="ph ph-stack"></i> Stock
                         </a>
                     </div>
+
+
 
                     <div class="nav-group">
                         <div class="nav-group-title">Outbound</div>

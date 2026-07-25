@@ -497,6 +497,19 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="toast-alert" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #fca5a5; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                    <i class="ph ph-warning-circle"></i> Upload / Submission Error:
+                </div>
+                <ul style="margin: 0.25rem 0 0 1.25rem; padding: 0; font-size: 0.8rem;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- ==================== TAB 1: DELIVERIES ==================== -->
         <div id="panel-deliveries" class="tab-panel active">
             <div class="section-title">
@@ -588,20 +601,20 @@
 
                             <!-- Execution Actions -->
                             @if($order->delivery_status !== 'Delivered')
-                                <form action="{{ route('driver.deliveries.complete', $cardId) }}" method="POST" enctype="multipart/form-data">
+                                <form action="{{ route('driver.deliveries.complete', $cardId) }}" method="POST" enctype="multipart/form-data" onclick="event.stopPropagation();">
                                     @csrf
                                     <div class="form-group" style="margin-top: 1rem;">
                                         <div class="form-file">
                                             <label for="signed_proof-{{ $cardId }}">Upload Signed Proof (POD)</label>
-                                            <input type="file" id="signed_proof-{{ $cardId }}" name="signed_proof" accept="image/*" required>
+                                            <input type="file" id="signed_proof-{{ $cardId }}" name="signed_proof" accept="image/*,application/pdf,.heic" required onclick="event.stopPropagation();">
                                         </div>
 
                                         <div class="form-file">
                                             <label for="delivery_photo-{{ $cardId }}">Upload Delivery Photo</label>
-                                            <input type="file" id="delivery_photo-{{ $cardId }}" name="delivery_photo" accept="image/*" required>
+                                            <input type="file" id="delivery_photo-{{ $cardId }}" name="delivery_photo" accept="image/*,application/pdf,.heic" required onclick="event.stopPropagation();">
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-success">
+                                    <button type="submit" class="btn btn-success" onclick="event.stopPropagation();">
                                         <i class="ph ph-check-square"></i> Mark Delivered
                                     </button>
                                 </form>

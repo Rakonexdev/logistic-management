@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChequeCollection;
 use App\Models\DeliveryInstruction;
 use App\Models\DeliveryInvoice;
+use App\Models\DeliveryNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +13,7 @@ class DeliveryInvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DeliveryInvoice::with(['deliveryInstruction', 'items', 'user']);
+        $query = DeliveryInvoice::with(['deliveryInstruction.deliveryNotes', 'items', 'user']);
 
         if (Auth::user()->role === 'end_user') {
             $query->where('user_id', Auth::id());
@@ -93,6 +95,22 @@ class DeliveryInvoiceController extends Controller
             $invoice->items()->create($data);
         }
 
+        $assignedDriver = DeliveryNote::where('delivery_instruction_id', $di->id)
+            ->whereNotNull('driver')
+            ->value('driver');
+
+        ChequeCollection::create([
+            'user_id' => Auth::id(),
+            'collection_ref' => 'CHQ-'.$invoice->invoice_number,
+            'customer_name' => $di->customer_name,
+            'collection_location' => $di->delivery_address ?? 'Customer Site',
+            'amount' => $totalInvoiceAmount,
+            'so_reference' => $di->so_reference ?: $di->di_number,
+            'invoice_reference' => $invoice->invoice_number,
+            'driver' => $assignedDriver ?: '-',
+            'status' => 'Pending',
+        ]);
+
         return redirect()->route('delivery-invoices.index')->with('success', "Delivery Invoice {$invoice->invoice_number} created successfully.");
     }
 
@@ -114,6 +132,7 @@ class DeliveryInvoiceController extends Controller
     {
         $invoice = DeliveryInvoice::findOrFail($id);
         $num = $invoice->invoice_number;
+        ChequeCollection::where('invoice_reference', $num)->delete();
         $invoice->delete();
 
         return redirect()->route('delivery-invoices.index')->with('success', "Delivery Invoice {$num} deleted successfully.");

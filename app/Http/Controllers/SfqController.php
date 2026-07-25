@@ -285,7 +285,7 @@ class SfqController extends Controller
             $deliveries->push([
                 'id' => $note->id,
                 'ref' => $note->dn_number,
-                'so' => $note->dn_number,
+                'so' => $note->deliveryInstruction->di_number ?? $note->dn_number,
                 'address' => ($note->deliveryInstruction->customer_name ?? 'N/A').' ('.($note->deliveryInstruction->delivery_address ?? 'N/A').')',
                 'driver' => $note->driver ?? '-',
                 'vehicle' => $note->vehicle ?? '-',
@@ -307,12 +307,23 @@ class SfqController extends Controller
         ]);
 
         if (str_starts_with($request->delivery_ref, 'DN-')) {
-            $dn = DeliveryNote::where('dn_number', $request->delivery_ref)->firstOrFail();
+            $dn = DeliveryNote::with('deliveryInstruction.invoice')->where('dn_number', $request->delivery_ref)->firstOrFail();
             $dn->update([
                 'driver' => $request->driver,
                 'vehicle' => $request->vehicle,
                 'delivery_status' => 'Assigned',
             ]);
+
+            if ($dn->deliveryInstruction) {
+                $di = $dn->deliveryInstruction;
+                ChequeCollection::where(function ($q) use ($di) {
+                    $q->where('so_reference', $di->di_number)
+                        ->orWhere('so_reference', $di->so_reference);
+                    if ($di->invoice) {
+                        $q->orWhere('invoice_reference', $di->invoice->invoice_number);
+                    }
+                })->update(['driver' => $request->driver]);
+            }
         } else {
             $orderId = (int) str_replace('DEL-', '', $request->delivery_ref);
             $order = SalesOrder::findOrFail($orderId);
@@ -482,6 +493,8 @@ class SfqController extends Controller
                 'driver' => $chq->driver ?? '-',
                 'amount' => $chq->amount,
                 'status' => $chq->status,
+                'invoice_reference' => $chq->invoice_reference,
+                'so_reference' => $chq->so_reference,
             ];
         });
 

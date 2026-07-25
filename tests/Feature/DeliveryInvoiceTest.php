@@ -84,6 +84,18 @@ test('end user can create a delivery invoice with serial charges and auto total'
         'charge_amount' => 250.00,
         'total_amount' => 250.00,
     ]);
+
+    $this->assertDatabaseHas('cheque_collections', [
+        'invoice_reference' => 'INV-20260724-999',
+        'customer_name' => 'Acme Corporation',
+        'amount' => 400.00,
+    ]);
+
+    $sfqUser = User::factory()->create(['role' => 'sfq_user']);
+    $chequesResponse = $this->actingAs($sfqUser)->get(route('sfq.cheques.index'));
+    $chequesResponse->assertStatus(200);
+    $chequesResponse->assertSee('INV-20260724-999');
+    $chequesResponse->assertSee('Acme Corporation');
 });
 
 test('invoiced delivery instructions are excluded from create invoice dropdown', function () {

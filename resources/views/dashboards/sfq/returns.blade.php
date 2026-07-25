@@ -152,149 +152,100 @@
         </div>
     @endif
 
-    <div class="grid-panels">
-        <!-- Operational Returns List -->
-        <div class="form-panel glass">
-            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Operational Return Instructions</h3>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
+    <div class="form-panel glass" style="width: 100%; box-sizing: border-box;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Operational Return Instructions</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Return Ref</th>
+                        <th>Return Type</th>
+                        <th>Driver & Location</th>
+                        <th>Items & Serials</th>
+                        <th>Workflow Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($instructions as $ret)
                         <tr>
-                            <th>Return Ref</th>
-                            <th>Driver & Location</th>
-                            <th>Items & Serials</th>
-                            <th>Workflow Status</th>
-                            <th>Actions</th>
+                            <td>
+                                <strong>{{ $ret->return_ref }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ $ret->customer_name }}</div>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary, #6366f1); font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                    <i class="ph {{ str_contains(strtolower($ret->return_type ?? ''), 'company') ? 'ph-truck' : 'ph-warehouse' }}"></i>
+                                    {{ $ret->return_type ?: 'Return to Warehouse' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div><i class="ph ph-user"></i> {{ $ret->driver_name ?: 'Not Assigned' }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);"><i class="ph ph-map-pin"></i> {{ $ret->storing_location ?: 'Pending Location' }}</div>
+                            </td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                    @foreach($ret->items as $item)
+                                        <div style="font-size: 0.85rem;">
+                                            <strong>{{ $item->sku_code }}</strong> (x{{ $item->quantity }})
+                                            @if($item->serial_numbers)
+                                                <span style="color: var(--text-secondary); font-size: 0.75rem; display: block;">S/N: {{ $item->serial_numbers }}</span>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td>
+                                @php
+                                    $statusKey = strtolower(explode(' ', $ret->status)[0]);
+                                @endphp
+                                <span class="badge badge-{{ $statusKey }}">
+                                    {{ $ret->status }}
+                                </span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    @if($ret->inspection_status)
+                                        <span style="color: var(--success); font-weight: 600;"><i class="ph ph-check-circle"></i> {{ $ret->inspection_status === 'Passed' ? 'Inspection Completed' : $ret->inspection_status }}</span>
+                                    @endif
+                                    @if($ret->picking_date)<br>Picked: {{ $ret->picking_date->format('M d, H:i') }}@endif
+                                    @if($ret->storing_date) | Stored: {{ $ret->storing_date->format('M d, H:i') }}@endif
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                    <button type="button" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
+                                            onclick="openAssignModal('{{ $ret->return_ref }}', '{{ $ret->driver_name }}', '{{ $ret->storing_location }}')">
+                                        <i class="ph ph-user-plus"></i> Assign Driver / Loc
+                                    </button>
+
+                                    @if($ret->status === 'Driver Assigned')
+                                        <form action="{{ route('sfq.returns.status') }}" method="POST" style="margin: 0;">
+                                            @csrf
+                                            <input type="hidden" name="return_ref" value="{{ $ret->return_ref }}">
+                                            <input type="hidden" name="status" value="Picked Up">
+                                            <button type="submit" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--accent-primary); width: 100%;">
+                                                <i class="ph ph-check-square"></i> Mark Picked Up
+                                            </button>
+                                        </form>
+                                    @elseif($ret->status === 'Picked Up')
+                                        <form action="{{ route('sfq.returns.status') }}" method="POST" style="margin: 0;">
+                                            @csrf
+                                            <input type="hidden" name="return_ref" value="{{ $ret->return_ref }}">
+                                            <input type="hidden" name="status" value="Stored">
+                                            <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; width: 100%;">
+                                                <i class="ph ph-stack"></i> Mark Stored (Restock)
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($instructions as $ret)
-                            <tr>
-                                <td>
-                                    <strong>{{ $ret->return_ref }}</strong>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ $ret->customer_name }}</div>
-                                </td>
-                                <td>
-                                    <div><i class="ph ph-user"></i> {{ $ret->driver_name ?: 'Not Assigned' }}</div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);"><i class="ph ph-map-pin"></i> {{ $ret->storing_location ?: 'Pending Location' }}</div>
-                                </td>
-                                <td>
-                                    <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                        @foreach($ret->items as $item)
-                                            <div style="font-size: 0.85rem;">
-                                                <strong>{{ $item->sku_code }}</strong> (x{{ $item->quantity }})
-                                                @if($item->serial_numbers)
-                                                    <span style="color: var(--text-secondary); font-size: 0.75rem; display: block;">S/N: {{ $item->serial_numbers }}</span>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </td>
-                                <td>
-                                    @php
-                                        $statusKey = strtolower(explode(' ', $ret->status)[0]);
-                                    @endphp
-                                    <span class="badge badge-{{ $statusKey }}">
-                                        {{ $ret->status }}
-                                    </span>
-                                    <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                                        @if($ret->picking_date) Picked: {{ $ret->picking_date->format('M d, H:i') }} @endif
-                                        @if($ret->storing_date) | Stored: {{ $ret->storing_date->format('M d, H:i') }} @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                        <button type="button" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
-                                                onclick="openAssignModal('{{ $ret->return_ref }}', '{{ $ret->driver_name }}', '{{ $ret->storing_location }}')">
-                                            <i class="ph ph-user-plus"></i> Assign Driver / Loc
-                                        </button>
-
-                                        @if($ret->status === 'Driver Assigned')
-                                            <form action="{{ route('sfq.returns.status') }}" method="POST" style="margin: 0;">
-                                                @csrf
-                                                <input type="hidden" name="return_ref" value="{{ $ret->return_ref }}">
-                                                <input type="hidden" name="status" value="Picked Up">
-                                                <button type="submit" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--accent-primary); width: 100%;">
-                                                    <i class="ph ph-check-square"></i> Mark Picked Up
-                                                </button>
-                                            </form>
-                                        @elseif($ret->status === 'Picked Up')
-                                            <form action="{{ route('sfq.returns.status') }}" method="POST" style="margin: 0;">
-                                                @csrf
-                                                <input type="hidden" name="return_ref" value="{{ $ret->return_ref }}">
-                                                <input type="hidden" name="status" value="Stored">
-                                                <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; width: 100%;">
-                                                    <i class="ph ph-stack"></i> Mark Stored (Restock)
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active Return Instructions found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Classification & Return Shipping Form -->
-        <div class="form-panel glass">
-            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-primary);">Classify & Return Shipment</h3>
-            <form action="{{ route('sfq.returns.classify') }}" method="POST">
-                @csrf
-
-                <div class="form-group">
-                    <label class="form-label" for="return_ref">Return Reference *</label>
-                    <select id="return_ref" name="return_ref" class="form-select" required>
-                        <option value="">Select Return</option>
-                        @foreach($instructions as $ret)
-                            <option value="{{ $ret->return_ref }}">{{ $ret->return_ref }} ({{ $ret->customer_name }})</option>
-                        @endforeach
-                        @foreach($legacyReturns as $leg)
-                            <option value="{{ $leg->return_ref }}">{{ $leg->return_ref }} ({{ $leg->product_sku }} x{{ $leg->quantity }})</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="classification">Classification *</label>
-                    <select id="classification" name="classification" class="form-select" required>
-                        <option value="Re-stockable">Re-stockable (Return to Inventory)</option>
-                        <option value="Defective">Defective (Send to END for Inspection)</option>
-                    </select>
-                </div>
-
-                <div class="form-group" style="flex-direction: row; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
-                    <input type="checkbox" id="ship_back" name="ship_back" value="1" style="width: 18px; height: 18px;" onchange="toggleShipmentFields(this.checked)">
-                    <label class="form-label" for="ship_back" style="margin: 0;">Arrange shipment back to END (Dubai)</label>
-                </div>
-
-                <!-- Shipping Evidence Fields -->
-                <div id="shipmentFields" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <div class="form-group">
-                        <label class="form-label">Courier Name</label>
-                        <input type="text" name="courier_name" class="form-input" placeholder="e.g. DHL / Aramex">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Tracking Number / Evidence</label>
-                        <input type="text" name="tracking_number" class="form-input" placeholder="Tracking # or Receipt ref">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Shipping Charges Incurred ($)</label>
-                        <input type="number" step="0.01" name="shipping_charges" class="form-input" placeholder="0.00 (Cost charged to END)">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1.5rem;">
-                    <i class="ph ph-shield-check"></i> Submit Classification & Action
-                </button>
-            </form>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active Return Instructions found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 

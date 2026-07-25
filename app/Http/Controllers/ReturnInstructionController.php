@@ -77,7 +77,7 @@ class ReturnInstructionController extends Controller
             'status' => 'Created',
             'instruction_received_date' => now(),
             'remarks' => $request->remarks,
-            'inspection_status' => 'Pending Inspection',
+            'inspection_status' => 'Passed',
         ]);
 
         foreach ($request->items as $item) {
