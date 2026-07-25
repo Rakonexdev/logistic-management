@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 use App\Http\Controllers\AsnController;
+use App\Http\Controllers\ChequeCollectionInvoiceController;
 use App\Http\Controllers\DeliveryInstructionController;
 use App\Http\Controllers\DeliveryInvoiceController;
 use App\Http\Controllers\ProductController;
@@ -62,6 +63,10 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     // Rent Invoice Routes
     Route::post('rent-invoices/{id}/mark-paid', [RentInvoiceController::class, 'markPaid'])->name('rent-invoices.mark-paid');
     Route::resource('rent-invoices', RentInvoiceController::class);
+
+    // Cheque Collection Invoice Routes
+    Route::post('cheque-collection-invoices/{id}/mark-paid', [ChequeCollectionInvoiceController::class, 'markPaid'])->name('cheque-collection-invoices.mark-paid');
+    Route::resource('cheque-collection-invoices', ChequeCollectionInvoiceController::class);
 });
 
 Route::middleware(['auth', 'role:end_user'])->group(function () {
@@ -97,6 +102,7 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::get('delivery-instructions/{id}/attachment', [DeliveryInstructionController::class, 'downloadAttachment'])->name('delivery-instructions.attachment');
     Route::get('delivery-invoices/{id}/print', [DeliveryInvoiceController::class, 'print'])->name('delivery-invoices.print');
     Route::get('rent-invoices/{id}/print', [RentInvoiceController::class, 'print'])->name('rent-invoices.print');
+    Route::get('cheque-collection-invoices/{id}/print', [ChequeCollectionInvoiceController::class, 'print'])->name('cheque-collection-invoices.print');
     Route::get('return-instructions/{id}/print', [ReturnInstructionController::class, 'print'])->name('return-instructions.print');
     Route::get('return-instructions/{id}/attachment', [ReturnInstructionController::class, 'downloadAttachment'])->name('return-instructions.attachment');
 });

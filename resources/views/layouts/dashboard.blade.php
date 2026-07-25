@@ -426,7 +426,8 @@
                             class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
-                        <a href="#" class="nav-link">
+                        <a href="{{ route('cheque-collection-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/cheque-collection-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>
@@ -493,8 +494,8 @@
                             class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
-                        <a href="{{ route('sfq.cheques.index') }}"
-                            class="nav-link {{ request()->is('*/cheques*') ? 'active' : '' }}">
+                        <a href="{{ route('cheque-collection-invoices.index') }}"
+                            class="nav-link {{ request()->is('*/cheque-collection-invoices*') ? 'active' : '' }}">
                             <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>

@@ -1,0 +1,134 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ChequeCollection;
+use App\Models\ChequeCollectionInvoice;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ChequeCollectionInvoiceController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = ChequeCollectionInvoice::with(['items.chequeCollection', 'user']);
+
+        if (Auth::user()->role === 'end_user') {
+            $query->where('user_id', Auth::id());
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%");
+            });
+        }
+
+        $invoices = $query->latest()->paginate(10)->withQueryString();
+
+        $totalFeeSum = ChequeCollectionInvoice::when(Auth::user()->role === 'end_user', function ($q) {
+            $q->where('user_id', Auth::id());
+        })->sum('total_amount');
+
+        $unpaidCount = ChequeCollectionInvoice::when(Auth::user()->role === 'end_user', function ($q) {
+            $q->where('user_id', Auth::id());
+        })->where('status', 'Unpaid')->count();
+
+        $paidCount = ChequeCollectionInvoice::when(Auth::user()->role === 'end_user', function ($q) {
+            $q->where('user_id', Auth::id());
+        })->where('status', 'Paid')->count();
+
+        return view('dashboards.cheque_collection_invoices.index', compact('invoices', 'totalFeeSum', 'unpaidCount', 'paidCount'));
+    }
+
+    public function create()
+    {
+        $chequesQuery = ChequeCollection::doesntHave('invoiceItem');
+
+        if (Auth::user()->role === 'end_user') {
+            $chequesQuery->where(function ($q) {
+                $q->where('user_id', Auth::id())->orWhereNull('user_id');
+            });
+        }
+
+        $cheques = $chequesQuery->latest()->get();
+
+        $defaultInvoiceNum = 'CHQ-INV-'.date('Ymd').'-'.rand(100, 999);
+
+        return view('dashboards.cheque_collection_invoices.create', compact('cheques', 'defaultInvoiceNum'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'invoice_number' => 'required|string|unique:cheque_collection_invoices,invoice_number',
+            'customer_name' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.cheque_collection_id' => 'required|exists:cheque_collections,id',
+            'items.*.collection_fee' => 'required|numeric|min:0',
+        ]);
+
+        $totalInvoiceAmount = 0;
+        $itemsData = [];
+
+        foreach ($request->items as $item) {
+            $cheque = ChequeCollection::findOrFail($item['cheque_collection_id']);
+            $fee = (float) $item['collection_fee'];
+            $totalInvoiceAmount += $fee;
+
+            $itemsData[] = [
+                'cheque_collection_id' => $cheque->id,
+                'collection_ref' => $cheque->collection_ref,
+                'cheque_number' => $cheque->cheque_number ?: $cheque->collection_ref,
+                'cheque_amount' => $cheque->amount,
+                'collection_fee' => $fee,
+            ];
+        }
+
+        $invoice = ChequeCollectionInvoice::create([
+            'invoice_number' => $request->invoice_number,
+            'user_id' => Auth::id(),
+            'customer_name' => $request->customer_name,
+            'total_amount' => $totalInvoiceAmount,
+            'status' => 'Unpaid',
+        ]);
+
+        foreach ($itemsData as $data) {
+            $invoice->items()->create($data);
+        }
+
+        return redirect()->route('cheque-collection-invoices.index')->with('success', "Cheque Collection Invoice {$invoice->invoice_number} created successfully.");
+    }
+
+    public function show($id)
+    {
+        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection', 'user'])->findOrFail($id);
+
+        return view('dashboards.cheque_collection_invoices.show', compact('invoice'));
+    }
+
+    public function print($id)
+    {
+        $invoice = ChequeCollectionInvoice::with(['items.chequeCollection', 'user'])->findOrFail($id);
+
+        return view('dashboards.cheque_collection_invoices.print', compact('invoice'));
+    }
+
+    public function markPaid($id)
+    {
+        $invoice = ChequeCollectionInvoice::findOrFail($id);
+        $invoice->update(['status' => 'Paid']);
+
+        return redirect()->back()->with('success', "Cheque Collection Invoice {$invoice->invoice_number} marked as Paid.");
+    }
+
+    public function destroy($id)
+    {
+        $invoice = ChequeCollectionInvoice::findOrFail($id);
+        $num = $invoice->invoice_number;
+        $invoice->delete();
+
+        return redirect()->route('cheque-collection-invoices.index')->with('success', "Cheque Collection Invoice {$num} deleted successfully.");
+    }
+}
