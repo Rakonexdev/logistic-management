@@ -259,7 +259,12 @@
 
                 <div class="form-group">
                     <label class="form-label">Assign Delivery Driver *</label>
-                    <input type="text" name="driver_name" id="modal_driver_name" class="form-input" required placeholder="Driver Name (e.g. Ahmed)">
+                    <select name="driver_name" id="modal_driver_name" class="form-select" required>
+                        <option value="">Select Driver</option>
+                        @foreach($drivers as $drv)
+                            <option value="{{ $drv->name }}">{{ $drv->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="form-group">

@@ -363,10 +363,10 @@ class SfqController extends Controller
     {
         $instructions = ReturnInstruction::with('items')->latest()->get();
         $locations = Location::all();
-
+        $drivers = User::where('role', 'driver')->orderBy('name')->get();
         $legacyReturns = ReturnPickup::latest()->get();
 
-        return view('dashboards.sfq.returns', compact('instructions', 'locations', 'legacyReturns'));
+        return view('dashboards.sfq.returns', compact('instructions', 'locations', 'drivers', 'legacyReturns'));
     }
 
     public function returnsAssign(Request $request)
@@ -377,12 +377,26 @@ class SfqController extends Controller
             'storing_location' => 'required|string|max:255',
         ]);
 
-        $instruction = ReturnInstruction::where('return_ref', $request->return_ref)->firstOrFail();
+        $instruction = ReturnInstruction::with('items')->where('return_ref', $request->return_ref)->firstOrFail();
         $instruction->update([
             'driver_name' => $request->driver_name,
             'storing_location' => $request->storing_location,
             'status' => 'Driver Assigned',
         ]);
+
+        foreach ($instruction->items as $item) {
+            ReturnPickup::updateOrCreate(
+                ['return_ref' => $instruction->return_ref.'-'.$item->sku_code],
+                [
+                    'driver' => $request->driver_name,
+                    'pickup_location' => $instruction->pickup_address,
+                    'product_sku' => $item->sku_code,
+                    'quantity' => $item->quantity,
+                    'status' => 'Pending Pickup',
+                    'remarks' => $instruction->remarks,
+                ]
+            );
+        }
 
         return back()->with('success', "Driver {$request->driver_name} and location {$request->storing_location} assigned to Return {$instruction->return_ref}.");
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ChequeCollection;
 use App\Models\DeliveryNote;
+use App\Models\ReturnInstruction;
 use App\Models\ReturnPickup;
 use App\Models\SalesOrder;
 use Illuminate\Http\Request;
@@ -198,6 +199,12 @@ class DriverDashboardController extends Controller
             'status' => 'Pickup Started',
         ]);
 
+        $refParts = explode('-', $returnPickup->return_ref);
+        if (count($refParts) >= 3) {
+            $mainRef = $refParts[0].'-'.$refParts[1].'-'.$refParts[2];
+            ReturnInstruction::where('return_ref', $mainRef)->update(['status' => 'Pickup Started']);
+        }
+
         return back()->with('success', "Return pickup {$returnPickup->return_ref} started.");
     }
 
@@ -238,6 +245,15 @@ class DriverDashboardController extends Controller
             'remarks' => $request->remarks,
         ]);
 
+        $refParts = explode('-', $returnPickup->return_ref);
+        if (count($refParts) >= 3) {
+            $mainRef = $refParts[0].'-'.$refParts[1].'-'.$refParts[2];
+            ReturnInstruction::where('return_ref', $mainRef)->update([
+                'status' => 'Picked Up',
+                'picking_date' => now(),
+            ]);
+        }
+
         return back()->with('success', "Return pickup {$returnPickup->return_ref} confirmed completed.");
     }
 
@@ -250,6 +266,15 @@ class DriverDashboardController extends Controller
         $returnPickup->update([
             'status' => 'Returned to Warehouse',
         ]);
+
+        $refParts = explode('-', $returnPickup->return_ref);
+        if (count($refParts) >= 3) {
+            $mainRef = $refParts[0].'-'.$refParts[1].'-'.$refParts[2];
+            ReturnInstruction::where('return_ref', $mainRef)->update([
+                'status' => 'Stored',
+                'storing_date' => now(),
+            ]);
+        }
 
         return back()->with('success', "Handover submitted for return {$returnPickup->return_ref}.");
     }
