@@ -346,9 +346,6 @@
                                     <a href="{{ route('products.edit', $product->id) }}" class="icon-btn" title="Edit">
                                         <i class="ph ph-pencil-simple"></i>
                                     </a>
-                                    <button type="button" class="icon-btn danger" onclick="openDeleteModal('{{ route('products.destroy', $product->id) }}')" title="Delete">
-                                        <i class="ph ph-trash"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -372,24 +369,6 @@
         </div>
     </div>
 @endsection
-
-<!-- Custom Delete Confirmation Modal -->
-<div id="deleteModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content glass">
-        <h3 class="modal-title"><i class="ph ph-warning" style="color: var(--danger);"></i> Confirm Delete</h3>
-        <p class="modal-message">Are you sure you want to delete this product? This action cannot be undone.</p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
-            <form id="deleteForm" method="POST" style="margin: 0;">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-primary" style="background: var(--danger);">
-                    Yes, Delete
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Custom Serial Numbers Modal -->
 <div id="serialModal" class="modal-overlay" style="display: none;">
@@ -429,15 +408,6 @@
     <script>
         let currentModalSerials = [];
         let currentModalQty = 0;
-
-        function openDeleteModal(actionUrl) {
-            document.getElementById('deleteForm').action = actionUrl;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
 
         function openSerialModal(sku, name, serials, qty) {
             document.getElementById('modalSkuCode').textContent = `SKU: ${sku}`;
@@ -551,10 +521,6 @@
         }
 
         window.addEventListener('click', function(e) {
-            const deleteModal = document.getElementById('deleteModal');
-            if (e.target === deleteModal) {
-                closeDeleteModal();
-            }
             const serialModal = document.getElementById('serialModal');
             if (e.target === serialModal) {
                 closeSerialModal();
