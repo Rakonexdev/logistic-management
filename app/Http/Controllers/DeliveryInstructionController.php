@@ -335,22 +335,11 @@ class DeliveryInstructionController extends Controller
             'Content-type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename=delivery_instruction_template.csv',
         ];
-        $columns = ['sku_code', 'description', 'quantity', 'serial_numbers'];
+        $columns = ['sku_code', 'product_name', 'quantity', 'serial_numbers'];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
-
-            $samples = [
-                ['FG-100F', 'FortiGate-100F Firewall', '2', 'FG100FTK25011385, FG100FTK25011385'],
-                ['FG-40F', 'FortiGate-40F Firewall', '5', 'FGT40FTK24083675'],
-                ['LIC-FG100F-BDL', 'Unified Threat Protection License', '1', ''],
-            ];
-
-            foreach ($samples as $sample) {
-                fputcsv($file, $sample);
-            }
-
             fclose($file);
         };
 

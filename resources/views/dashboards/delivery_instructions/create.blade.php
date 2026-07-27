@@ -181,6 +181,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Delivery Address *</label>
+                    <input type="text" name="delivery_address" class="form-input" required 
+                           value="{{ old('delivery_address', isset($parentDi) ? $parentDi->delivery_address : '') }}">
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">End User Name</label>
                     <input type="text" name="end_user_name" class="form-input" placeholder="e.g. Acme Health System" 
                            value="{{ old('end_user_name', isset($parentDi) ? $parentDi->end_user_name : '') }}">
@@ -195,12 +201,6 @@
                 <div class="form-group">
                     <label class="form-label">Upload Delivery Note Document</label>
                     <input type="file" name="delivery_note_attachment" class="form-input" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="padding: 0.5rem 0.75rem;">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Delivery Address *</label>
-                    <input type="text" name="delivery_address" class="form-input" required 
-                           value="{{ old('delivery_address', isset($parentDi) ? $parentDi->delivery_address : '') }}">
                 </div>
             </div>
 

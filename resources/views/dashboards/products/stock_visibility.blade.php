@@ -130,6 +130,35 @@
             color: var(--accent-primary);
         }
 
+        .action-btn-view:hover {
+            background: rgba(99, 102, 241, 0.25) !important;
+            border-color: var(--accent-primary, #6366f1) !important;
+            transform: translateY(-1px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            padding: 1.75rem;
+            border-radius: 12px;
+            max-width: 660px;
+            width: 92%;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
         .pagination-wrapper {
             padding: 1rem 0 0 0;
             display: flex;
@@ -225,41 +254,31 @@
                 <thead>
                     <tr>
                         <th>SKU Code</th>
-                        <th>Serial Number</th>
                         <th>Product Name</th>
                         <th>Location</th>
                         <th>Available Qty</th>
+                        <th style="text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($products as $product)
+                        @php
+                            $serials = array_values(array_filter(array_map('trim', explode(',', $product->serial_number ?? ''))));
+                        @endphp
                         <tr>
                             <td><strong>{{ $product->sku_code }}</strong></td>
-                            <td>
-                                @php
-                                    $serials = array_filter(array_map('trim', explode(',', $product->serial_number ?? '')));
-                                    $totalSerials = count($serials);
-                                @endphp
-                                @if($product->available_qty <= 0)
-                                    <span style="color: var(--danger, #ef4444); font-style: italic; font-weight: 500;">Stock Not Available</span>
-                                @elseif($totalSerials === 0)
-                                    <span style="color: var(--text-secondary); font-style: italic;">No Serial Number</span>
-                                @elseif($totalSerials === 1)
-                                    <span>{{ $serials[0] }}</span>
-                                @else
-                                    <div class="serial-toggle-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                                        <span class="serial-short" style="font-size: 0.875rem;">{{ $serials[0] }}</span>
-                                        <span class="serial-full" style="display: none; font-size: 0.875rem; word-break: break-word;">{{ implode(', ', $serials) }}</span>
-                                        <button type="button" class="serial-toggle-btn" onclick="toggleSerials(this)" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); color: var(--accent-primary, #6366f1); font-size: 0.75rem; font-weight: 500; border-radius: 4px; padding: 0.15rem 0.4rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; transition: all 0.2s;">
-                                            <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem;"></i>
-                                            <span class="serial-btn-text">+{{ $totalSerials - 1 }} View More</span>
-                                        </button>
-                                    </div>
-                                @endif
-                            </td>
                             <td>{{ $product->name }}</td>
                             <td>{{ $product->location_info }}</td>
                             <td class="stock-qty stock-available">{{ $product->available_qty }}</td>
+                            <td style="text-align: center;">
+                                <button type="button" 
+                                    class="action-btn-view" 
+                                    title="View Serial Numbers" 
+                                    onclick="openSerialModal('{{ e($product->sku_code) }}', '{{ e($product->name) }}', {{ json_encode($serials) }}, {{ $product->available_qty }})"
+                                    style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); color: var(--accent-primary, #6366f1); border-radius: 6px; padding: 0.45rem 0.65rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; transition: all 0.2s;">
+                                    <i class="ph ph-eye" style="font-size: 1.15rem;"></i>
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -281,9 +300,46 @@
         </div>
     </div>
 
+    <!-- Serial Numbers Modal -->
+    <div id="serialModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card glass">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; color: var(--text-primary);">
+                    <i class="ph ph-barcode" style="color: var(--accent-primary, #6366f1); font-size: 1.35rem;"></i> Serial Numbers
+                </h3>
+                <button type="button" onclick="closeSerialModal()" style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; padding: 0.25rem; border-radius: 4px;" title="Close">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+
+            <div style="margin-bottom: 1rem; padding: 0.85rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem; font-family: monospace;" id="modalSkuCode">SKU: </div>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 1rem;" id="modalProductName">Product Name</div>
+            </div>
+
+            <!-- Modal Search Input -->
+            <div id="modalSearchWrapper" style="margin-bottom: 1rem; position: relative; display: none;">
+                <i class="ph ph-magnifying-glass" style="position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;"></i>
+                <input type="text" id="modalSerialSearch" placeholder="Search serial numbers..." oninput="filterModalSerials()" 
+                    style="width: 100%; box-sizing: border-box; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.875rem; outline: none;">
+            </div>
+
+            <div id="modalSerialList" style="max-height: 360px; overflow-y: auto; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem;">
+                <!-- Dynamically populated -->
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeSerialModal()" style="padding: 0.5rem 1.25rem; font-size: 0.875rem; border-radius: 6px;">Close</button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             let searchTimeout;
+            let currentModalSerials = [];
+            let currentModalQty = 0;
+
             function debouncedSearch() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
@@ -291,26 +347,125 @@
                 }, 600);
             }
 
-            function toggleSerials(btn) {
-                const container = btn.closest('.serial-toggle-container');
-                const shortSpan = container.querySelector('.serial-short');
-                const fullSpan = container.querySelector('.serial-full');
-                const btnText = btn.querySelector('.serial-btn-text');
-                const icon = btn.querySelector('.serial-icon');
-                
-                if (fullSpan.style.display === 'none') {
-                    fullSpan.style.display = 'inline';
-                    shortSpan.style.display = 'none';
-                    btnText.textContent = 'View Less';
-                    if (icon) icon.className = 'ph ph-caret-up serial-icon';
-                } else {
-                    fullSpan.style.display = 'none';
-                    shortSpan.style.display = 'inline';
-                    const total = fullSpan.textContent.split(',').length;
-                    btnText.textContent = `+${total - 1} View More`;
-                    if (icon) icon.className = 'ph ph-caret-down serial-icon';
+            function openSerialModal(sku, name, serials, availableQty) {
+                document.getElementById('modalSkuCode').textContent = `SKU: ${sku}`;
+                document.getElementById('modalProductName').textContent = name;
+
+                currentModalSerials = Array.isArray(serials) ? serials : [];
+                currentModalQty = availableQty;
+
+                const searchInput = document.getElementById('modalSerialSearch');
+                if (searchInput) {
+                    searchInput.value = '';
                 }
+
+                const searchWrapper = document.getElementById('modalSearchWrapper');
+                if (searchWrapper) {
+                    searchWrapper.style.display = (availableQty > 0 && currentModalSerials.length > 0) ? 'block' : 'none';
+                }
+
+                renderModalSerials(currentModalSerials);
+
+                const modal = document.getElementById('serialModal');
+                modal.style.display = 'flex';
             }
+
+            function filterModalSerials() {
+                const query = document.getElementById('modalSerialSearch').value.trim().toLowerCase();
+                if (!query) {
+                    renderModalSerials(currentModalSerials);
+                    return;
+                }
+                const filtered = currentModalSerials.filter(sn => sn.toLowerCase().includes(query));
+                renderModalSerials(filtered, query);
+            }
+
+            function renderModalSerials(serialsToDisplay, searchQuery = '') {
+                const container = document.getElementById('modalSerialList');
+
+                if (currentModalQty <= 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: var(--danger, #ef4444); font-style: italic; padding: 1.5rem 0;">
+                            <i class="ph ph-x-circle" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; margin-left: auto; margin-right: auto;"></i>
+                            Stock Not Available
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!currentModalSerials || currentModalSerials.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: var(--text-secondary); font-style: italic; padding: 1.5rem 0;">
+                            <i class="ph ph-info" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; margin-left: auto; margin-right: auto;"></i>
+                            No Serial Number
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (serialsToDisplay.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: var(--text-secondary); padding: 1.5rem 0;">
+                            <i class="ph ph-magnifying-glass" style="font-size: 1.75rem; display: block; margin-bottom: 0.5rem; margin-left: auto; margin-right: auto; opacity: 0.7;"></i>
+                            No serial numbers match "${escapeHtml(searchQuery)}"
+                        </div>
+                    `;
+                    return;
+                }
+
+                let countText = searchQuery 
+                    ? `Showing ${serialsToDisplay.length} of ${currentModalSerials.length} Serial Numbers` 
+                    : `Serial Numbers (${currentModalSerials.length})`;
+
+                let html = `<div style="margin-bottom: 0.6rem; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">${countText}</div>`;
+                html += '<div style="display: flex; flex-direction: column; gap: 0.45rem;">';
+                serialsToDisplay.forEach((sn, idx) => {
+                    html += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 0.875rem; color: var(--text-primary);">
+                            <span><strong style="color: var(--text-secondary); margin-right: 0.6rem; font-family: inherit; display: inline-block; min-width: 28px;">#${idx + 1}</strong> ${escapeHtml(sn)}</span>
+                            <button type="button" onclick="copySerial('${escapeHtml(sn)}', this)" title="Copy Serial" style="background: transparent; border: 1px solid var(--border-color); color: var(--accent-primary, #6366f1); cursor: pointer; padding: 0.25rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; transition: all 0.2s;">
+                                <i class="ph ph-copy"></i> Copy
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            function closeSerialModal() {
+                document.getElementById('serialModal').style.display = 'none';
+            }
+
+            function escapeHtml(text) {
+                return String(text)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function copySerial(text, btn) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '<i class="ph ph-check" style="color: var(--success, #10b981);"></i> Copied!';
+                    setTimeout(() => {
+                        btn.innerHTML = orig;
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Failed to copy', err);
+                });
+            }
+
+            window.addEventListener('click', function(e) {
+                const modal = document.getElementById('serialModal');
+                if (e.target === modal) {
+                    closeSerialModal();
+                }
+            });
         </script>
     @endpush
 @endsection
+
+

@@ -202,3 +202,20 @@ test('end user can release a delivery note and it appears under order fulfillmen
     $response->assertSuccessful();
     $response->assertSee('DN-RELEASE-TEST');
 });
+
+test('authenticated user can download delivery instruction template with product_name and no dummy data', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+
+    $response = $this->actingAs($user)
+        ->get(route('delivery-instructions.template'));
+
+    $response->assertSuccessful();
+
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    expect($content)->toContain('sku_code,product_name,quantity,serial_numbers');
+    expect($content)->not->toContain('description');
+    expect($content)->not->toContain('FortiGate');
+});

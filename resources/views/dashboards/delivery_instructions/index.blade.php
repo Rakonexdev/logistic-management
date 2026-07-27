@@ -124,27 +124,21 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Date</th>
                         <th>DI Number</th>
                         <th>Customer</th>
                         <th>Address</th>
                         <th>Status</th>
-                        <th>PRODUCT / SERIAL NUMBER</th>
-                        <th>Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($instructions as $di)
                         <tr>
+                            <td>{{ $di->created_at->format('Y-m-d') }}</td>
                             <td><strong>{{ $di->di_number }}</strong></td>
                             <td>
                                 <strong>{{ $di->customer_name }}</strong>
-                                @if($di->end_user_name)
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">End User: {{ $di->end_user_name }}</div>
-                                @endif
-                                @if($di->so_reference)
-                                    <div style="font-size: 0.75rem; color: var(--accent-primary, #6366f1); font-weight: 500;">SO Ref: {{ $di->so_reference }}</div>
-                                @endif
                             </td>
                             <td>{{ $di->delivery_address }}</td>
                             <td>
@@ -153,29 +147,13 @@
                                 </span>
                             </td>
                             <td>
-                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                    @foreach($di->items as $item)
-                                        <div class="serial-toggle-wrap" style="font-size: 0.85rem;">
-                                            @if($item->serial_numbers)
-                                                <button type="button" class="serial-toggle-btn" onclick="toggleDiSerials(this)" style="background: none; border: none; padding: 0; color: var(--text-primary); font-size: 0.85rem; font-family: inherit; cursor: pointer; text-align: left; display: inline-flex; align-items: center; gap: 0.3rem;">
-                                                    <strong>{{ $item->sku_code }}</strong>
-                                                    <i class="ph ph-caret-down serial-icon" style="font-size: 0.75rem; color: var(--accent-primary, #6366f1);"></i>
-                                                </button>
-                                                <div class="serial-full-text" style="display: none; font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; margin-top: 0.2rem; word-break: break-all; padding-left: 0.5rem; border-left: 2px solid var(--accent-primary, #6366f1);">
-                                                    S/N: {{ $item->serial_numbers }}
-                                                </div>
-                                            @else
-                                                <div>
-                                                    <strong>{{ $item->sku_code }}</strong>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </td>
-                            <td>{{ $di->created_at->format('Y-m-d H:i') }}</td>
-                            <td>
                                 <div style="display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; min-width: 170px;">
+                                    <button type="button" class="btn btn-outline" 
+                                        onclick="showItemsModal('{{ e($di->di_number) }}', {{ json_encode($di->items) }})" 
+                                        style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem; color: var(--accent-primary, #6366f1); border-color: rgba(99, 102, 241, 0.3);">
+                                        <i class="ph ph-eye"></i> View Items
+                                    </button>
+
                                     @if($di->status === 'partial')
                                         <a href="{{ route('delivery-instructions.fulfill-remaining', $di->id) }}"
                                             class="btn btn-outline"
@@ -207,8 +185,9 @@
                                                 @if($dn->delivery_note_attachment || $di->delivery_note_attachment)
                                                     <a href="{{ route('delivery-instructions.attachment', $di->id) }}" target="_blank"
                                                         class="btn btn-outline"
-                                                        style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);">
-                                                        <i class="ph ph-file-text"></i> View Uploaded DN
+                                                        style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);"
+                                                        title="View Uploaded Delivery Note">
+                                                        <i class="ph ph-file-text"></i> View
                                                     </a>
                                                 @endif
                                             </div>
@@ -219,7 +198,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No Delivery
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No Delivery
                                 Instructions found</td>
                         </tr>
                     @endforelse
