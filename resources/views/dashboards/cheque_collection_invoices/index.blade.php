@@ -196,14 +196,12 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Date Issued</th>
                         <th>Invoice #</th>
                         <th>Customer / Client</th>
                         <th>Cheques Invoiced</th>
-                        <th>Total Amount</th>
-                        <th>Paid Amount</th>
                         <th>Status</th>
-                        <th>Date Issued</th>
-                        <th style="width: 170px;">Actions</th>
+                        <th style="width: 130px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -233,6 +231,7 @@
                             }
                         @endphp
                         <tr>
+                            <td>{{ $inv->created_at->format('Y-m-d') }}</td>
                             <td><strong>{{ $inv->invoice_number }}</strong></td>
                             <td><strong>{{ $inv->customer_name }}</strong></td>
                             <td>
@@ -240,18 +239,11 @@
                                     <i class="ph ph-files"></i> {{ $collectedCount }} Cheque(s)
                                 </span>
                             </td>
-                            <td style="font-weight: 800; color: var(--accent-primary, #6366f1);">
-                                QAR {{ number_format($inv->total_amount, 2) }}
-                            </td>
-                            <td style="font-weight: 800; color: {{ $paidAmountSum > 0 ? '#10b981' : 'var(--text-secondary)' }};">
-                                QAR {{ number_format($paidAmountSum, 2) }}
-                            </td>
                             <td>
                                 <span class="badge badge-{{ strtolower(str_replace(' ', '-', $computedStatus)) }}">
                                     <i class="ph {{ strtolower($computedStatus) === 'paid' ? 'ph-check-circle' : (strtolower($computedStatus) === 'partially paid' ? 'ph-clock-counter-clockwise' : 'ph-clock') }}"></i> {{ ucfirst($computedStatus) }}
                                 </span>
                             </td>
-                            <td>{{ $inv->created_at->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
                                     @if(Auth::user()->role === 'sfq_user')
@@ -265,15 +257,12 @@
                                     <a href="{{ route('cheque-collection-invoices.print', $inv->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="Print Invoice">
                                         <i class="ph ph-printer"></i>
                                     </a>
-                                    <button type="button" class="btn btn-outline" onclick="openDeleteModal({{ $inv->id }}, '{{ $inv->invoice_number }}')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Delete Invoice">
-                                        <i class="ph ph-trash"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
                                 <i class="ph ph-bank" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                                 No Cheque Collection Invoices created yet. Click "Create Cheque Invoice" to generate one.
                             </td>
@@ -285,32 +274,6 @@
 
         <div style="margin-top: 1.5rem;">
             {{ $invoices->links() }}
-        </div>
-    </div>
-
-    <!-- Custom Delete Confirmation Modal Popup -->
-    <div id="deleteModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center;">
-        <div class="glass" style="width: 90%; max-width: 440px; padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: var(--danger, #ef4444); display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 1.25rem; margin-left: auto; margin-right: auto;">
-                <i class="ph ph-warning"></i>
-            </div>
-            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Delete Cheque Invoice?</h3>
-            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.75rem; line-height: 1.5;">
-                Are you sure you want to delete cheque collection invoice <strong id="deleteInvoiceNumberText" style="color: var(--text-primary);"></strong>? This action cannot be undone.
-            </p>
-
-            <form id="deleteInvoiceForm" method="POST" action="">
-                @csrf
-                @method('DELETE')
-                <div style="display: flex; gap: 0.75rem; justify-content: center;">
-                    <button type="button" class="btn btn-outline" onclick="closeDeleteModal()" style="flex: 1; padding: 0.65rem 1rem;">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn" style="flex: 1; padding: 0.65rem 1rem; background: var(--danger, #ef4444); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                        <i class="ph ph-trash"></i> Delete
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -371,27 +334,8 @@
                 modal.style.display = 'none';
             }
 
-            function openDeleteModal(invoiceId, invoiceNumber) {
-                const modal = document.getElementById('deleteModal');
-                const form = document.getElementById('deleteInvoiceForm');
-                const invoiceText = document.getElementById('deleteInvoiceNumberText');
-
-                form.action = `{{ url('cheque-collection-invoices') }}/${invoiceId}`;
-                invoiceText.textContent = invoiceNumber;
-                modal.style.display = 'flex';
-            }
-
-            function closeDeleteModal() {
-                const modal = document.getElementById('deleteModal');
-                modal.style.display = 'none';
-            }
-
             window.addEventListener('click', function(e) {
-                const deleteModal = document.getElementById('deleteModal');
                 const assignModal = document.getElementById('assignDriverModal');
-                if (e.target === deleteModal) {
-                    closeDeleteModal();
-                }
                 if (e.target === assignModal) {
                     closeAssignDriverModal();
                 }

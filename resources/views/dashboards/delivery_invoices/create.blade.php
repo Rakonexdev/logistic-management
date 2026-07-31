@@ -180,7 +180,7 @@
                 </div>
             </div>
 
-            <div class="section-title">Serial Numbers & Charge Breakdown</div>
+            <div class="section-title">SFQ Handling Charges Sheet</div>
             
             <div id="noDiNotice" style="padding: 2rem; text-align: center; color: var(--text-secondary); background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 1.5rem;">
                 <i class="ph ph-info" style="font-size: 1.75rem; display: block; margin-bottom: 0.5rem; color: var(--accent-primary, #6366f1);"></i>
@@ -191,17 +191,26 @@
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th style="width: 20%;">SKU Code</th>
-                            <th style="width: 30%;">Serial Number</th>
+                            <th style="width: 25%;">SKU Code</th>
+                            <th style="width: 35%;">Serial Number</th>
                             <th style="width: 15%; text-align: center;">Quantity</th>
-                            <th style="width: 20%;">Charge Amount (QAR) *</th>
-                            <th style="width: 15%; text-align: right;">Line Total (QAR)</th>
+                            <th style="width: 25%;">Charge Amount (QAR)</th>
                         </tr>
                     </thead>
                     <tbody id="itemsBody">
                         <!-- Populated dynamically via JS -->
                     </tbody>
                 </table>
+
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ph ph-coins" style="font-size: 1.4rem; color: var(--accent-primary, #6366f1);"></i>
+                        <span style="font-weight: 600; font-size: 1rem; color: var(--text-primary);">Lump Sum Amount (QAR):</span>
+                    </div>
+                    <div style="width: 240px;">
+                        <input type="number" step="0.01" min="0" id="lumpSumInput" name="lump_sum_amount" class="form-input" placeholder="0.00" oninput="calculateTotals()" style="text-align: right; font-weight: 700; font-size: 1.1rem; padding: 0.5rem 0.75rem;">
+                    </div>
+                </div>
 
                 <div class="total-summary-card">
                     <div class="total-summary-label">
@@ -235,6 +244,7 @@
                 const customerInput = document.getElementById('customerNameInput');
                 const soRefInput = document.getElementById('soRefInput');
                 const endUserInput = document.getElementById('endUserInput');
+                const lumpSumInput = document.getElementById('lumpSumInput');
 
                 if (!diId || !instructionsMap[diId]) {
                     notice.style.display = 'block';
@@ -243,6 +253,7 @@
                     customerInput.value = '';
                     soRefInput.value = '';
                     endUserInput.value = '';
+                    if (lumpSumInput) lumpSumInput.value = '';
                     body.innerHTML = '';
                     return;
                 }
@@ -270,12 +281,11 @@
                                 <td><span style="font-family: monospace; background: rgba(99, 102, 241, 0.1); color: var(--accent-primary, #6366f1); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">${sn}</span></td>
                                 <td style="text-align: center;">1</td>
                                 <td>
-                                    <input type="number" step="0.01" min="0" name="items[${rowIndex}][charge_amount]" class="form-input charge-input" required placeholder="0.00" value="0.00" oninput="calculateTotals()" style="padding: 0.4rem 0.75rem;">
+                                    <input type="number" step="0.01" min="0" name="items[${rowIndex}][charge_amount]" class="form-input charge-input" placeholder="0.00" oninput="calculateTotals()" style="padding: 0.4rem 0.75rem;">
                                     <input type="hidden" name="items[${rowIndex}][sku_code]" value="${item.sku_code}">
                                     <input type="hidden" name="items[${rowIndex}][serial_number]" value="${sn}">
                                     <input type="hidden" name="items[${rowIndex}][quantity]" value="1">
                                 </td>
-                                <td style="text-align: right; font-weight: 700;" class="line-total-cell">QAR 0.00</td>
                             `;
                             body.appendChild(tr);
                             rowIndex++;
@@ -288,12 +298,11 @@
                             <td><span style="color: var(--text-secondary); font-style: italic;">No Serial Number</span></td>
                             <td style="text-align: center;">${item.quantity}</td>
                             <td>
-                                <input type="number" step="0.01" min="0" name="items[${rowIndex}][charge_amount]" class="form-input charge-input" required placeholder="0.00" value="0.00" oninput="calculateTotals()" style="padding: 0.4rem 0.75rem;">
+                                <input type="number" step="0.01" min="0" name="items[${rowIndex}][charge_amount]" class="form-input charge-input" placeholder="0.00" oninput="calculateTotals()" style="padding: 0.4rem 0.75rem;">
                                 <input type="hidden" name="items[${rowIndex}][sku_code]" value="${item.sku_code}">
                                 <input type="hidden" name="items[${rowIndex}][serial_number]" value="">
                                 <input type="hidden" name="items[${rowIndex}][quantity]" value="${item.quantity}">
                             </td>
-                            <td style="text-align: right; font-weight: 700;" class="line-total-cell">QAR 0.00</td>
                         `;
                         body.appendChild(tr);
                         rowIndex++;
@@ -304,27 +313,28 @@
                 container.style.display = 'block';
                 submitBtn.disabled = false;
 
+                if (lumpSumInput) lumpSumInput.value = '';
                 calculateTotals();
             }
 
             function calculateTotals() {
-                let grandTotal = 0;
+                let itemsTotal = 0;
                 const rows = document.querySelectorAll('#itemsBody tr');
 
                 rows.forEach(tr => {
                     const chargeInput = tr.querySelector('.charge-input');
                     const qtyHidden = tr.querySelector('input[name*="[quantity]"]');
-                    const lineTotalCell = tr.querySelector('.line-total-cell');
 
                     const charge = parseFloat(chargeInput ? chargeInput.value : 0) || 0;
                     const qty = parseInt(qtyHidden ? qtyHidden.value : 1) || 1;
-                    const lineTotal = charge * qty;
 
-                    grandTotal += lineTotal;
-                    if (lineTotalCell) {
-                        lineTotalCell.textContent = 'QAR ' + lineTotal.toFixed(2);
-                    }
+                    itemsTotal += charge * qty;
                 });
+
+                const lumpSumInput = document.getElementById('lumpSumInput');
+                const lumpSum = parseFloat(lumpSumInput ? lumpSumInput.value : 0) || 0;
+
+                const grandTotal = itemsTotal + lumpSum;
 
                 const totalSummaryText = document.getElementById('totalInvoiceAmountText');
                 if (totalSummaryText) {

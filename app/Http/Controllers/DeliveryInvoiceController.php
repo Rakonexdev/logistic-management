@@ -53,20 +53,22 @@ class DeliveryInvoiceController extends Controller
         $request->validate([
             'invoice_number' => 'required|string|unique:delivery_invoices,invoice_number',
             'delivery_instruction_id' => 'required|exists:delivery_instructions,id',
+            'lump_sum_amount' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string',
             'items.*.serial_number' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.charge_amount' => 'required|numeric|min:0',
+            'items.*.charge_amount' => 'nullable|numeric|min:0',
         ]);
 
         $di = DeliveryInstruction::findOrFail($request->delivery_instruction_id);
 
-        $totalInvoiceAmount = 0;
+        $lumpSum = (float) $request->input('lump_sum_amount', 0);
+        $totalInvoiceAmount = $lumpSum;
         $itemsData = [];
 
         foreach ($request->items as $item) {
-            $charge = (float) $item['charge_amount'];
+            $charge = (float) ($item['charge_amount'] ?? 0);
             $qty = (int) $item['quantity'];
             $lineTotal = $charge * $qty;
             $totalInvoiceAmount += $lineTotal;
@@ -87,6 +89,7 @@ class DeliveryInvoiceController extends Controller
             'customer_name' => $di->customer_name,
             'end_user_name' => $di->end_user_name,
             'so_reference' => $di->so_reference,
+            'lump_sum_amount' => $lumpSum,
             'total_amount' => $totalInvoiceAmount,
             'status' => 'Unpaid',
         ]);
@@ -136,5 +139,35 @@ class DeliveryInvoiceController extends Controller
         $invoice->delete();
 
         return redirect()->route('delivery-invoices.index')->with('success', "Delivery Invoice {$num} deleted successfully.");
+    }
+
+    public function updateRemarks(Request $request, $id)
+    {
+        $invoice = DeliveryInvoice::findOrFail($id);
+
+        $request->validate([
+            'remarks' => 'nullable|string',
+        ]);
+
+        $invoice->update([
+            'remarks' => $request->remarks,
+        ]);
+
+        return redirect()->back()->with('success', 'Remarks updated successfully.');
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $invoice = DeliveryInvoice::findOrFail($id);
+
+        $request->validate([
+            'status' => 'required|string|in:Unpaid,Processing,Paid',
+        ]);
+
+        $invoice->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()->back()->with('success', "Delivery Invoice status updated to '{$request->status}' successfully.");
     }
 }

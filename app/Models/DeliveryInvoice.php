@@ -18,11 +18,14 @@ class DeliveryInvoice extends Model
         'customer_name',
         'end_user_name',
         'so_reference',
+        'lump_sum_amount',
         'total_amount',
         'status',
+        'remarks',
     ];
 
     protected $casts = [
+        'lump_sum_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
     ];
 

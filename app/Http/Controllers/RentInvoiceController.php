@@ -105,6 +105,21 @@ class RentInvoiceController extends Controller
         return redirect()->back()->with('success', "Rent Invoice {$invoice->invoice_number} marked as Paid.");
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $invoice = RentInvoice::findOrFail($id);
+
+        $request->validate([
+            'status' => 'required|string|in:Unpaid,Processing,Paid',
+        ]);
+
+        $invoice->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()->back()->with('success', "Rent Invoice status updated to '{$request->status}' successfully.");
+    }
+
     public function destroy($id)
     {
         $invoice = RentInvoice::findOrFail($id);

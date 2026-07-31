@@ -139,41 +139,23 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Received Date</th>
                         <th>Return Ref</th>
                         <th>Customer / Pickup Location</th>
-                        <th>Returned Items</th>
-                        <th>Received Date</th>
                         <th>Status</th>
-                        <th>Inspection</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($instructions as $ret)
                         <tr>
+                            <td>{{ $ret->instruction_received_date ? $ret->instruction_received_date->format('Y-m-d') : '-' }}</td>
                             <td>
                                 <strong>{{ $ret->return_ref }}</strong>
-                                <div style="font-size: 0.75rem; color: var(--accent-primary, #6366f1); font-weight: 500; margin-top: 0.15rem;">
-                                    {{ $ret->return_type ?? 'Return to Warehouse' }}
-                                </div>
                             </td>
                             <td>
-                                <div><strong>{{ $ret->customer_name }}</strong></div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ $ret->pickup_address }}</div>
+                                <strong>{{ $ret->customer_name }}</strong>
                             </td>
-                            <td>
-                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                    @foreach($ret->items as $item)
-                                        <div style="font-size: 0.85rem;">
-                                            <strong>{{ $item->sku_code }}</strong> (x{{ $item->quantity }})
-                                            @if($item->serial_numbers)
-                                                <span style="color: var(--text-secondary); font-size: 0.75rem;">S/N: {{ $item->serial_numbers }}</span>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </td>
-                            <td>{{ $ret->instruction_received_date ? $ret->instruction_received_date->format('Y-m-d H:i') : '-' }}</td>
                             <td>
                                 @php
                                     $statusKey = strtolower(explode(' ', $ret->status)[0]);
@@ -183,17 +165,9 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge badge-inspection-{{ strtolower(explode(' ', $ret->inspection_status)[0]) }}">
-                                    {{ $ret->inspection_status }}
-                                </span>
-                            </td>
-                            <td>
                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <a href="{{ route('return-instructions.show', $ret->id) }}" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="View Workflow & Timeline">
                                         <i class="ph ph-eye"></i> View
-                                    </a>
-                                    <a href="{{ route('return-instructions.print', $ret->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="Print Return Document">
-                                        <i class="ph ph-printer"></i>
                                     </a>
                                     @if($ret->attachment)
                                         <a href="{{ route('return-instructions.attachment', $ret->id) }}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);" title="View Attachment">
@@ -205,7 +179,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
                                 <i class="ph ph-arrow-u-up-left" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                                 No Return Instructions created yet. Click "Create Return Instruction" to create one.
                             </td>

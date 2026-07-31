@@ -73,6 +73,11 @@
             text-transform: uppercase;
             background: rgba(0, 0, 0, 0.2);
         }
+
+        .badge-unpaid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-processing { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-issued { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-paid { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
     </style>
 @endpush
 
@@ -85,17 +90,28 @@
             <a href="{{ route('delivery-invoices.print', $invoice->id) }}" target="_blank" class="btn btn-primary">
                 <i class="ph ph-printer"></i> Print Invoice
             </a>
-            <a href="{{ route('delivery-invoices.index') }}" class="btn btn-outline">
-                <i class="ph ph-arrow-left"></i> Back to Invoices
-            </a>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="glass" style="padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid var(--success); background: rgba(16, 185, 129, 0.1); color: var(--success);">
+            {{ session('success') }}
+        </div>
+    @endif
 
     <div class="glass details-panel">
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Invoice Number</span>
                 <span class="info-value">{{ $invoice->invoice_number }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                    <span class="badge badge-{{ strtolower($invoice->status) }}" style="padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <i class="ph {{ strtolower($invoice->status) === 'paid' ? 'ph-check-circle' : (strtolower($invoice->status) === 'processing' ? 'ph-gear-six' : 'ph-clock') }}"></i> {{ ucfirst($invoice->status) }}
+                    </span>
+                </span>
             </div>
             <div class="info-item">
                 <span class="info-label">DI Reference</span>
@@ -114,6 +130,12 @@
                 <span class="info-value">{{ $invoice->end_user_name ?: '-' }}</span>
             </div>
             <div class="info-item">
+                <span class="info-label">Lump Sum Amount</span>
+                <span class="info-value">
+                    QAR {{ number_format($invoice->lump_sum_amount ?? 0, 2) }}
+                </span>
+            </div>
+            <div class="info-item">
                 <span class="info-label">Total Invoice Amount</span>
                 <span class="info-value" style="color: var(--accent-primary, #6366f1); font-size: 1.25rem;">
                     QAR {{ number_format($invoice->total_amount, 2) }}
@@ -121,7 +143,7 @@
             </div>
         </div>
 
-        <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Serial Number Charge Breakdown</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--text-primary);">SFQ Handling Charges Sheet</h3>
 
         <table class="data-table">
             <thead>
@@ -157,6 +179,14 @@
                 @endforeach
             </tbody>
             <tfoot>
+                @if(($invoice->lump_sum_amount ?? 0) > 0)
+                    <tr>
+                        <td colspan="5" style="text-align: right; font-weight: 600; color: var(--text-secondary);">LUMP SUM AMOUNT:</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--text-primary);">
+                            QAR {{ number_format($invoice->lump_sum_amount, 2) }}
+                        </td>
+                    </tr>
+                @endif
                 <tr>
                     <td colspan="5" style="text-align: right; font-weight: 700; font-size: 1rem;">TOTAL INVOICE AMOUNT:</td>
                     <td style="text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--accent-primary, #6366f1);">
@@ -165,5 +195,58 @@
                 </tr>
             </tfoot>
         </table>
+
+        <!-- Remarks & Action Section -->
+        @if(Auth::user()->role === 'end_user')
+            <div style="margin-top: 2.5rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 12px;">
+                <h4 style="margin: 0 0 1rem 0; color: var(--text-primary); font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-chat-text" style="color: var(--accent-primary, #6366f1); font-size: 1.2rem;"></i> Delivery Invoice Remarks & Notes
+                </h4>
+                
+                <form action="{{ route('delivery-invoices.remarks', $invoice->id) }}" method="POST">
+                    @csrf
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <textarea name="remarks" class="form-input" rows="3" placeholder="Enter special instructions, remarks or notes for this delivery invoice..." style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">{{ old('remarks', $invoice->remarks) }}</textarea>
+                        
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.25rem;">
+                                <i class="ph ph-floppy-disk"></i> Save Remarks
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        @else
+            <!-- SFQ Status Acknowledge Section -->
+            <div style="margin-top: 2.5rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 12px;">
+                <h4 style="margin: 0 0 1.25rem 0; color: var(--text-primary); font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-check-square" style="color: var(--accent-primary, #6366f1); font-size: 1.2rem;"></i> Invoice Status Acknowledge (SFQ)
+                </h4>
+
+                <form action="{{ route('delivery-invoices.status', $invoice->id) }}" method="POST" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    @csrf
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 260px;">
+                        <label style="font-weight: 600; font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap;">Acknowledge Status:</label>
+                        <select name="status" class="form-input" style="padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; appearance: auto;" required>
+                            <option value="Unpaid" {{ $invoice->status === 'Unpaid' ? 'selected' : '' }}>Unpaid</option>
+                            <option value="Processing" {{ $invoice->status === 'Processing' ? 'selected' : '' }}>Processing</option>
+                            <option value="Paid" {{ $invoice->status === 'Paid' ? 'selected' : '' }}>Paid</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.25rem;">
+                        <i class="ph ph-check-circle"></i> Submit Acknowledge
+                    </button>
+                </form>
+            </div>
+
+            @if($invoice->remarks)
+                <div style="margin-top: 1.5rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <h4 style="margin: 0 0 0.75rem 0; color: var(--text-primary); font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ph ph-chat-text" style="color: var(--accent-primary, #6366f1); font-size: 1.2rem;"></i> Delivery Invoice Remarks & Notes
+                    </h4>
+                    <div style="font-size: 0.925rem; color: var(--text-primary); background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); white-space: pre-wrap;">{{ $invoice->remarks }}</div>
+                </div>
+            @endif
+        @endif
     </div>
 @endsection

@@ -66,6 +66,7 @@
         }
 
         .badge-unpaid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-processing { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
         .badge-paid { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
     </style>
 @endpush
@@ -93,6 +94,12 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="glass" style="padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid var(--success); background: rgba(16, 185, 129, 0.1); color: var(--success);">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="glass details-panel">
         <div class="info-grid">
             <div class="info-item">
@@ -115,7 +122,7 @@
                 <span class="info-label">Status</span>
                 <div>
                     <span class="badge badge-{{ strtolower($invoice->status) }}">
-                        <i class="ph {{ strtolower($invoice->status) === 'paid' ? 'ph-check-circle' : 'ph-clock' }}"></i> {{ ucfirst($invoice->status) }}
+                        <i class="ph {{ strtolower($invoice->status) === 'paid' ? 'ph-check-circle' : (strtolower($invoice->status) === 'processing' ? 'ph-gear-six' : 'ph-clock') }}"></i> {{ ucfirst($invoice->status) }}
                     </span>
                 </div>
             </div>
@@ -143,6 +150,30 @@
                 <span>QAR {{ number_format($invoice->total_amount, 2) }}</span>
             </div>
         </div>
+
+        @if(Auth::user()->role === 'sfq_user')
+            <!-- SFQ Status Acknowledge Section -->
+            <div style="margin-top: 2.5rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 12px;">
+                <h4 style="margin: 0 0 1.25rem 0; color: var(--text-primary); font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-check-square" style="color: var(--accent-primary, #6366f1); font-size: 1.2rem;"></i> Rent Invoice Status Acknowledge (SFQ)
+                </h4>
+
+                <form action="{{ route('rent-invoices.status', $invoice->id) }}" method="POST" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    @csrf
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 260px;">
+                        <label style="font-weight: 600; font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap;">Acknowledge Status:</label>
+                        <select name="status" class="form-input" style="padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; appearance: auto;" required>
+                            <option value="Unpaid" {{ $invoice->status === 'Unpaid' ? 'selected' : '' }}>Unpaid</option>
+                            <option value="Processing" {{ $invoice->status === 'Processing' ? 'selected' : '' }}>Processing</option>
+                            <option value="Paid" {{ $invoice->status === 'Paid' ? 'selected' : '' }}>Paid</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.25rem;">
+                        <i class="ph ph-check-circle"></i> Submit Acknowledge
+                    </button>
+                </form>
+            </div>
+        @endif
 
         @if($invoice->remarks)
             <div style="margin-top: 1.5rem;">

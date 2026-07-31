@@ -58,10 +58,13 @@ Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     Route::resource('products', ProductController::class);
 
     // Delivery Invoice Routes
+    Route::post('delivery-invoices/{id}/remarks', [DeliveryInvoiceController::class, 'updateRemarks'])->name('delivery-invoices.remarks');
+    Route::post('delivery-invoices/{id}/status', [DeliveryInvoiceController::class, 'updateStatus'])->name('delivery-invoices.status');
     Route::resource('delivery-invoices', DeliveryInvoiceController::class);
 
     // Rent Invoice Routes
     Route::post('rent-invoices/{id}/mark-paid', [RentInvoiceController::class, 'markPaid'])->name('rent-invoices.mark-paid');
+    Route::post('rent-invoices/{id}/status', [RentInvoiceController::class, 'updateStatus'])->name('rent-invoices.status');
     Route::resource('rent-invoices', RentInvoiceController::class);
 
     // Cheque Collection Invoice Routes

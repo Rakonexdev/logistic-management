@@ -164,7 +164,7 @@
             </div>
         </div>
 
-        <div class="title">DELIVERY INVOICE</div>
+        <div class="title">DELIVERY INVOICE - SFQ HANDLING CHARGES SHEET</div>
 
         <!-- Info Grid -->
         <div class="info-grid">
