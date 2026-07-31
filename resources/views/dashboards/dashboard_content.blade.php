@@ -411,3 +411,111 @@
         </div>
     </div>
 </div>
+
+<!-- Month-Wise Stock Movement Chart Row -->
+<div class="glass" style="padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ph ph-chart-bar" style="color: var(--accent-primary, #6366f1); font-size: 1.3rem;"></i> Month-Wise Stock Movement (Stock In vs Stock Out)
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Comparison of total monthly stock coming in (Inbound) vs stock going out (Outbound).</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; font-weight: 600;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background: #10b981; display: inline-block;"></span>
+                <span>Stock In (Inbound)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background: #6366f1; display: inline-block;"></span>
+                <span>Stock Out (Outbound)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div style="position: relative; height: 320px; width: 100%;">
+        <canvas id="monthlyStockMovementChart"></canvas>
+    </div>
+</div>
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('monthlyStockMovementChart');
+            if (!ctx) return;
+
+            const labels = {!! json_encode($monthlyStockData['labels'] ?? []) !!};
+            const stockIn = {!! json_encode($monthlyStockData['stock_in'] ?? []) !!};
+            const stockOut = {!! json_encode($monthlyStockData['stock_out'] ?? []) !!};
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Stock In (Inbound)',
+                            data: stockIn,
+                            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'Stock Out (Outbound)',
+                            data: stockOut,
+                            backgroundColor: 'rgba(99, 102, 241, 0.75)',
+                            borderColor: '#6366f1',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            padding: 12,
+                            backgroundColor: 'rgba(15, 17, 26, 0.95)',
+                            titleColor: '#f8f9fa',
+                            bodyColor: '#f8f9fa',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#adb5bd',
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#adb5bd',
+                                font: { family: 'Inter', size: 12 },
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+@endpush
