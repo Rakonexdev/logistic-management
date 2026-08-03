@@ -131,9 +131,10 @@
         }
 
         .nav-link.active {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--accent-primary);
-            border-left-color: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #ffffff;
+            border-left-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
         }
 
         .nav-link i {
@@ -374,7 +375,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Overview</div>
                         <a href="{{ url('end-user/dashboard') }}"
-                            class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*dashboard') ? 'active' : '' }}">
                             <i class="ph ph-squares-four"></i> Dashboard
                         </a>
                     </div>
@@ -382,7 +383,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Inventory</div>
                         <a href="{{ route('products.index') }}"
-                            class="nav-link {{ request()->is('*/products*') ? 'active' : '' }}">
+                            class="nav-link {{ (request()->is('*products*') || request()->routeIs('products.*')) && !request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
                             <i class="ph ph-package"></i> Product Management
                         </a>
                         <a href="{{ route('products.stock-visibility') }}"
@@ -393,25 +394,25 @@
 
                     <div class="nav-group">
                         <div class="nav-group-title">Inbound</div>
-                        <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*/asns*') ? 'active' : '' }}">
+                        <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*asns*') || request()->routeIs('asns.*') ? 'active' : '' }}">
                             <i class="ph ph-download-simple"></i> Advance Shipping Note
                         </a>
                     </div>
 
                     <div class="nav-group">
                         <div class="nav-group-title">Outbound</div>
-                        <!-- <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*/sales-orders*') ? 'active' : '' }}">
+                        <!-- <a href="{{ route('sales-orders.index') }}" class="nav-link {{ request()->is('*sales-orders*') ? 'active' : '' }}">
                             <i class="ph ph-shopping-cart"></i> Sales Orders
                         </a> -->
                         <a href="{{ route('delivery-instructions.index') }}"
-                            class="nav-link {{ request()->is('*/delivery-instructions*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*delivery-instructions*') || request()->routeIs('delivery-instructions.*') ? 'active' : '' }}">
                             <i class="ph ph-truck"></i> Delivery Instructions
                         </a>
                     </div>
 
                     <div class="nav-group">
                         <div class="nav-group-title">Reverse Logistics</div>
-                        <a href="{{ route('return-instructions.index') }}" class="nav-link {{ request()->is('*/return-instructions*') ? 'active' : '' }}">
+                        <a href="{{ route('return-instructions.index') }}" class="nav-link {{ request()->is('*return-instructions*') || request()->routeIs('return-instructions.*') ? 'active' : '' }}">
                             <i class="ph ph-arrow-u-up-left"></i> Return Instructions
                         </a>
                     </div>
@@ -419,22 +420,22 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Finance</div>
                         <a href="{{ route('delivery-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/delivery-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*delivery-invoices*') || request()->routeIs('delivery-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
                         <a href="{{ route('rent-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*rent-invoices*') || request()->routeIs('rent-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
                         <a href="{{ route('cheque-collection-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/cheque-collection-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*cheque-collection-invoices*') || request()->routeIs('cheque-collection-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>
 
                     <div class="nav-group">
                         <div class="nav-group-title">Reporting</div>
-                        <a href="#" class="nav-link">
+                        <a href="#" class="nav-link {{ request()->is('*reports*') ? 'active' : '' }}">
                             <i class="ph ph-chart-bar"></i> Reports
                         </a>
                     </div>
@@ -443,7 +444,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Overview</div>
                         <a href="{{ url('sfq-user/dashboard') }}"
-                            class="nav-link {{ request()->is('*/dashboard') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*dashboard') ? 'active' : '' }}">
                             <i class="ph ph-squares-four"></i> Dashboard
                         </a>
                     </div>
@@ -451,7 +452,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Inbound</div>
                         <a href="{{ route('sfq.grns.index') }}"
-                            class="nav-link {{ request()->is('*/grns*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*grns*') || request()->routeIs('sfq.grns.*') ? 'active' : '' }}">
                             <i class="ph ph-download-simple"></i> GRN Confirmation
                         </a>
                     </div>
@@ -469,7 +470,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Outbound</div>
                         <a href="{{ route('sfq.fulfillment.index') }}"
-                            class="nav-link {{ request()->is('*/fulfillment*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*fulfillment*') || request()->routeIs('sfq.fulfillment.*') ? 'active' : '' }}">
                             <i class="ph ph-shopping-cart"></i> Order Fulfillment
                         </a>
                     </div>
@@ -477,11 +478,11 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Logistics</div>
                         <a href="{{ route('sfq.deliveries.index') }}"
-                            class="nav-link {{ request()->is('*/deliveries*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*deliveries*') || request()->routeIs('sfq.deliveries.*') ? 'active' : '' }}">
                             <i class="ph ph-truck"></i> Delivery Planning
                         </a>
                         <a href="{{ route('sfq.returns.index') }}"
-                            class="nav-link {{ request()->is('*/returns*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*returns*') || request()->routeIs('sfq.returns.*') ? 'active' : '' }}">
                             <i class="ph ph-arrow-u-up-left"></i> Returns Execution
                         </a>
                     </div>
@@ -489,15 +490,15 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Finance</div>
                         <a href="{{ route('delivery-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/delivery-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*delivery-invoices*') || request()->routeIs('delivery-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-receipt"></i> Delivery Invoices
                         </a>
                         <a href="{{ route('rent-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/rent-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*rent-invoices*') || request()->routeIs('rent-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-currency-circle-dollar"></i> Rent Invoices
                         </a>
                         <a href="{{ route('cheque-collection-invoices.index') }}"
-                            class="nav-link {{ request()->is('*/cheque-collection-invoices*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*cheque-collection-invoices*') || request()->routeIs('cheque-collection-invoices.*') ? 'active' : '' }}">
                             <i class="ph ph-bank"></i> Cheque Collection Invoices
                         </a>
                     </div>
@@ -505,7 +506,7 @@
                     <div class="nav-group">
                         <div class="nav-group-title">Reporting</div>
                         <a href="{{ route('sfq.reports.index') }}"
-                            class="nav-link {{ request()->is('*/reports*') ? 'active' : '' }}">
+                            class="nav-link {{ request()->is('*reports*') || request()->routeIs('sfq.reports.*') ? 'active' : '' }}">
                             <i class="ph ph-chart-bar"></i> Reports & Dashboards
                         </a>
                     </div>
