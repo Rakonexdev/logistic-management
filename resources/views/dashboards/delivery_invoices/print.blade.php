@@ -200,15 +200,20 @@
         </div>
 
         <!-- Items Table -->
+        @php
+            $hasLineItemCharges = $invoice->items->sum('total_amount') > 0;
+        @endphp
         <table class="data-table">
             <thead>
                 <tr>
                     <th style="width: 5%; text-align: center;">#</th>
-                    <th style="width: 25%;">SKU CODE</th>
-                    <th style="width: 35%;">SERIAL NUMBER</th>
-                    <th style="width: 10%; text-align: center;">QTY</th>
-                    <th style="width: 12.5%; text-align: right;">UNIT CHARGE</th>
-                    <th style="width: 12.5%; text-align: right;">AMOUNT</th>
+                    <th style="width: 35%;">SKU CODE</th>
+                    <th style="width: 45%;">SERIAL NUMBER</th>
+                    <th style="width: 15%; text-align: center;">QTY</th>
+                    @if($hasLineItemCharges)
+                        <th style="width: 12.5%; text-align: right;">UNIT CHARGE</th>
+                        <th style="width: 12.5%; text-align: right;">AMOUNT</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -218,14 +223,16 @@
                         <td><strong>{{ $item->sku_code }}</strong></td>
                         <td>{{ $item->serial_number ?: '-' }}</td>
                         <td class="center">{{ $item->quantity }}</td>
-                        <td class="right">QAR {{ number_format($item->charge_amount, 2) }}</td>
-                        <td class="right"><strong>QAR {{ number_format($item->total_amount, 2) }}</strong></td>
+                        @if($hasLineItemCharges)
+                            <td class="right">QAR {{ number_format($item->charge_amount, 2) }}</td>
+                            <td class="right"><strong>QAR {{ number_format($item->total_amount, 2) }}</strong></td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="5" style="text-align: right;">TOTAL INVOICE AMOUNT (QAR):</td>
+                    <td colspan="{{ $hasLineItemCharges ? 5 : 3 }}" style="text-align: right;">TOTAL INVOICE AMOUNT (QAR):</td>
                     <td class="right" style="font-size: 12px; color: #0255a5;">QAR {{ number_format($invoice->total_amount, 2) }}</td>
                 </tr>
             </tfoot>

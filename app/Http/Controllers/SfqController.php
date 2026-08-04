@@ -68,7 +68,7 @@ class SfqController extends Controller
                             $missingSerialsList = $missingStr ? array_filter(array_map('trim', explode(',', $missingStr))) : [];
                             $receivedSerials = array_diff($allItemSerials, $missingSerialsList);
                             $combinedSerials = array_unique(array_merge($existingSerials, $receivedSerials));
-                            $product->update(['serial_number' => implode(', ', $combinedSerials)]);
+                            $product->update(['serial_number' => ! empty($combinedSerials) ? implode(', ', $combinedSerials) : null]);
                         }
                     }
                 }
@@ -426,7 +426,7 @@ class SfqController extends Controller
                             $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
                             $newSerials = array_filter(array_map('trim', explode(',', $item->serial_numbers)));
                             $mergedSerials = array_values(array_unique(array_merge($existingSerials, $newSerials)));
-                            $product->update(['serial_number' => implode(', ', $mergedSerials)]);
+                            $product->update(['serial_number' => ! empty($mergedSerials) ? implode(', ', $mergedSerials) : null]);
                         }
                     }
                 }
@@ -487,7 +487,7 @@ class SfqController extends Controller
                         $existingSerials = $product->serial_number ? array_filter(array_map('trim', explode(',', $product->serial_number))) : [];
                         $newSerials = array_filter(array_map('trim', explode(',', $item->serial_numbers)));
                         $mergedSerials = array_values(array_unique(array_merge($existingSerials, $newSerials)));
-                        $product->update(['serial_number' => implode(', ', $mergedSerials)]);
+                        $product->update(['serial_number' => ! empty($mergedSerials) ? implode(', ', $mergedSerials) : null]);
                     }
                 }
             }

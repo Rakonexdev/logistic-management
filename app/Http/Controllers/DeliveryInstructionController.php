@@ -281,7 +281,7 @@ class DeliveryInstructionController extends Controller
                         }));
                         $product->update([
                             'qty' => $newQty,
-                            'serial_number' => implode(', ', $remainingSerials),
+                            'serial_number' => ! empty($remainingSerials) ? implode(', ', $remainingSerials) : null,
                         ]);
                     } else {
                         $product->update(['qty' => $newQty]);

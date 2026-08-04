@@ -145,6 +145,10 @@
 
         <h3 style="margin-bottom: 1rem; color: var(--text-primary);">SFQ Handling Charges Sheet</h3>
 
+        @php
+            $hasLineItemCharges = $invoice->items->sum('total_amount') > 0;
+        @endphp
+
         <table class="data-table">
             <thead>
                 <tr>
@@ -152,8 +156,10 @@
                     <th>SKU Code</th>
                     <th>Serial Number</th>
                     <th style="text-align: center;">Quantity</th>
-                    <th style="text-align: right;">Unit Charge Amount</th>
-                    <th style="text-align: right;">Line Total</th>
+                    @if($hasLineItemCharges)
+                        <th style="text-align: right;">Unit Charge Amount</th>
+                        <th style="text-align: right;">Line Total</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -171,24 +177,18 @@
                             @endif
                         </td>
                         <td style="text-align: center;">{{ $item->quantity }}</td>
-                        <td style="text-align: right;">QAR {{ number_format($item->charge_amount, 2) }}</td>
-                        <td style="text-align: right; font-weight: 700; color: var(--accent-primary, #6366f1);">
-                            QAR {{ number_format($item->total_amount, 2) }}
-                        </td>
+                        @if($hasLineItemCharges)
+                            <td style="text-align: right;">QAR {{ number_format($item->charge_amount, 2) }}</td>
+                            <td style="text-align: right; font-weight: 700; color: var(--accent-primary, #6366f1);">
+                                QAR {{ number_format($item->total_amount, 2) }}
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
-                @if(($invoice->lump_sum_amount ?? 0) > 0)
-                    <tr>
-                        <td colspan="5" style="text-align: right; font-weight: 600; color: var(--text-secondary);">LUMP SUM AMOUNT:</td>
-                        <td style="text-align: right; font-weight: 700; color: var(--text-primary);">
-                            QAR {{ number_format($invoice->lump_sum_amount, 2) }}
-                        </td>
-                    </tr>
-                @endif
                 <tr>
-                    <td colspan="5" style="text-align: right; font-weight: 700; font-size: 1rem;">TOTAL INVOICE AMOUNT:</td>
+                    <td colspan="{{ $hasLineItemCharges ? 5 : 3 }}" style="text-align: right; font-weight: 700; font-size: 1rem;">TOTAL INVOICE AMOUNT:</td>
                     <td style="text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--accent-primary, #6366f1);">
                         QAR {{ number_format($invoice->total_amount, 2) }}
                     </td>

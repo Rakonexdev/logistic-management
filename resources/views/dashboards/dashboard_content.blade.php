@@ -311,103 +311,111 @@
     </h1>
 </div>
 
-<div class="filter-bar glass">
+<form method="GET" action="{{ url()->current() }}" class="filter-bar glass">
     <div class="filter-group">
         <label>Date Range</label>
-        <input type="date" class="filter-input" value="{{ date('Y-m-d') }}">
+        <input type="date" name="date" class="filter-input" value="{{ request('date') }}">
     </div>
     <div class="filter-group">
         <label>Customer</label>
-        <select class="filter-select">
+        <select name="customer_id" class="filter-select">
             <option value="all">All Customers</option>
-            <option value="1">Acme Corp</option>
-            <option value="2">Global Logistics</option>
-            <option value="3">Tech Solutions</option>
+            @if(isset($customers))
+                @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                @endforeach
+            @endif
         </select>
     </div>
     <div class="filter-group">
         <label>Warehouse</label>
-        <select class="filter-select">
+        <select name="warehouse" class="filter-select">
             <option value="all">All Warehouses</option>
-            <option value="wh1">Main WH (Doha)</option>
-            <option value="wh2">Secondary WH</option>
+            @if(isset($warehouses))
+                @foreach($warehouses as $wh)
+                    <option value="{{ $wh }}" {{ request('warehouse') == $wh ? 'selected' : '' }}>{{ $wh }}</option>
+                @endforeach
+            @endif
         </select>
     </div>
     <div class="filter-group">
         <label>Status</label>
-        <select class="filter-select">
-            <option value="all">Any Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
+        <select name="status" class="filter-select">
+            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>Any Status</option>
+            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
         </select>
     </div>
     <div style="flex-grow: 1; display: flex; justify-content: flex-end; align-items: flex-end; padding-bottom: 4px;">
-        <button class="btn btn-primary" style="padding: 0.5rem 1rem;">Apply Filters</button>
+        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Apply Filters</button>
+        @if(request()->hasAny(['date', 'customer_id', 'warehouse', 'status']))
+            <a href="{{ url()->current() }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; margin-left: 0.5rem; text-decoration: none;">Clear</a>
+        @endif
     </div>
-</div>
+</form>
 
 <!-- Key Metrics Row -->
 <div class="grid-cards">
     <!-- Current Stock -->
     <div class="widget-card glass">
-        <a href="#" class="widget-link" title="Drill down to Stock"></a>
+        <a href="{{ route('products.index') }}" class="widget-link" title="Drill down to Stock"></a>
         <div class="widget-icon icon-stock">
             <i class="ph ph-stack"></i>
         </div>
         <h3 class="widget-title">Stocks</h3>
-        <p class="widget-value">24,592</p>
+        <p class="widget-value">{{ number_format($metrics['stocks']['total_qty'] ?? 0) }}</p>
         <div class="widget-trend trend-up">
-            <i class="ph ph-trend-up"></i> +5.2% from last week
+            <i class="ph ph-tag"></i> {{ number_format($metrics['stocks']['total_skus'] ?? 0) }} Total SKUs
         </div>
     </div>
 
-    <!-- Sales Orders -->
+    <!-- Sales Orders / ASN -->
     <div class="widget-card glass">
-        <a href="#" class="widget-link" title="Drill down to Orders"></a>
+        <a href="{{ Auth::user() && Auth::user()->role === 'sfq_user' ? route('sfq.grns.index') : route('asns.index') }}" class="widget-link" title="Drill down to ASN"></a>
         <div class="widget-icon icon-orders">
             <i class="ph ph-shopping-cart"></i>
         </div>
         <h3 class="widget-title">ASN</h3>
-        <p class="widget-value">1,204</p>
+        <p class="widget-value">{{ number_format($metrics['asn']['total'] ?? 0) }}</p>
         <div class="progress-wrapper">
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: 75%; background: var(--success);"></div>
+                <div class="progress-bar-fill" style="width: {{ $metrics['asn']['percentage'] ?? 0 }}%; background: var(--success);"></div>
             </div>
         </div>
         <div class="widget-trend" style="color: var(--text-secondary)">
-            75% Fulfilled
+            {{ $metrics['asn']['percentage'] ?? 0 }}% Fulfilled ({{ number_format($metrics['asn']['completed'] ?? 0) }} of {{ number_format($metrics['asn']['total'] ?? 0) }})
         </div>
     </div>
 
-    <!-- Deliveries -->
+    <!-- Active Deliveries -->
     <div class="widget-card glass">
-        <a href="#" class="widget-link" title="Drill down to Deliveries"></a>
+        <a href="{{ route('delivery-instructions.index') }}" class="widget-link" title="Drill down to Deliveries"></a>
         <div class="widget-icon icon-deliveries">
             <i class="ph ph-truck"></i>
         </div>
         <h3 class="widget-title">Active Deliveries</h3>
-        <p class="widget-value">342</p>
+        <p class="widget-value">{{ number_format($metrics['deliveries']['total'] ?? 0) }}</p>
         <div class="progress-wrapper">
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: 45%; background: var(--info);"></div>
+                <div class="progress-bar-fill" style="width: {{ $metrics['deliveries']['percentage'] ?? 0 }}%; background: var(--info);"></div>
             </div>
         </div>
         <div class="widget-trend" style="color: var(--text-secondary)">
-            150 In Transit
+            {{ number_format($metrics['deliveries']['in_transit'] ?? 0) }} In Transit
         </div>
     </div>
 
     <!-- Open Invoices -->
     <div class="widget-card glass">
-        <a href="#" class="widget-link" title="Drill down to Invoices"></a>
+        <a href="{{ route('delivery-invoices.index') }}" class="widget-link" title="Drill down to Invoices"></a>
         <div class="widget-icon icon-invoices">
             <i class="ph ph-receipt"></i>
         </div>
         <h3 class="widget-title">Open Invoices</h3>
-        <p class="widget-value">QAR 45,230</p>
+        <p class="widget-value">QAR {{ number_format($metrics['open_invoices']['total_amount'] ?? 0, 2) }}</p>
         <div class="widget-trend trend-down">
-            <i class="ph ph-trend-down"></i> -1.5% overdue rate
+            <i class="ph ph-receipt"></i> {{ number_format($metrics['open_invoices']['count'] ?? 0) }} Pending Invoices
         </div>
     </div>
 </div>

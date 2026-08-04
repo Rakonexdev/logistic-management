@@ -53,6 +53,7 @@ class DeliveryInvoiceController extends Controller
         $request->validate([
             'invoice_number' => 'required|string|unique:delivery_invoices,invoice_number',
             'delivery_instruction_id' => 'required|exists:delivery_instructions,id',
+            'total_amount' => 'nullable|numeric|min:0',
             'lump_sum_amount' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.sku_code' => 'required|string',
@@ -64,22 +65,17 @@ class DeliveryInvoiceController extends Controller
         $di = DeliveryInstruction::findOrFail($request->delivery_instruction_id);
 
         $lumpSum = (float) $request->input('lump_sum_amount', 0);
-        $totalInvoiceAmount = $lumpSum;
-        $itemsData = [];
+        $totalInvoiceAmount = 0;
 
-        foreach ($request->items as $item) {
-            $charge = (float) ($item['charge_amount'] ?? 0);
-            $qty = (int) $item['quantity'];
-            $lineTotal = $charge * $qty;
-            $totalInvoiceAmount += $lineTotal;
-
-            $itemsData[] = [
-                'sku_code' => $item['sku_code'],
-                'serial_number' => $item['serial_number'] ?? null,
-                'quantity' => $qty,
-                'charge_amount' => $charge,
-                'total_amount' => $lineTotal,
-            ];
+        if ($request->has('total_amount') && $request->input('total_amount') !== null) {
+            $totalInvoiceAmount = (float) $request->input('total_amount');
+        } else {
+            $totalInvoiceAmount = $lumpSum;
+            foreach ($request->items as $item) {
+                $charge = (float) ($item['charge_amount'] ?? 0);
+                $qty = (int) ($item['quantity'] ?? 1);
+                $totalInvoiceAmount += $charge * $qty;
+            }
         }
 
         $invoice = DeliveryInvoice::create([
@@ -89,13 +85,23 @@ class DeliveryInvoiceController extends Controller
             'customer_name' => $di->customer_name,
             'end_user_name' => $di->end_user_name,
             'so_reference' => $di->so_reference,
-            'lump_sum_amount' => $lumpSum,
+            'lump_sum_amount' => $lumpSum > 0 ? $lumpSum : $totalInvoiceAmount,
             'total_amount' => $totalInvoiceAmount,
             'status' => 'Unpaid',
         ]);
 
-        foreach ($itemsData as $data) {
-            $invoice->items()->create($data);
+        foreach ($request->items as $item) {
+            $charge = (float) ($item['charge_amount'] ?? 0);
+            $qty = (int) $item['quantity'];
+            $lineTotal = $charge * $qty;
+
+            $invoice->items()->create([
+                'sku_code' => $item['sku_code'],
+                'serial_number' => $item['serial_number'] ?? null,
+                'quantity' => $qty,
+                'charge_amount' => $charge,
+                'total_amount' => $lineTotal,
+            ]);
         }
 
         $assignedDriver = DeliveryNote::where('delivery_instruction_id', $di->id)
