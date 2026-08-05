@@ -382,8 +382,11 @@
             </button>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 0.85rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px;">
-            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem; font-family: monospace;" id="modalSkuCode">SKU: </div>
+        <div style="margin-bottom: 1rem; padding: 0.85rem 1rem; background: var(--bg-color, #0f111a); border: 1px solid var(--border-color); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary, #6366f1); font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; text-transform: uppercase;">SKU</span>
+                <span id="modalSkuCode" style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary); font-family: monospace;"></span>
+            </div>
             <div style="font-weight: 600; color: var(--text-primary); font-size: 1rem;" id="modalProductName">Product Name</div>
         </div>
 
@@ -391,10 +394,10 @@
         <div id="modalSearchWrapper" style="margin-bottom: 1rem; position: relative; display: none;">
             <i class="ph ph-magnifying-glass" style="position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;"></i>
             <input type="text" id="modalSerialSearch" placeholder="Search serial numbers..." oninput="filterModalSerials()" 
-                style="width: 100%; box-sizing: border-box; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.875rem; outline: none;">
+                style="width: 100%; box-sizing: border-box; padding: 0.65rem 1rem 0.65rem 2.5rem; background: var(--bg-color, #0f111a); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.875rem; outline: none;">
         </div>
 
-        <div id="modalSerialList" style="max-height: 360px; overflow-y: auto; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem;">
+        <div id="modalSerialList" style="max-height: 360px; overflow-y: auto; background: var(--bg-color, #0f111a); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem;">
             <!-- Dynamically populated -->
         </div>
 
@@ -410,7 +413,7 @@
         let currentModalQty = 0;
 
         function openSerialModal(sku, name, serials, qty) {
-            document.getElementById('modalSkuCode').textContent = `SKU: ${sku}`;
+            document.getElementById('modalSkuCode').textContent = sku;
             document.getElementById('modalProductName').textContent = name;
 
             currentModalSerials = Array.isArray(serials) ? serials : [];
@@ -483,8 +486,8 @@
             html += '<div style="display: flex; flex-direction: column; gap: 0.45rem;">';
             serialsToDisplay.forEach((sn, idx) => {
                 html += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 0.875rem; color: var(--text-primary);">
-                        <span><strong style="color: var(--text-secondary); margin-right: 0.6rem; font-family: inherit; display: inline-block; min-width: 28px;">#${idx + 1}</strong> ${escapeHtml(sn)}</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--surface-color, rgba(255, 255, 255, 0.04)); border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 0.875rem; color: var(--text-primary);">
+                        <span><strong style="color: var(--accent-primary, #6366f1); margin-right: 0.6rem; font-family: inherit; display: inline-block; min-width: 28px;">#${idx + 1}</strong> ${escapeHtml(sn)}</span>
                         <button type="button" onclick="copySerial('${escapeHtml(sn)}', this)" title="Copy Serial" style="background: transparent; border: 1px solid var(--border-color); color: var(--accent-primary, #6366f1); cursor: pointer; padding: 0.25rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; transition: all 0.2s;">
                             <i class="ph ph-copy"></i> Copy
                         </button>
