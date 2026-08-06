@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Http\UploadedFile;
 
 uses(LazilyRefreshDatabase::class);
 
@@ -134,5 +135,43 @@ test('user can delete a customer', function () {
 
     $this->assertDatabaseMissing('customers', [
         'id' => $customer->id,
+    ]);
+});
+
+test('user can download customer CSV template', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+
+    $response = $this->actingAs($user)
+        ->get(route('customers.template'));
+
+    $response->assertSuccessful();
+    $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+});
+
+test('user can bulk upload customers via CSV file', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+
+    $csvContent = "Customer Name,Contact Number,Address\n"
+        .'"Bulk Customer 1","+974 55112233","Doha, Qatar"'."\n"
+        .'"Bulk Customer 2","50998877","Dubai, UAE"'."\n";
+
+    $file = UploadedFile::fake()->createWithContent('customers.csv', $csvContent);
+
+    $response = $this->actingAs($user)
+        ->post(route('customers.bulk-upload'), [
+            'csv_file' => $file,
+        ]);
+
+    $response->assertRedirect(route('customers.index'));
+    $response->assertSessionHas('success', 'Successfully imported 2 customer(s).');
+
+    $this->assertDatabaseHas('customers', [
+        'name' => 'Bulk Customer 1',
+        'contact_number' => '+974 55112233',
+    ]);
+
+    $this->assertDatabaseHas('customers', [
+        'name' => 'Bulk Customer 2',
+        'contact_number' => '+974 50998877',
     ]);
 });

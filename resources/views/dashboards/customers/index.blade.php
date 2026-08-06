@@ -117,11 +117,53 @@
     }
 
     .pagination-wrapper {
+        padding: 1rem 1.5rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
         border-top: 1px solid var(--border-color);
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 0.25rem;
+    }
+
+    .page-item .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 0.5rem;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .page-item:not(.disabled):not(.active) .page-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--text-secondary);
+    }
+
+    .page-item.active .page-link {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .empty-state {
@@ -193,6 +235,16 @@
             Customer Management
         </h1>
         <div class="actions-group">
+            <a href="{{ route('customers.template') }}" class="btn btn-outline">
+                <i class="ph ph-download-simple"></i> Download Template
+            </a>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFileInput').click()">
+                <i class="ph ph-upload-simple"></i> Bulk Upload CSV
+            </button>
+            <form action="{{ route('customers.bulk-upload') }}" method="POST" enctype="multipart/form-data" id="bulkUploadForm" style="display: none;">
+                @csrf
+                <input type="file" name="csv_file" id="csvFileInput" accept=".csv" onchange="document.getElementById('bulkUploadForm').submit()">
+            </form>
             <a href="{{ route('customers.create') }}" class="btn btn-primary">
                 <i class="ph ph-plus"></i> Add Customer
             </a>
@@ -203,6 +255,13 @@
         <div class="alert-success">
             <i class="ph ph-check-circle" style="font-size: 1.25rem;"></i>
             <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if ($errors->has('csv_file'))
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ph ph-warning-circle" style="font-size: 1.25rem;"></i>
+            <span>{{ $errors->first('csv_file') }}</span>
         </div>
     @endif
 
@@ -286,7 +345,10 @@
 
         @if($customers->hasPages())
             <div class="pagination-wrapper">
-                {{ $customers->links() }}
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                    Showing {{ $customers->firstItem() ?? 0 }} to {{ $customers->lastItem() ?? 0 }} of {{ $customers->total() }} records
+                </div>
+                {{ $customers->links('pagination::bootstrap-4') }}
             </div>
         @endif
     </div>

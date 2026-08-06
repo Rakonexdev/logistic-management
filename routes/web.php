@@ -52,6 +52,8 @@ use App\Http\Controllers\SalesOrderController;
 
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
     // Customer Routes
+    Route::get('customers/template', [CustomerController::class, 'downloadTemplate'])->name('customers.template');
+    Route::post('customers/bulk-upload', [CustomerController::class, 'bulkUpload'])->name('customers.bulk-upload');
     Route::resource('customers', CustomerController::class);
 
     // Product Routes
