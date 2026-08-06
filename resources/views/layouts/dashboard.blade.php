@@ -393,6 +393,14 @@
                     </div>
 
                     <div class="nav-group">
+                        <div class="nav-group-title">Master Data</div>
+                        <a href="{{ route('customers.index') }}"
+                            class="nav-link {{ request()->is('*customers*') || request()->routeIs('customers.*') ? 'active' : '' }}">
+                            <i class="ph ph-users"></i> Customers
+                        </a>
+                    </div>
+
+                    <div class="nav-group">
                         <div class="nav-group-title">Inbound</div>
                         <a href="{{ route('asns.index') }}" class="nav-link {{ request()->is('*asns*') || request()->routeIs('asns.*') ? 'active' : '' }}">
                             <i class="ph ph-download-simple"></i> Advance Shipping Note
@@ -462,6 +470,14 @@
                         <a href="{{ route('products.stock-visibility') }}"
                             class="nav-link {{ request()->routeIs('products.stock-visibility') ? 'active' : '' }}">
                             <i class="ph ph-stack"></i> Stock
+                        </a>
+                    </div>
+
+                    <div class="nav-group">
+                        <div class="nav-group-title">Master Data</div>
+                        <a href="{{ route('customers.index') }}"
+                            class="nav-link {{ request()->is('*customers*') || request()->routeIs('customers.*') ? 'active' : '' }}">
+                            <i class="ph ph-users"></i> Customers
                         </a>
                     </div>
 

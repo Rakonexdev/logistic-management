@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\DeliveryInstruction;
 use App\Models\DeliveryInstructionItem;
 use App\Models\DeliveryNote;
@@ -61,8 +62,9 @@ class DeliveryInstructionController extends Controller
         $products = Product::orderBy('sku_code')->get();
         $remainingItems = [];
         $salesOrders = SalesOrder::with('items')->where('user_id', Auth::id())->latest()->get();
+        $customers = Customer::orderBy('name')->get();
 
-        return view('dashboards.delivery_instructions.create', compact('products', 'remainingItems', 'salesOrders'));
+        return view('dashboards.delivery_instructions.create', compact('products', 'remainingItems', 'salesOrders', 'customers'));
     }
 
     public function fulfillRemaining($id)
@@ -70,6 +72,7 @@ class DeliveryInstructionController extends Controller
         $di = DeliveryInstruction::with('items')->where('user_id', Auth::id())->findOrFail($id);
         $products = Product::orderBy('sku_code')->get();
         $salesOrders = SalesOrder::with('items')->where('user_id', Auth::id())->latest()->get();
+        $customers = Customer::orderBy('name')->get();
 
         $remainingItems = [];
         foreach ($di->items as $item) {
@@ -88,6 +91,7 @@ class DeliveryInstructionController extends Controller
             'remainingItems' => $remainingItems,
             'parentDi' => $di,
             'salesOrders' => $salesOrders,
+            'customers' => $customers,
         ]);
     }
 

@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
 
 use App\Http\Controllers\AsnController;
 use App\Http\Controllers\ChequeCollectionInvoiceController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeliveryInstructionController;
 use App\Http\Controllers\DeliveryInvoiceController;
 use App\Http\Controllers\ProductController;
@@ -50,6 +51,9 @@ use App\Http\Controllers\ReturnInstructionController;
 use App\Http\Controllers\SalesOrderController;
 
 Route::middleware(['auth', 'role:end_user,sfq_user'])->group(function () {
+    // Customer Routes
+    Route::resource('customers', CustomerController::class);
+
     // Product Routes
     Route::get('products/template', [ProductController::class, 'downloadTemplate'])->name('products.template');
     Route::post('products/bulk-upload', [ProductController::class, 'bulkUpload'])->name('products.bulk-upload');

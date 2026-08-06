@@ -176,8 +176,20 @@
                 
                 <div class="form-group">
                     <label class="form-label">Customer / Destination Name *</label>
-                    <input type="text" name="customer_name" class="form-input" required 
-                           value="{{ old('customer_name', isset($parentDi) ? $parentDi->customer_name : '') }}">
+                    <select name="customer_name" id="customer_name_select" class="form-select" required onchange="onCustomerSelectChange(this)">
+                        <option value="">Select Customer</option>
+                        @foreach($customers as $cust)
+                            <option value="{{ $cust->name }}" data-address="{{ $cust->address }}" 
+                                {{ old('customer_name', isset($parentDi) ? $parentDi->customer_name : '') == $cust->name ? 'selected' : '' }}>
+                                {{ $cust->name }}
+                            </option>
+                        @endforeach
+                        @if(old('customer_name') && !$customers->contains('name', old('customer_name')))
+                            <option value="{{ old('customer_name') }}" selected>{{ old('customer_name') }}</option>
+                        @elseif(isset($parentDi) && $parentDi->customer_name && !$customers->contains('name', $parentDi->customer_name))
+                            <option value="{{ $parentDi->customer_name }}" selected>{{ $parentDi->customer_name }}</option>
+                        @endif
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -329,6 +341,17 @@
 
     @push('scripts')
         <script>
+            function onCustomerSelectChange(selectEl) {
+                const selectedOption = selectEl.options[selectEl.selectedIndex];
+                if (selectedOption) {
+                    const address = selectedOption.getAttribute('data-address');
+                    const addressInput = document.querySelector('input[name="delivery_address"]');
+                    if (address && addressInput && (!addressInput.value || addressInput.value.trim() === '')) {
+                        addressInput.value = address;
+                    }
+                }
+            }
+
             let rowCount = {{ count($remainingItems) > 0 ? count($remainingItems) : 1 }};
 
             const productsData = {
