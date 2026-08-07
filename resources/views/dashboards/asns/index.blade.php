@@ -229,9 +229,6 @@
                                 <a href="{{ route('asns.show', $asn->id) }}" class="action-icon" title="View">
                                     <i class="ph ph-eye"></i>
                                 </a>
-                                <a href="{{ route('asns.edit', $asn->id) }}" class="action-icon" title="Edit" style="margin-left: 0.5rem;">
-                                    <i class="ph ph-pencil-simple"></i>
-                                </a>
                             </td>
                         </tr>
                     @empty
