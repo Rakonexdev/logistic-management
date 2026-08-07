@@ -190,7 +190,7 @@
                             <div class="customer-options-list" style="display: flex; flex-direction: column; gap: 0.2rem;">
                                 @foreach($customers as $cust)
                                     <div class="customer-option-item" 
-                                         onclick="selectCustomerOption('{{ e($cust->name) }}', '{{ e($cust->address ?? '') }}')" 
+                                         onclick="selectCustomerOption('{{ e($cust->name) }}', '{{ e($cust->address ?? '') }}', '{{ e($cust->end_user_name ?? $cust->name) }}')" 
                                          style="padding: 0.5rem 0.75rem; cursor: pointer; border-radius: 6px; font-weight: 500; font-size: 0.875rem; transition: background 0.15s;" 
                                          onmouseover="this.style.background='rgba(99, 102, 241, 0.15)'" 
                                          onmouseout="this.style.background='transparent'">
@@ -383,7 +383,7 @@
                 });
             }
 
-            function selectCustomerOption(name, address) {
+            function selectCustomerOption(name, address, endUser = '') {
                 const hiddenInput = document.getElementById('customer_name_input');
                 const btnText = document.getElementById('customer-btn-text');
                 const menu = document.getElementById('customer-dropdown-menu');
@@ -393,8 +393,13 @@
                 if (menu) menu.style.display = 'none';
 
                 const addressInput = document.querySelector('input[name="delivery_address"]');
-                if (address && addressInput && (!addressInput.value || addressInput.value.trim() === '')) {
+                if (address && addressInput) {
                     addressInput.value = address;
+                }
+
+                const endUserInput = document.querySelector('input[name="end_user_name"]');
+                if (endUserInput) {
+                    endUserInput.value = endUser || name;
                 }
             }
 
