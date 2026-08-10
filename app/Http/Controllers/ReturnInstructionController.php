@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ReturnInstruction;
 use App\Models\ReturnInstructionItem;
@@ -37,9 +38,10 @@ class ReturnInstructionController extends Controller
     public function create()
     {
         $products = Product::orderBy('sku_code')->get();
+        $customers = Customer::orderBy('name')->get();
         $defaultRef = 'RET-'.date('Ymd').'-'.rand(100, 999);
 
-        return view('dashboards.return_instructions.create', compact('products', 'defaultRef'));
+        return view('dashboards.return_instructions.create', compact('products', 'customers', 'defaultRef'));
     }
 
     public function store(Request $request)

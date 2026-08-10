@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ReturnInstruction;
 use App\Models\User;
@@ -13,6 +14,21 @@ test('end user can view return instructions page', function () {
     $response = $this->actingAs($user)->get(route('return-instructions.index'));
 
     $response->assertStatus(200);
+});
+
+test('end user can view create return instruction page with customers dropdown', function () {
+    $user = User::factory()->create(['role' => 'end_user']);
+    Customer::create([
+        'name' => 'Acme Global LLC',
+        'contact_number' => '+974 5555 1234',
+        'address' => 'Building 12, West Bay, Doha',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('return-instructions.create'));
+
+    $response->assertStatus(200);
+    $response->assertViewHas('customers');
+    $response->assertSee('Acme Global LLC');
 });
 
 test('end user can create a return instruction', function () {

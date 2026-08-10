@@ -165,7 +165,41 @@
 
                 <div class="form-group">
                     <label class="form-label">Customer / Client Name *</label>
-                    <input type="text" name="customer_name" class="form-input" required placeholder="e.g. Acme Corp" value="{{ old('customer_name') }}">
+                    <div class="customer-searchable-container" style="position: relative;">
+                        <button type="button" class="form-input customer-dropdown-btn" onclick="toggleCustomerDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; text-align: left; cursor: pointer; width: 100%;">
+                            <span id="customer-btn-text" style="font-weight: 500;">
+                                {{ old('customer_name', 'Select or Enter Customer') }}
+                            </span>
+                            <i class="ph ph-caret-down" style="margin-left: 0.5rem;"></i>
+                        </button>
+                        <div id="customer-dropdown-menu" class="customer-dropdown-menu glass" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 300; max-height: 280px; overflow-y: auto; padding: 0.5rem; background: var(--bg-color, #1e1e2d); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-top: 0.25rem;">
+                            <div style="position: sticky; top: 0; background: var(--bg-color, #1e1e2d); padding-bottom: 0.4rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--border-color); z-index: 10;">
+                                <input type="text" id="customer-search-input" class="form-input" placeholder="🔍 Search or type customer..." oninput="filterCustomerOptions(this)" onclick="event.stopPropagation()" style="padding: 0.4rem 0.6rem; font-size: 0.85rem; width: 100%; box-sizing: border-box;">
+                            </div>
+                            <div class="customer-options-list" style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                @foreach($customers as $cust)
+                                    <div class="customer-option-item" 
+                                         onclick="selectCustomerOption('{{ e($cust->name) }}', '{{ e($cust->address ?? '') }}', '{{ e($cust->contact_number ?? '') }}')" 
+                                         style="padding: 0.5rem 0.75rem; cursor: pointer; border-radius: 6px; font-weight: 500; font-size: 0.875rem; transition: background 0.15s;" 
+                                         onmouseover="this.style.background='rgba(99, 102, 241, 0.15)'" 
+                                         onmouseout="this.style.background='transparent'">
+                                        <div style="font-weight: 600;">{{ $cust->name }}</div>
+                                        @if($cust->address || $cust->contact_number)
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                                {{ implode(' • ', array_filter([$cust->address, $cust->contact_number])) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                @if($customers->isEmpty())
+                                    <div style="padding: 0.5rem 0.75rem; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
+                                        No customers found in database. Type customer name in search box.
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <input type="hidden" id="customer_name_input" name="customer_name" value="{{ old('customer_name') }}" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -274,5 +308,71 @@
             tbody.appendChild(tr);
             rowCount++;
         }
+
+        function toggleCustomerDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('customer-dropdown-menu');
+            if (!menu) return;
+            const isVisible = menu.style.display === 'block';
+
+            if (!isVisible) {
+                menu.style.display = 'block';
+                const searchInput = document.getElementById('customer-search-input');
+                if (searchInput) {
+                    searchInput.value = '';
+                    filterCustomerOptions(searchInput);
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+        function filterCustomerOptions(input) {
+            const filter = input.value.trim();
+            const filterLower = filter.toLowerCase();
+            const list = document.querySelectorAll('.customer-option-item');
+            
+            list.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const matches = text.includes(filterLower);
+                item.style.display = matches ? 'block' : 'none';
+            });
+
+            const hiddenInput = document.getElementById('customer_name_input');
+            const btnText = document.getElementById('customer-btn-text');
+            if (filter) {
+                hiddenInput.value = filter;
+                btnText.textContent = filter;
+            }
+        }
+
+        function selectCustomerOption(name, address, phone) {
+            const hiddenInput = document.getElementById('customer_name_input');
+            const btnText = document.getElementById('customer-btn-text');
+            const menu = document.getElementById('customer-dropdown-menu');
+
+            if (hiddenInput) hiddenInput.value = name;
+            if (btnText) btnText.textContent = name;
+            if (menu) menu.style.display = 'none';
+
+            const addressInput = document.querySelector('input[name="pickup_address"]');
+            if (address && addressInput) {
+                addressInput.value = address;
+            }
+
+            const phoneInput = document.querySelector('input[name="contact_phone"]');
+            if (phone && phoneInput) {
+                phoneInput.value = phone;
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const custContainer = document.querySelector('.customer-searchable-container');
+            if (custContainer && !custContainer.contains(e.target)) {
+                const menu = document.getElementById('customer-dropdown-menu');
+                if (menu) menu.style.display = 'none';
+            }
+        });
     </script>
 @endsection
