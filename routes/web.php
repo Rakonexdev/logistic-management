@@ -96,6 +96,9 @@ Route::middleware(['auth', 'role:end_user'])->group(function () {
     Route::get('delivery-instructions/template', [DeliveryInstructionController::class, 'downloadTemplate'])->name('delivery-instructions.template');
     Route::get('delivery-instructions/{id}/fulfill-remaining', [DeliveryInstructionController::class, 'fulfillRemaining'])->name('delivery-instructions.fulfill-remaining');
     Route::post('delivery-notes/{id}/release', [DeliveryInstructionController::class, 'releaseDeliveryNote'])->name('delivery-notes.release');
+    Route::post('delivery-notes/{id}/amend', [DeliveryInstructionController::class, 'amendDeliveryNote'])->name('delivery-notes.amend');
+    Route::post('delivery-notes/{id}/cancel', [DeliveryInstructionController::class, 'cancelDeliveryNote'])->name('delivery-notes.cancel');
+    Route::get('delivery-notes/{id}/history', [DeliveryInstructionController::class, 'getRevisionHistory'])->name('delivery-notes.history');
     Route::get('delivery-notes', [DeliveryInstructionController::class, 'deliveryNotesIndex'])->name('delivery-notes.index');
     Route::resource('delivery-instructions', DeliveryInstructionController::class);
 

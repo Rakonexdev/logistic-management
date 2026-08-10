@@ -18,6 +18,16 @@ class DeliveryNote extends Model
         'vehicle',
         'delivery_status',
         'delivery_note_attachment',
+        'version',
+        'version_label',
+        'parent_dn_id',
+        'is_latest',
+        'amendment_reason',
+    ];
+
+    protected $casts = [
+        'is_latest' => 'boolean',
+        'version' => 'integer',
     ];
 
     public function deliveryInstruction()
@@ -33,5 +43,15 @@ class DeliveryNote extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parentNote()
+    {
+        return $this->belongsTo(DeliveryNote::class, 'parent_dn_id');
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany(DeliveryNote::class, 'parent_dn_id')->latest();
     }
 }

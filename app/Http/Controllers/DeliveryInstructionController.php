@@ -12,6 +12,7 @@ use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 
 class DeliveryInstructionController extends Controller
 {
@@ -25,7 +26,7 @@ class DeliveryInstructionController extends Controller
         foreach ($instructions as $di) {
             if ($di->deliveryNotes->isEmpty()) {
                 $dn = DeliveryNote::create([
-                    'dn_number' => 'DN-'.date('Ymd').'-'.rand(100, 999),
+                    'dn_number' => $this->generateUniqueDnNumber(),
                     'delivery_instruction_id' => $di->id,
                     'user_id' => $di->user_id,
                     'status' => 'draft',
@@ -47,14 +48,166 @@ class DeliveryInstructionController extends Controller
         return view('dashboards.delivery_instructions.index', compact('instructions'));
     }
 
-    public function deliveryNotesIndex()
+    public function deliveryNotesIndex(Request $request)
     {
-        $notes = DeliveryNote::with('items', 'deliveryInstruction')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->paginate(10);
+        $query = DeliveryNote::with(['items', 'deliveryInstruction', 'parentNote', 'user'])
+            ->where('user_id', Auth::id());
+
+        if (! $request->boolean('show_all')) {
+            $query->where('is_latest', true);
+        }
+
+        $notes = $query->latest()->paginate(10)->withQueryString();
 
         return view('dashboards.delivery_notes.index', compact('notes'));
+    }
+
+    public function amendDeliveryNote(Request $request, $id)
+    {
+        $request->validate([
+            'amendment_reason' => 'required|string|max:1000',
+            'delivery_note_attachment' => 'nullable|file|mimes:pdf,png,jpg,jpeg,doc,docx,xls,xlsx|max:5000',
+            'driver' => 'nullable|string|max:255',
+            'vehicle' => 'nullable|string|max:255',
+            'items' => 'nullable|array',
+            'items.*.sku_code' => 'required|string',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.serial_numbers' => 'nullable|string',
+            'items.*.description' => 'nullable|string',
+        ]);
+
+        $parentNote = DeliveryNote::where('user_id', Auth::id())->with('items')->findOrFail($id);
+
+        $nextVersion = $parentNote->version + 1;
+        $versionLabel = 'v'.($nextVersion - 1);
+
+        $baseDnNumber = preg_replace('/-v\d+$/i', '', $parentNote->dn_number);
+        $newDnNumber = "{$baseDnNumber}-{$versionLabel}";
+
+        $attachmentPath = $parentNote->delivery_note_attachment;
+        if ($request->hasFile('delivery_note_attachment')) {
+            $attachmentPath = $request->file('delivery_note_attachment')->store('delivery_notes', 'public');
+        }
+
+        $parentNote->update([
+            'is_latest' => false,
+            'status' => 'amended',
+        ]);
+
+        $amendedNote = DeliveryNote::create([
+            'dn_number' => $newDnNumber,
+            'delivery_instruction_id' => $parentNote->delivery_instruction_id,
+            'user_id' => Auth::id(),
+            'status' => 'released',
+            'version' => $nextVersion,
+            'version_label' => $versionLabel,
+            'parent_dn_id' => $parentNote->id,
+            'is_latest' => true,
+            'amendment_reason' => $request->input('amendment_reason'),
+            'driver' => $request->input('driver', $parentNote->driver),
+            'vehicle' => $request->input('vehicle', $parentNote->vehicle),
+            'delivery_note_attachment' => $attachmentPath,
+        ]);
+
+        if ($request->filled('items') && is_array($request->input('items'))) {
+            foreach ($request->input('items') as $itemData) {
+                DeliveryNoteItem::create([
+                    'delivery_note_id' => $amendedNote->id,
+                    'sku_code' => $itemData['sku_code'],
+                    'description' => $itemData['description'] ?? '',
+                    'quantity' => (int) $itemData['quantity'],
+                    'serial_numbers' => $itemData['serial_numbers'] ?? null,
+                ]);
+            }
+        } else {
+            foreach ($parentNote->items as $item) {
+                DeliveryNoteItem::create([
+                    'delivery_note_id' => $amendedNote->id,
+                    'sku_code' => $item->sku_code,
+                    'description' => $item->description ?? '',
+                    'quantity' => $item->quantity,
+                    'serial_numbers' => $item->serial_numbers,
+                ]);
+            }
+        }
+
+        return redirect()->route('delivery-notes.index')->with('success', "Delivery Note amended successfully as {$newDnNumber}.");
+    }
+
+    public function cancelDeliveryNote(Request $request, $id)
+    {
+        $request->validate([
+            'cancellation_reason' => 'required|string|max:1000',
+        ]);
+
+        $note = DeliveryNote::where('user_id', Auth::id())->findOrFail($id);
+
+        $note->update([
+            'status' => 'canceled',
+            'is_latest' => false,
+            'amendment_reason' => $request->input('cancellation_reason'),
+        ]);
+
+        return redirect()->route('delivery-notes.index')->with('success', "Delivery Note {$note->dn_number} canceled successfully.");
+    }
+
+    public function getRevisionHistory($id)
+    {
+        $currentNote = DeliveryNote::with(['items', 'parentNote', 'user', 'deliveryInstruction'])->findOrFail($id);
+
+        $rootNote = $currentNote;
+        while ($rootNote->parent_dn_id) {
+            $parent = DeliveryNote::with(['items', 'parentNote', 'user', 'deliveryInstruction'])->find($rootNote->parent_dn_id);
+            if (! $parent) {
+                break;
+            }
+            $rootNote = $parent;
+        }
+
+        $lineageIds = [$rootNote->id];
+        $collector = function ($noteId) use (&$collector, &$lineageIds) {
+            $children = DeliveryNote::where('parent_dn_id', $noteId)->pluck('id');
+            foreach ($children as $childId) {
+                $lineageIds[] = $childId;
+                $collector($childId);
+            }
+        };
+        $collector($rootNote->id);
+
+        $historyNotes = DeliveryNote::with(['items', 'user', 'deliveryInstruction'])
+            ->whereIn('id', array_unique($lineageIds))
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $historyData = $historyNotes->map(function ($n) {
+            return [
+                'id' => $n->id,
+                'dn_number' => $n->dn_number,
+                'version' => $n->version,
+                'version_label' => $n->version_label ?? 'Original',
+                'status' => ucfirst($n->status),
+                'is_latest' => $n->is_latest,
+                'amendment_reason' => $n->amendment_reason,
+                'driver' => $n->driver,
+                'vehicle' => $n->vehicle,
+                'created_at' => $n->created_at->format('M d, Y H:i'),
+                'author' => $n->user->name ?? 'System',
+                'attachment_url' => $n->delivery_note_attachment ? Storage::url($n->delivery_note_attachment) : null,
+                'items' => $n->items->map(function ($item) {
+                    return [
+                        'sku_code' => $item->sku_code,
+                        'description' => $item->description ?? '',
+                        'quantity' => $item->quantity,
+                        'serial_numbers' => $item->serial_numbers,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'dn_number' => $rootNote->dn_number,
+            'history' => $historyData,
+        ]);
     }
 
     public function create()
@@ -307,7 +460,7 @@ class DeliveryInstructionController extends Controller
         }, $items);
 
         $dn = DeliveryNote::create([
-            'dn_number' => 'DN-'.date('Ymd').'-'.rand(100, 999),
+            'dn_number' => $this->generateUniqueDnNumber(),
             'delivery_instruction_id' => $di->id,
             'user_id' => Auth::id(),
             'status' => 'draft',
@@ -391,5 +544,17 @@ class DeliveryInstructionController extends Controller
         }
 
         return response()->file($fullPath);
+    }
+
+    /**
+     * Generate a unique, collision-safe Delivery Note number.
+     */
+    private function generateUniqueDnNumber(): string
+    {
+        do {
+            $dnNumber = 'DN-'.date('Ymd').'-'.rand(1000, 9999);
+        } while (DeliveryNote::where('dn_number', $dnNumber)->exists());
+
+        return $dnNumber;
     }
 }

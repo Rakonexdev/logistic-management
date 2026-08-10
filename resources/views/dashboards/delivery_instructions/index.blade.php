@@ -162,37 +162,55 @@
                                         </a>
                                     @endif
 
-                                    @foreach($di->deliveryNotes as $dn)
-                                        <div style="display: flex; flex-direction: column; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.45rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
-                                            <div style="font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; align-items: center;">
-                                                <span>{{ $dn->dn_number }}</span>
-                                                <span class="status-badge status-{{ $dn->status }}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">{{ $dn->status }}</span>
-                                            </div>
-                                            <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.2rem;">
-                                                @if($dn->status === 'draft')
-                                                    <form action="{{ route('delivery-notes.release', $dn->id) }}" method="POST" style="margin: 0;">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: var(--accent-primary, #6366f1); border-color: var(--accent-primary, #6366f1);">
-                                                            <i class="ph ph-paper-plane-tilt"></i> Release to Warehouse
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                                <a href="{{ route('delivery-notes.print', $dn->id) }}" target="_blank"
-                                                    class="btn btn-outline"
-                                                    style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
-                                                    <i class="ph ph-printer"></i> Print DN
-                                                </a>
-                                                @if($dn->delivery_note_attachment || $di->delivery_note_attachment)
-                                                    <a href="{{ route('delivery-instructions.attachment', $di->id) }}" target="_blank"
-                                                        class="btn btn-outline"
-                                                        style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);"
-                                                        title="View Uploaded Delivery Note">
-                                                        <i class="ph ph-file-text"></i> View
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
+                                     @foreach($di->deliveryNotes as $dn)
+                                         <div style="display: flex; flex-direction: column; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.45rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+                                             <div style="font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; gap: 0.5rem; align-items: center;">
+                                                 <span>
+                                                     {{ $dn->dn_number }}
+                                                     @if($dn->version_label)
+                                                         <span class="badge" style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.15); color: var(--accent-primary, #6366f1); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 700; margin-left: 0.2rem;">
+                                                             {{ $dn->version_label }}
+                                                         </span>
+                                                     @endif
+                                                 </span>
+                                                 <span class="status-badge status-{{ $dn->status }}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">{{ $dn->status }}</span>
+                                             </div>
+                                             @if($dn->amendment_reason)
+                                                 <div style="font-size: 0.7rem; color: var(--text-secondary); font-style: italic; margin-top: 0.1rem;">
+                                                     Reason: {{ Str::limit($dn->amendment_reason, 40) }}
+                                                 </div>
+                                             @endif
+                                             <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.2rem;">
+                                                 @if($dn->status === 'draft')
+                                                     <form action="{{ route('delivery-notes.release', $dn->id) }}" method="POST" style="margin: 0;">
+                                                         @csrf
+                                                         <button type="submit" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: var(--accent-primary, #6366f1); border-color: var(--accent-primary, #6366f1);">
+                                                             <i class="ph ph-paper-plane-tilt"></i> Release to Warehouse
+                                                         </button>
+                                                     </form>
+                                                 @endif
+                                                 <a href="{{ route('delivery-notes.print', $dn->id) }}" target="_blank"
+                                                     class="btn btn-outline"
+                                                     style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                                     <i class="ph ph-printer"></i> Print DN
+                                                 </a>
+                                                 <a href="{{ route('delivery-notes.index') }}"
+                                                     class="btn btn-outline"
+                                                     style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: var(--accent-primary, #6366f1);"
+                                                     title="View & Amend Revisions">
+                                                     <i class="ph ph-clock-counter-clockwise"></i> Revisions
+                                                 </a>
+                                                 @if($dn->delivery_note_attachment || $di->delivery_note_attachment)
+                                                     <a href="{{ route('delivery-instructions.attachment', $di->id) }}" target="_blank"
+                                                         class="btn btn-outline"
+                                                         style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);"
+                                                         title="View Uploaded Delivery Note">
+                                                         <i class="ph ph-file-text"></i> View
+                                                     </a>
+                                                 @endif
+                                             </div>
+                                         </div>
+                                     @endforeach
                                 </div>
                             </td>
                         </tr>
